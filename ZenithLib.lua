@@ -102,6 +102,79 @@ local function SpringStep(state, dt, target, frequency, damping)
 	}
 end
 
+
+-- ══════════════════════════════════════════════
+-- SpringStep — физика пружины для selector полоски
+-- ══════════════════════════════════════════════
+-- (уже определена выше)
+
+-- ══════════════════════════════════════════════
+-- Acrylic / Frosted Glass (как в Fluent UI)
+-- Стеклянный Part в 3D мире перед камерой
+-- ══════════════════════════════════════════════
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+
+local function MapRange(v, a, b, c_, d)
+	return (v - a) * (d - c_) / (b - a) + c_
+end
+
+local function ScreenToWorld(pos2d, depth)
+	local ray = Camera:ScreenPointToRay(pos2d.X, pos2d.Y)
+	return ray.Origin + ray.Direction * depth
+end
+
+local function MakeAcrylic(frame)
+	local depth = MapRange(Camera.ViewportSize.Y, 0, 2560, 8, 56)
+
+	local part = Instance.new("Part")
+	part.Name = "ZenithAcrylic"
+	part.Color = Color3.new(0, 0, 0)
+	part.Material = Enum.Material.Glass
+	part.Size = Vector3.new(1, 1, 0)
+	part.Anchored = true
+	part.CanCollide = false
+	part.Locked = true
+	part.CastShadow = false
+	part.Transparency = 0.98
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.Brick
+	mesh.Offset = Vector3.new(0, 0, -0.000001)
+	mesh.Parent = part
+	part.Parent = workspace
+
+	local conns = {}
+
+	local function update()
+		if not frame or not frame.Parent then return end
+		local pos = frame.AbsolutePosition
+		local size = frame.AbsoluteSize
+		local tl = ScreenToWorld(pos, depth)
+		local tr = ScreenToWorld(pos + Vector2.new(size.X, 0), depth)
+		local br = ScreenToWorld(pos + size, depth)
+		local w = (tr - tl).Magnitude
+		local h = (tr - br).Magnitude
+		local cf = Camera.CFrame
+		part.CFrame = CFrame.fromMatrix((tl + br) / 2, cf.XVector, cf.YVector, cf.ZVector)
+		part.Mesh.Scale = Vector3.new(w, h, 0)
+	end
+
+	table.insert(conns, Camera:GetPropertyChangedSignal("CFrame"):Connect(update))
+	table.insert(conns, Camera:GetPropertyChangedSignal("ViewportSize"):Connect(update))
+	table.insert(conns, frame:GetPropertyChangedSignal("AbsolutePosition"):Connect(update))
+	table.insert(conns, frame:GetPropertyChangedSignal("AbsoluteSize"):Connect(update))
+
+	frame.AncestryChanged:Connect(function()
+		if not frame.Parent then
+			for _, conn in ipairs(conns) do pcall(function() conn:Disconnect() end) end
+			pcall(function() part:Destroy() end)
+		end
+	end)
+
+	task.defer(update)
+	return part
+end
+
 -- Color Constants (Black & Rose Theme)
 local COLORS = {
 	MainBackground = Color3.fromRGB(0, 0, 0),         -- чистый чёрный
@@ -460,8 +533,6 @@ function ZenithLib:MakeWindow(config)
 	-- Make Draggable
 	MakeDraggable(self.MainFrame, self.ScreenGui)
 
-	-- Acrylic blur — стеклянный Part перед камерой
-	-- task.defer ждёт первый рендер чтобы AbsolutePosition был верным
 	self._acrylicPart = nil
 	task.defer(function()
 		if self.MainFrame and self.MainFrame.Parent then
@@ -580,18 +651,42 @@ function ZenithLib:MakeTab(config)
 	
 	-- Tab Click Handler
 	local function SelectTab()
-		self.CurrentTab = Title
-		
-		-- Update button appearance
-		for _, button in ipairs(self.TabNav:GetChildren()) do
-			if button:IsA("Frame") then
-				Tween(button, { BackgroundColor3 = Color3.fromRGB(0,0,0), BackgroundTransparency = 1 })
-				local txt = button:FindFirstChildWhichIsA("TextLabel")
-				if txt then Tween(txt, { TextColor3 = COLORS.SubText }) end
+		-- Page transition: скрываем текущий
+		for _, frame in pairs(self.TabFrames) do
+			if frame.Visible and frame ~= tabContent then
+				Tween(frame, { BackgroundTransparency = 1 }, 0.08)
+				task.delay(0.1, function()
+					frame.Visible = false
+					frame.BackgroundTransparency = 0
+				end)
 			end
 		end
-		Tween(tabButton, { BackgroundColor3 = COLORS.ActiveTab, BackgroundTransparency = 0 })
-		Tween(tabText, { TextColor3 = COLORS.Accent })
+
+		-- Показываем новый с небольшой задержкой
+		task.delay(0.08, function()
+			tabContent.Visible = true
+			tabContent.Position = UDim2.new(0, 0, 0, 6)
+			TweenSpring(tabContent, { Position = UDim2.new(0, 0, 0, 0) }, 0.28)
+		end)
+
+		self.CurrentTab = Title
+
+		-- Обновляем кнопки табов
+		for _, button in ipairs(self.TabNav:GetChildren()) do
+			if button:IsA("Frame") and button.Name ~= "SelectorBar" then
+				Tween(button, { BackgroundColor3 = Color3.fromRGB(0,0,0), BackgroundTransparency = 1 }, 0.15)
+				local txt = button:FindFirstChildWhichIsA("TextLabel")
+				if txt then Tween(txt, { TextColor3 = COLORS.SubText }, 0.15) end
+			end
+		end
+		Tween(tabButton, { BackgroundColor3 = COLORS.ActiveTab, BackgroundTransparency = 0 }, 0.15)
+		Tween(tabText, { TextColor3 = COLORS.AccentText }, 0.15)
+
+		-- Selector полоска
+		if self._moveSelectorTo then
+			local relY = tabButton.AbsolutePosition.Y - self.TabNav.AbsolutePosition.Y
+			self._moveSelectorTo(relY)
+		end
 	end
 	
 	tabButton.InputBegan:Connect(function(input)
