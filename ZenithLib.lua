@@ -75,6 +75,45 @@ local COLORS = {
 	InputBackground = Color3.fromRGB(35, 35, 35),
 }
 
+-- Function to update accent color globally
+local function SetAccentColor(color)
+	COLORS.Accent = color
+end
+
+-- Theme customization
+function ZenithLib:SetTheme(theme)
+	if theme.Accent then
+		COLORS.Accent = theme.Accent
+	end
+	if theme.MainBackground then
+		COLORS.MainBackground = theme.MainBackground
+	end
+	if theme.Text then
+		COLORS.Text = theme.Text
+	end
+	if theme.SubText then
+		COLORS.SubText = theme.SubText
+	end
+	if theme.InputBackground then
+		COLORS.InputBackground = theme.InputBackground
+	end
+	if theme.DarkerBackground then
+		COLORS.DarkerBackground = theme.DarkerBackground
+	end
+end
+
+-- Get current theme
+function ZenithLib:GetTheme()
+	return {
+		Accent = COLORS.Accent,
+		MainBackground = COLORS.MainBackground,
+		Text = COLORS.Text,
+		SubText = COLORS.SubText,
+		InputBackground = COLORS.InputBackground,
+		DarkerBackground = COLORS.DarkerBackground,
+	}
+end
+
 -- Main Library
 local ZenithLib = {}
 ZenithLib.__index = ZenithLib
@@ -94,19 +133,37 @@ function ZenithLib:MakeWindow(config)
 	self.ScreenGui.Parent = game:GetService("CoreGui")
 	
 	-- Main Frame
+	local windowPos = config.Position or UDim2.new(0.5, -350, 0, 50)
+	local windowSize = config.Size or UDim2.new(0, 700, 0, 450)
+	
+	-- Shadow Effect
+	local shadow = CreateInstance("ImageLabel", {
+		Name = "Shadow",
+		Size = UDim2.new(1, 20, 1, 20),
+		Position = UDim2.new(0.5, 0, 0.5, 0),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://5273142107",
+		ImageColor3 = Color3.new(0, 0, 0),
+		ImageTransparency = 0.5,
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(20, 20, 20, 20),
+	})
+	shadow.Parent = self.ScreenGui
+	
 	self.MainFrame = CreateInstance("Frame", {
 		Name = "MainFrame",
-		Size = UDim2.new(0, 700, 0, 450),
-		Position = UDim2.new(0.5, -350, 0, 50),
+		Size = windowSize,
+		Position = windowPos,
 		BackgroundColor3 = COLORS.MainBackground,
-		BackgroundTransparency = 0.2,
+		BackgroundTransparency = 0.15,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 	})
 	self.MainFrame.Parent = self.ScreenGui
 	
 	-- Corner Radius
-	local mainCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
+	local mainCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 10) })
 	mainCorner.Parent = self.MainFrame
 	
 	-- Title Bar
@@ -187,8 +244,8 @@ function ZenithLib:MakeWindow(config)
 	maxHitbox.Parent = self.MaximizeButton
 	
 	self.isMaximized = false
-	self.normalSize = UDim2.new(0, 700, 0, 450)
-	self.expandedSize = UDim2.new(0, 700, 0, 600)
+	self.normalSize = windowSize
+	self.expandedSize = UDim2.new(windowSize.X.Scale, windowSize.X.Offset, 0, 600)
 	
 	maxHitbox.MouseButton1Click:Connect(function()
 		self.isMaximized = not self.isMaximized
@@ -216,7 +273,7 @@ function ZenithLib:MakeWindow(config)
 	minHitbox.Parent = self.MinimizeButton
 	
 	self.isMinimized = false
-	self.normalHeight = 450
+	self.normalHeight = windowSize.Y.Offset
 	self.minimizedHeight = 40
 	
 	minHitbox.MouseButton1Click:Connect(function()
@@ -281,7 +338,7 @@ function ZenithLib:MakeWindow(config)
 end
 
 function ZenithLib:MakeTab(config)
-	local self = setmetatable({}, { __index = getmetatable(self) })
+	local self = setmetatable({}, { __index = self })
 	
 	local Title = config.Title or "Tab"
 	local Image = config.Image
@@ -383,6 +440,23 @@ function ZenithLib:MakeTab(config)
 		end
 	end)
 	
+	-- Hover effect for tab button
+	tabButton.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			if self.CurrentTab ~= Title then
+				Tween(tabButton, { BackgroundColor3 = Color3.new(40, 40, 40) })
+			end
+		end
+	end)
+	
+	tabButton.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			if self.CurrentTab ~= Title then
+				Tween(tabButton, { BackgroundColor3 = COLORS.InputBackground })
+			end
+		end
+	end)
+	
 	-- Auto-select first tab
 	if not self.CurrentTab then
 		SelectTab()
@@ -429,6 +503,10 @@ function ZenithLib:MakeTab(config)
 		buttonHitbox.MouseButton1Up:Connect(function()
 			Tween(buttonFrame, { BackgroundColor3 = COLORS.InputBackground })
 			Callback()
+		end)
+		
+		buttonHitbox.MouseEnter:Connect(function()
+			Tween(buttonFrame, { BackgroundColor3 = Color3.new(45, 45, 45) })
 		end)
 		
 		buttonHitbox.MouseLeave:Connect(function()
@@ -609,8 +687,20 @@ function ZenithLib:MakeTab(config)
 			isDragging = false
 		end)
 		
-		sliderHitbox.MouseMoved:Connect(function(_, y)
+		sliderHitbox.MouseMoved:Connect(function()
 			if isDragging then
+				local relativeX = sliderTrack.AbsolutePosition.X
+				local width = sliderTrack.AbsoluteSize.X
+				local mouseX = UserInputService:GetMouseLocation().X
+				local percent = math.clamp((mouseX - relativeX) / width, 0, 1)
+				local value = math.floor(Min + percent * (Max - Min))
+				UpdateSlider(value)
+			end
+		end)
+		
+		-- Click to set value directly
+		sliderTrack.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
 				local relativeX = sliderTrack.AbsolutePosition.X
 				local width = sliderTrack.AbsoluteSize.X
 				local mouseX = UserInputService:GetMouseLocation().X
@@ -721,6 +811,22 @@ function ZenithLib:MakeTab(config)
 			isOpen = not isOpen
 			dropdownList.Visible = isOpen
 			Tween(dropdownArrow, { Rotation = isOpen and 180 or 0 })
+		end)
+		
+		-- Close dropdown when clicking outside
+		UserInputService.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 and isOpen then
+				local mousePos = UserInputService:GetMouseLocation()
+				local dropdownAbsPos = dropdownFrame.AbsolutePosition
+				local dropdownAbsSize = dropdownFrame.AbsoluteSize
+				
+				if mousePos.X < dropdownAbsPos.X or mousePos.X > dropdownAbsPos.X + dropdownAbsSize.X or
+				   mousePos.Y < dropdownAbsPos.Y or mousePos.Y > dropdownAbsPos.Y + dropdownAbsSize.Y then
+					isOpen = false
+					dropdownList.Visible = false
+					Tween(dropdownArrow, { Rotation = 0 })
+				end
+			end
 		end)
 		
 		dropdownFrame.Parent = tabContent
@@ -860,6 +966,22 @@ function ZenithLib:MakeTab(config)
 			isOpen = not isOpen
 			dropdownList.Visible = isOpen
 			Tween(dropdownArrow, { Rotation = isOpen and 180 or 0 })
+		end)
+		
+		-- Close dropdown when clicking outside
+		UserInputService.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 and isOpen then
+				local mousePos = UserInputService:GetMouseLocation()
+				local dropdownAbsPos = dropdownFrame.AbsolutePosition
+				local dropdownAbsSize = dropdownFrame.AbsoluteSize
+				
+				if mousePos.X < dropdownAbsPos.X or mousePos.X > dropdownAbsPos.X + dropdownAbsSize.X or
+				   mousePos.Y < dropdownAbsPos.Y or mousePos.Y > dropdownAbsPos.Y + dropdownAbsSize.Y then
+					isOpen = false
+					dropdownList.Visible = false
+					Tween(dropdownArrow, { Rotation = 0 })
+				end
+			end
 		end)
 		
 		dropdownFrame.Parent = tabContent
@@ -1004,6 +1126,184 @@ function ZenithLib:MakeTab(config)
 		return textboxFrame
 	end
 	
+	function Tab:MakeLabel(config)
+		local Name = config.Name or "Label"
+		
+		local labelFrame = CreateInstance("Frame", {
+			Name = "Label_" .. Name,
+			Size = UDim2.new(1, 0, 0, 30),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+		})
+		
+		local labelText = CreateInstance("TextLabel", {
+			Size = UDim2.new(1, 0, 1, 0),
+			BackgroundTransparency = 1,
+			Text = Name,
+			TextColor3 = COLORS.Text,
+			TextSize = 14,
+			Font = Enum.Font.Gotham,
+		})
+		labelText.Parent = labelFrame
+		
+		labelFrame.Parent = tabContent
+		return labelFrame
+	end
+	
+	function Tab:MakeSeparator()
+		local separatorFrame = CreateInstance("Frame", {
+			Name = "Separator",
+			Size = UDim2.new(1, 0, 0, 1),
+			BackgroundColor3 = COLORS.DarkerBackground,
+			BorderSizePixel = 0,
+		})
+		
+		separatorFrame.Parent = tabContent
+		return separatorFrame
+	end
+	
+	function Tab:MakeColorPicker(config)
+		local Name = config.Name or "ColorPicker"
+		local Default = config.Default or Color3.new(1, 1, 1)
+		local Callback = config.Callback or function() end
+		
+		local pickerFrame = CreateInstance("Frame", {
+			Name = "ColorPicker_" .. Name,
+			Size = UDim2.new(1, 0, 0, 50),
+			BackgroundColor3 = COLORS.InputBackground,
+			BorderSizePixel = 0,
+		})
+		
+		local pickerCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
+		pickerCorner.Parent = pickerFrame
+		
+		local pickerText = CreateInstance("TextLabel", {
+			Size = UDim2.new(1, -50, 0, 20),
+			Position = UDim2.new(0, 10, 0, 5),
+			BackgroundTransparency = 1,
+			Text = Name,
+			TextColor3 = COLORS.Text,
+			TextSize = 14,
+			Font = Enum.Font.Gotham,
+			TextXAlignment = Enum.TextXAlignment.Left,
+		})
+		pickerText.Parent = pickerFrame
+		
+		local colorPreview = CreateInstance("Frame", {
+			Name = "ColorPreview",
+			Size = UDim2.new(0, 30, 0, 30),
+			Position = UDim2.new(1, -40, 0.5, -15),
+			BackgroundColor3 = Default,
+			BorderSizePixel = 0,
+		})
+		colorPreview.Parent = pickerFrame
+		
+		local previewCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 4) })
+		previewCorner.Parent = colorPreview
+		
+		local colors = {
+			Color3.new(1, 0, 0),
+			Color3.new(0, 1, 0),
+			Color3.new(0, 0, 1),
+			Color3.new(1, 1, 0),
+			Color3.new(1, 0, 1),
+			Color3.new(0, 1, 1),
+			Color3.new(1, 0.5, 0),
+			Color3.new(0.5, 0, 1),
+		}
+		
+		local colorButtons = {}
+		local currentColor = Default
+		
+		local colorsFrame = CreateInstance("Frame", {
+			Name = "ColorsFrame",
+			Size = UDim2.new(1, -60, 0, 25),
+			Position = UDim2.new(0, 5, 0, 25),
+			BackgroundTransparency = 1,
+		})
+		colorsFrame.Parent = pickerFrame
+		
+		local colorsList = CreateInstance("UIListLayout", {
+			Padding = UDim.new(0, 5),
+			FillDirection = Enum.FillDirection.Horizontal,
+		})
+		colorsList.Parent = colorsFrame
+		
+		for i, color in ipairs(colors) do
+			local colorBtn = CreateInstance("Frame", {
+				Size = UDim2.new(0, 20, 0, 20),
+				BackgroundColor3 = color,
+				BorderSizePixel = 0,
+			})
+			colorBtn.Parent = colorsFrame
+			
+			local btnCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 4) })
+			btnCorner.Parent = colorBtn
+			
+			local btnHitbox = CreateInstance("TextButton", {
+				Size = UDim2.new(1, 0, 1, 0),
+				BackgroundTransparency = 1,
+				Text = "",
+			})
+			btnHitbox.Parent = colorBtn
+			
+			btnHitbox.MouseButton1Click:Connect(function()
+				currentColor = color
+				Tween(colorPreview, { BackgroundColor3 = color })
+				Callback(color)
+			end)
+			
+			colorButtons[i] = colorBtn
+		end
+		
+		pickerFrame.Parent = tabContent
+		return pickerFrame
+	end
+	
+	function Tab:MakeParagraph(config)
+		local Title = config.Title or "Title"
+		local Text = config.Text or "Description text here..."
+		
+		local paragraphFrame = CreateInstance("Frame", {
+			Name = "Paragraph_" .. Title,
+			Size = UDim2.new(1, 0, 0, 60),
+			BackgroundColor3 = COLORS.InputBackground,
+			BorderSizePixel = 0,
+		})
+		
+		local paragraphCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
+		paragraphCorner.Parent = paragraphFrame
+		
+		local titleLabel = CreateInstance("TextLabel", {
+			Size = UDim2.new(1, 0, 0, 20),
+			Position = UDim2.new(0, 10, 0, 5),
+			BackgroundTransparency = 1,
+			Text = Title,
+			TextColor3 = COLORS.Text,
+			TextSize = 14,
+			Font = Enum.Font.GothamBold,
+			TextXAlignment = Enum.TextXAlignment.Left,
+		})
+		titleLabel.Parent = paragraphFrame
+		
+		local textLabel = CreateInstance("TextLabel", {
+			Size = UDim2.new(1, -20, 0, 35),
+			Position = UDim2.new(0, 10, 0, 25),
+			BackgroundTransparency = 1,
+			Text = Text,
+			TextColor3 = COLORS.SubText,
+			TextSize = 12,
+			Font = Enum.Font.Gotham,
+			TextWrapped = true,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextYAlignment = Enum.TextYAlignment.Top,
+		})
+		textLabel.Parent = paragraphFrame
+		
+		paragraphFrame.Parent = tabContent
+		return paragraphFrame
+	end
+	
 	return Tab
 end
 
@@ -1013,7 +1313,52 @@ function ZenithLib:Destroy()
 	end
 end
 
+-- Additional Window Methods
+function ZenithLib:SetTitle(newTitle)
+	if self.TitleText then
+		self.TitleText.Text = newTitle
+	end
+end
+
+function ZenithLib:SetSize(size)
+	if self.MainFrame then
+		self.normalSize = size
+		if not self.isMaximized then
+			Tween(self.MainFrame, { Size = size })
+		end
+	end
+end
+
+function ZenithLib:SetPosition(position)
+	if self.MainFrame then
+		Tween(self.MainFrame, { Position = position })
+	end
+end
+
+function ZenithLib:Minimize()
+	if not self.isMinimized then
+		self.isMinimized = true
+		local targetHeight = self.isMaximized and 600 or self.normalHeight
+		Tween(self.MainFrame, { Size = UDim2.new(0, 700, 0, targetHeight) })
+	end
+end
+
+function ZenithLib:Maximize()
+	if not self.isMaximized then
+		self.isMaximized = true
+		Tween(self.MainFrame, { Size = self.expandedSize })
+	end
+end
+
+function ZenithLib:Restore()
+	self.isMinimized = false
+	self.isMaximized = false
+	Tween(self.MainFrame, { Size = self.normalSize })
+end
+
 -- Make library global
 getgenv().ZenithLib = ZenithLib
 
 return ZenithLib
+
+
