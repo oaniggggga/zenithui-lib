@@ -73,6 +73,35 @@ local function MakeDraggable(frame, parent)
 	end)
 end
 
+
+-- SpringStep — физика пружины (используется для selector полоски)
+local function SpringStep(state, dt, target, frequency, damping)
+	frequency = frequency or 8
+	damping = damping or 1
+	local f = frequency * 2 * math.pi
+	local k = state.value - target
+	local v = state.velocity or 0
+	local e = math.exp(-damping * f * dt)
+	local newValue, newVelocity
+	if damping >= 1 then
+		newValue = (k * (1 + f * dt) + v * dt) * e + target
+		newVelocity = (v * (1 - f * dt) - k * (f * f * dt)) * e
+	else
+		local o = math.sqrt(1 - damping * damping)
+		local c_ = math.cos(f * o * dt)
+		local s_ = math.sin(f * o * dt)
+		local t2 = o > 0.0001 and s_ / o or dt
+		newValue = (k * (c_ + damping * t2) + v * (t2 / f)) * e + target
+		newVelocity = (v * (c_ - t2 * damping) - k * (t2 * f)) * e
+	end
+	local done = math.abs(newVelocity) < 0.001 and math.abs(newValue - target) < 0.001
+	return {
+		value = done and target or newValue,
+		velocity = done and 0 or newVelocity,
+		complete = done,
+	}
+end
+
 -- Color Constants (Black & Rose Theme)
 local COLORS = {
 	MainBackground = Color3.fromRGB(0, 0, 0),         -- чистый чёрный
@@ -360,16 +389,6 @@ function ZenithLib:MakeWindow(config)
 	selectorCorner.Parent = self.SelectorBar
 	self.SelectorBar.Parent = self.TabNav
 
-	-- Spring motors для selector полоски
-	self._selectorPosMotor = CreateSpringMotor(17, self.SelectorBar, "Position", 6, 1)
-	self._selectorSizeMotor = CreateSpringMotor(0, self.SelectorBar, "Size", 5, 0.7)
-	self._lastSelectorPos = 17
-	self._lastSelectorTime = tick()
-
-	-- Overrides для Position/Size (spring работает с числами, не UDim2)
-	self._selectorPosMotor.instance = nil
-	self._selectorSizeMotor.instance = nil
-
 	local selectorBar = self.SelectorBar
 	local selectorPosState = { value = 17, velocity = 0, complete = true }
 	local selectorSizeState = { value = 16, velocity = 0, complete = true }
@@ -426,13 +445,12 @@ function ZenithLib:MakeWindow(config)
 	end
 
 	-- Tab Content Area
-	self.TabContent = CreateInstance("CanvasGroup", {
+	self.TabContent = CreateInstance("Frame", {
 		Name = "TabContent",
 		Size = UDim2.new(1, -150, 1, 0),
 		Position = UDim2.new(0, 150, 0, 0),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		GroupTransparency = 0,
 	})
 	self.TabContent.Parent = self.ContentContainer
 	
@@ -443,9 +461,13 @@ function ZenithLib:MakeWindow(config)
 	MakeDraggable(self.MainFrame, self.ScreenGui)
 
 	-- Acrylic blur — стеклянный Part перед камерой
-	-- Работает через 3D Glass Material как в Fluent UI
-	local acrylicPart = MakeAcrylic(self.MainFrame)
-	self._acrylicPart = acrylicPart
+	-- task.defer ждёт первый рендер чтобы AbsolutePosition был верным
+	self._acrylicPart = nil
+	task.defer(function()
+		if self.MainFrame and self.MainFrame.Parent then
+			self._acrylicPart = MakeAcrylic(self.MainFrame)
+		end
+	end)
 
 
 
