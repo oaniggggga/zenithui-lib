@@ -62,20 +62,20 @@ local function MakeDraggable(frame, parent)
 	end)
 end
 
--- Color Constants (Dark Theme - Fluent inspired)
+-- Color Constants (Glass Dark Theme)
 local COLORS = {
-	MainBackground = Color3.fromRGB(60, 60, 60),
-	Accent = Color3.fromRGB(96, 205, 255),
-	Text = Color3.fromRGB(240, 240, 240),
-	SubText = Color3.fromRGB(170, 170, 170),
+	MainBackground = Color3.fromRGB(30, 30, 30),
+	Accent = Color3.fromRGB(0, 170, 255),
+	Text = Color3.fromRGB(245, 245, 245),
+	SubText = Color3.fromRGB(160, 160, 160),
 	CloseRed = Color3.fromRGB(255, 95, 85),
 	MaximizeYellow = Color3.fromRGB(255, 190, 40),
 	MinimizeGreen = Color3.fromRGB(40, 205, 65),
-	DarkerBackground = Color3.fromRGB(45, 45, 45),
-	InputBackground = Color3.fromRGB(120, 120, 120),
-	ElementBorder = Color3.fromRGB(35, 35, 35),
-	SliderRail = Color3.fromRGB(120, 120, 120),
-	DropdownHolder = Color3.fromRGB(45, 45, 45),
+	DarkerBackground = Color3.fromRGB(25, 25, 25),
+	InputBackground = Color3.fromRGB(45, 45, 45),
+	ElementBorder = Color3.fromRGB(60, 60, 60),
+	SliderRail = Color3.fromRGB(90, 90, 90),
+	DropdownHolder = Color3.fromRGB(40, 40, 40),
 }
 
 -- Function to update accent color globally
@@ -160,7 +160,7 @@ function ZenithLib:MakeWindow(config)
 		Size = windowSize,
 		Position = windowPos,
 		BackgroundColor3 = COLORS.MainBackground,
-		BackgroundTransparency = 0,
+		BackgroundTransparency = 0.15,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 	})
@@ -183,7 +183,7 @@ function ZenithLib:MakeWindow(config)
 		Name = "TitleBar",
 		Size = UDim2.new(1, 0, 0, 40),
 		BackgroundColor3 = COLORS.DarkerBackground,
-		BackgroundTransparency = 0.3,
+		BackgroundTransparency = 0.4,
 		BorderSizePixel = 0,
 	})
 	self.TitleBar.Parent = self.MainFrame
@@ -308,7 +308,7 @@ function ZenithLib:MakeWindow(config)
 		Name = "TabNav",
 		Size = UDim2.new(0, 150, 1, 0),
 		BackgroundColor3 = COLORS.DarkerBackground,
-		BackgroundTransparency = 0.5,
+		BackgroundTransparency = 0.6,
 		BorderSizePixel = 0,
 	})
 	self.TabNav.Parent = self.ContentContainer
