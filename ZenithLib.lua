@@ -3,7 +3,7 @@
 	Version 2.0.0
 	Created for Roblox Luau
 ]]
-print("[ZenithLib] 123")
+
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -1551,7 +1551,6 @@ print("[ZenithLib] >> ZenithLib:Destroy()")
 	if self.ScreenGui then self.ScreenGui:Destroy() end
 end
 
-end
 
 -- Additional Window Methods
 function ZenithLib:SetTitle(newTitle)
