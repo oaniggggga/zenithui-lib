@@ -24,7 +24,8 @@ local function Tween(instance, properties, duration)
 	return tween
 end
 
-local function MakeDraggable(frame, parent)
+-- handle = откуда начинается drag (TitleBar), frame = что двигается (MainFrame)
+local function MakeDraggable(frame, handle)
 	local dragging = false
 	local dragInput
 	local dragStart
@@ -32,11 +33,13 @@ local function MakeDraggable(frame, parent)
 
 	local function Update(input)
 		local delta = input.Position - dragStart
-		local newPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-		frame.Position = newPos
+		frame.Position = UDim2.new(
+			startPos.X.Scale, startPos.X.Offset + delta.X,
+			startPos.Y.Scale, startPos.Y.Offset + delta.Y
+		)
 	end
 
-	frame.InputBegan:Connect(function(input)
+	handle.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			dragging = true
 			dragStart = input.Position
@@ -49,7 +52,7 @@ local function MakeDraggable(frame, parent)
 		end
 	end)
 
-	frame.InputChanged:Connect(function(input)
+	handle.InputChanged:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
 			dragInput = input
 		end
@@ -248,85 +251,76 @@ function ZenithLib:MakeWindow(config)
 	self.TitleText.Parent = self.TitleBar
 	
 	-- Window Controls Container
+	-- Window controls — правый верхний угол, UIListLayout для равного spacing
 	self.ControlsContainer = CreateInstance("Frame", {
 		Name = "ControlsContainer",
-		Size = UDim2.new(0, 68, 0, 20),
-		Position = UDim2.new(1, -80, 0.5, -10),
+		Size = UDim2.new(0, 76, 1, 0),
+		Position = UDim2.new(1, -84, 0, 0),
 		BackgroundTransparency = 1,
 	})
 	self.ControlsContainer.Parent = self.TitleBar
-	
-	-- Close Button (Red)
-	self.CloseButton = CreateInstance("Frame", {
-		Name = "CloseButton",
+
+	CreateInstance("UIListLayout", {
+		FillDirection = Enum.FillDirection.Horizontal,
+		HorizontalAlignment = Enum.HorizontalAlignment.Right,
+		VerticalAlignment = Enum.VerticalAlignment.Center,
+		Padding = UDim.new(0, 8),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	}).Parent = self.ControlsContainer
+
+	-- Minimize (Green) — LayoutOrder 1 = левая
+	self.MinimizeButton = CreateInstance("Frame", {
+		Name = "MinimizeButton",
 		Size = UDim2.new(0, 12, 0, 12),
-		Position = UDim2.new(1, -12, 0.5, -6),
-		BackgroundColor3 = COLORS.CloseRed,
+		BackgroundColor3 = COLORS.MinimizeGreen,
 		BorderSizePixel = 0,
+		LayoutOrder = 1,
 	})
-	self.CloseButton.Parent = self.ControlsContainer
-	
-	local closeCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) })
-	closeCorner.Parent = self.CloseButton
-	
-	local closeHitbox = CreateInstance("TextButton", {
-		Size = UDim2.new(1, 0, 1, 0),
-		BackgroundTransparency = 1,
-		Text = "",
+	self.MinimizeButton.Parent = self.ControlsContainer
+	CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = self.MinimizeButton
+	local minHitbox = CreateInstance("TextButton", {
+		Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = "",
 	})
-	closeHitbox.Parent = self.CloseButton
-	closeHitbox.MouseButton1Click:Connect(function()
-		self:Destroy()
-	end)
-	
-	-- Maximize Button (Yellow)
+	minHitbox.Parent = self.MinimizeButton
+
+	-- Maximize (Yellow) — LayoutOrder 2 = средняя
 	self.MaximizeButton = CreateInstance("Frame", {
 		Name = "MaximizeButton",
 		Size = UDim2.new(0, 12, 0, 12),
-		Position = UDim2.new(1, -32, 0.5, -6),
 		BackgroundColor3 = COLORS.MaximizeYellow,
 		BorderSizePixel = 0,
+		LayoutOrder = 2,
 	})
 	self.MaximizeButton.Parent = self.ControlsContainer
-	
-	local maxCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) })
-	maxCorner.Parent = self.MaximizeButton
-	
+	CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = self.MaximizeButton
 	local maxHitbox = CreateInstance("TextButton", {
-		Size = UDim2.new(1, 0, 1, 0),
-		BackgroundTransparency = 1,
-		Text = "",
+		Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = "",
 	})
 	maxHitbox.Parent = self.MaximizeButton
-	
+
 	self.isMaximized = false
 	self.normalSize = windowSize
 	self.expandedSize = UDim2.new(windowSize.X.Scale, windowSize.X.Offset, 0, 600)
-	
 	maxHitbox.MouseButton1Click:Connect(function()
 		self.isMaximized = not self.isMaximized
 		Tween(self.MainFrame, { Size = self.isMaximized and self.expandedSize or self.normalSize })
 	end)
-	
-	-- Minimize Button (Green)
-	self.MinimizeButton = CreateInstance("Frame", {
-		Name = "MinimizeButton",
+
+	-- Close (Red) — LayoutOrder 3 = правая
+	self.CloseButton = CreateInstance("Frame", {
+		Name = "CloseButton",
 		Size = UDim2.new(0, 12, 0, 12),
-		Position = UDim2.new(0, 0, 0.5, -6),
-		BackgroundColor3 = COLORS.MinimizeGreen,
+		BackgroundColor3 = COLORS.CloseRed,
 		BorderSizePixel = 0,
+		LayoutOrder = 3,
 	})
-	self.MinimizeButton.Parent = self.ControlsContainer
-	
-	local minCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) })
-	minCorner.Parent = self.MinimizeButton
-	
-	local minHitbox = CreateInstance("TextButton", {
-		Size = UDim2.new(1, 0, 1, 0),
-		BackgroundTransparency = 1,
-		Text = "",
+	self.CloseButton.Parent = self.ControlsContainer
+	CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = self.CloseButton
+	local closeHitbox = CreateInstance("TextButton", {
+		Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = "",
 	})
-	minHitbox.Parent = self.MinimizeButton
+	closeHitbox.Parent = self.CloseButton
+	closeHitbox.MouseButton1Click:Connect(function() self:Destroy() end)
 	
 	self.isMinimized = false
 	self.normalHeight = windowSize.Y.Offset
@@ -446,7 +440,7 @@ function ZenithLib:MakeWindow(config)
 	self.CurrentTab = nil
 	
 	-- Make Draggable
-	MakeDraggable(self.TitleBar, self.ScreenGui)
+	MakeDraggable(self.MainFrame, self.TitleBar)
 	self._acrylicPart = nil
 	task.defer(function()
 		if self.MainFrame and self.MainFrame.Parent then
