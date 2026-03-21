@@ -83,7 +83,11 @@ local function SetAccentColor(color)
 	COLORS.Accent = color
 end
 
--- Theme customization
+-- Main Library
+local ZenithLib = {}
+ZenithLib.__index = ZenithLib
+
+-- Theme customization (after ZenithLib is defined)
 function ZenithLib:SetTheme(theme)
 	if theme.Accent then
 		COLORS.Accent = theme.Accent
@@ -116,10 +120,6 @@ function ZenithLib:GetTheme()
 		DarkerBackground = COLORS.DarkerBackground,
 	}
 end
-
--- Main Library
-local ZenithLib = {}
-ZenithLib.__index = ZenithLib
 
 function ZenithLib:MakeWindow(config)
 	local self = setmetatable({}, ZenithLib)
