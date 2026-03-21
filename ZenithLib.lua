@@ -160,7 +160,7 @@ function ZenithLib:MakeWindow(config)
 		Size = windowSize,
 		Position = windowPos,
 		BackgroundColor3 = COLORS.MainBackground,
-		BackgroundTransparency = 0.87,
+		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 	})
@@ -183,7 +183,7 @@ function ZenithLib:MakeWindow(config)
 		Name = "TitleBar",
 		Size = UDim2.new(1, 0, 0, 40),
 		BackgroundColor3 = COLORS.DarkerBackground,
-		BackgroundTransparency = 0.7,
+		BackgroundTransparency = 0.3,
 		BorderSizePixel = 0,
 	})
 	self.TitleBar.Parent = self.MainFrame
@@ -308,7 +308,7 @@ function ZenithLib:MakeWindow(config)
 		Name = "TabNav",
 		Size = UDim2.new(0, 150, 1, 0),
 		BackgroundColor3 = COLORS.DarkerBackground,
-		BackgroundTransparency = 0.82,
+		BackgroundTransparency = 0.5,
 		BorderSizePixel = 0,
 	})
 	self.TabNav.Parent = self.ContentContainer
