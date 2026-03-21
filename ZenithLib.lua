@@ -187,9 +187,9 @@ function ZenithLib:MakeWindow(config)
 	-- Border Stroke
 	local mainStroke = CreateInstance("UIStroke", {
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-		Thickness = 0.5,
-		Transparency = 0.5,
-		Color = COLORS.Accent,
+		Thickness = 1,
+		Transparency = 0.55,
+		Color = Color3.fromRGB(90, 90, 90),
 	})
 	mainStroke.Parent = self.MainFrame
 	
@@ -346,13 +346,93 @@ function ZenithLib:MakeWindow(config)
 	})
 	tabPadding.Parent = self.TabNav
 	
+
+	-- Selector полоска (как в Fluent)
+	self.SelectorBar = CreateInstance("Frame", {
+		Name = "SelectorBar",
+		Size = UDim2.new(0, 3, 0, 0),
+		Position = UDim2.new(0, 0, 0, 17),
+		BackgroundColor3 = COLORS.Accent,
+		BorderSizePixel = 0,
+		ZIndex = 5,
+	})
+	local selectorCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 2) })
+	selectorCorner.Parent = self.SelectorBar
+	self.SelectorBar.Parent = self.TabNav
+
+	-- Spring motors для selector полоски
+	self._selectorPosMotor = CreateSpringMotor(17, self.SelectorBar, "Position", 6, 1)
+	self._selectorSizeMotor = CreateSpringMotor(0, self.SelectorBar, "Size", 5, 0.7)
+	self._lastSelectorPos = 17
+	self._lastSelectorTime = tick()
+
+	-- Overrides для Position/Size (spring работает с числами, не UDim2)
+	self._selectorPosMotor.instance = nil
+	self._selectorSizeMotor.instance = nil
+
+	local selectorBar = self.SelectorBar
+	local selectorPosState = { value = 17, velocity = 0, complete = true }
+	local selectorSizeState = { value = 16, velocity = 0, complete = true }
+	local selectorConn = nil
+
+	local function updateSelector()
+		selectorBar.Position = UDim2.new(0, 0, 0, selectorPosState.value)
+		selectorBar.Size = UDim2.new(0, 3, 0, selectorSizeState.value)
+	end
+
+	local selectorTargetPos = 17
+	local selectorTargetSize = 16
+	local lastPos = 17
+	local lastTime = tick()
+
+	local function stepSelector(dt)
+		local posComplete, sizeComplete = selectorPosState.complete, selectorSizeState.complete
+		if not posComplete then
+			selectorPosState = SpringStep(selectorPosState, dt, selectorTargetPos, 6, 1)
+		end
+		if not sizeComplete then
+			selectorSizeState = SpringStep(selectorSizeState, dt, selectorTargetSize, 5, 0.7)
+		end
+		updateSelector()
+		if selectorPosState.complete and selectorSizeState.complete then
+			if selectorConn then selectorConn:Disconnect(); selectorConn = nil end
+		end
+	end
+
+	local function startSelectorStep()
+		if not selectorConn then
+			selectorConn = game:GetService("RunService").RenderStepped:Connect(stepSelector)
+		end
+	end
+
+	self._moveSelectorTo = function(tabPosY)
+		local now = tick()
+		local speed = math.abs(tabPosY - lastPos) / math.max(now - lastTime, 0.001)
+		lastPos = tabPosY
+		lastTime = now
+
+		selectorTargetPos = tabPosY + 17
+		selectorTargetSize = math.clamp(16 + speed * 0.08, 16, 40)
+		selectorPosState.complete = false
+		selectorSizeState.complete = false
+		startSelectorStep()
+
+		-- Возвращаем размер к 16 через 120мс
+		task.delay(0.12, function()
+			selectorTargetSize = 16
+			selectorSizeState.complete = false
+			startSelectorStep()
+		end)
+	end
+
 	-- Tab Content Area
-	self.TabContent = CreateInstance("Frame", {
+	self.TabContent = CreateInstance("CanvasGroup", {
 		Name = "TabContent",
 		Size = UDim2.new(1, -150, 1, 0),
 		Position = UDim2.new(0, 150, 0, 0),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
+		GroupTransparency = 0,
 	})
 	self.TabContent.Parent = self.ContentContainer
 	
@@ -362,11 +442,11 @@ function ZenithLib:MakeWindow(config)
 	-- Make Draggable
 	MakeDraggable(self.MainFrame, self.ScreenGui)
 
-	-- Blur Effect
-	local blur = Instance.new("BlurEffect")
-	blur.Size = 16
-	blur.Parent = game:GetService("Lighting")
-	self._blur = blur
+	-- Acrylic blur — стеклянный Part перед камерой
+	-- Работает через 3D Glass Material как в Fluent UI
+	local acrylicPart = MakeAcrylic(self.MainFrame)
+	self._acrylicPart = acrylicPart
+
 
 
 	
@@ -478,10 +558,6 @@ function ZenithLib:MakeTab(config)
 	
 	-- Tab Click Handler
 	local function SelectTab()
-		for _, frame in pairs(self.TabFrames) do
-			frame.Visible = false
-		end
-		tabContent.Visible = true
 		self.CurrentTab = Title
 		
 		-- Update button appearance
@@ -493,7 +569,7 @@ function ZenithLib:MakeTab(config)
 			end
 		end
 		Tween(tabButton, { BackgroundColor3 = COLORS.ActiveTab, BackgroundTransparency = 0 })
-		Tween(tabText, { TextColor3 = COLORS.AccentText })
+		Tween(tabText, { TextColor3 = COLORS.Accent })
 	end
 	
 	tabButton.InputBegan:Connect(function(input)
@@ -506,7 +582,7 @@ function ZenithLib:MakeTab(config)
 	tabButton.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseMovement then
 			if self.CurrentTab ~= Title then
-				Tween(tabButton, { BackgroundColor3 = Color3.new(40, 40, 40) })
+				TweenSpring(tabButton, { BackgroundColor3 = Color3.fromRGB(42, 42, 42), BackgroundTransparency = 0.5 }, 0.2)
 			end
 		end
 	end)
@@ -514,7 +590,7 @@ function ZenithLib:MakeTab(config)
 	tabButton.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseMovement then
 			if self.CurrentTab ~= Title then
-				Tween(tabButton, { BackgroundColor3 = COLORS.InputBackground })
+				TweenSpring(tabButton, { BackgroundColor3 = Color3.fromRGB(0,0,0), BackgroundTransparency = 1 }, 0.25)
 			end
 		end
 	end)
@@ -543,9 +619,9 @@ function ZenithLib:MakeTab(config)
 		
 		local buttonStroke = CreateInstance("UIStroke", {
 			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-			Thickness = 0.5,
-			Transparency = 0.3,
-			Color = COLORS.Accent,
+			Thickness = 1,
+			Transparency = 0.5,
+			Color = COLORS.InElementBorder,
 		})
 		buttonStroke.Parent = buttonFrame
 		
@@ -553,10 +629,10 @@ function ZenithLib:MakeTab(config)
 			Size = UDim2.new(1, 0, 1, 0),
 			BackgroundTransparency = 1,
 			Text = Name,
-			TextColor3 = COLORS.AccentText,
+			TextColor3 = COLORS.Text,
 			TextSize = 13,
 			Font = Enum.Font.GothamMedium,
-			TextTransparency = 0.05,
+			TextTransparency = 0,
 		})
 		buttonText.Parent = buttonFrame
 		
@@ -569,17 +645,17 @@ function ZenithLib:MakeTab(config)
 		
 		buttonHitbox.MouseButton1Down:Connect(function()
 			Tween(buttonFrame, { BackgroundColor3 = COLORS.Accent }, 0.1)
-			Tween(buttonText, { TextTransparency = 0 }, 0.08)
+			Tween(buttonText, { TextColor3 = Color3.fromRGB(0, 0, 0), TextTransparency = 0 }, 0.08)
 		end)
 		
 		buttonHitbox.MouseButton1Up:Connect(function()
 			Tween(buttonFrame, { BackgroundColor3 = COLORS.InputBackground }, 0.22)
-			Tween(buttonText, { TextTransparency = 0.05 }, 0.15)
+			Tween(buttonText, { TextColor3 = COLORS.Text, TextTransparency = 0 }, 0.15)
 			Callback()
 		end)
 		
 		buttonHitbox.MouseEnter:Connect(function()
-			Tween(buttonFrame, { BackgroundColor3 = COLORS.AccentDim })
+			Tween(buttonFrame, { BackgroundColor3 = Color3.fromRGB(50, 50, 50) })
 		end)
 		
 		buttonHitbox.MouseLeave:Connect(function()
@@ -658,11 +734,11 @@ function ZenithLib:MakeTab(config)
 			if isOn then
 				Tween(toggleSwitch, { BackgroundColor3 = COLORS.Accent }, 0.22)
 				TweenSpring(toggleKnob, { Position = UDim2.new(1, -20, 0.5, -8) }, 0.3)
-				Tween(toggleText, { TextColor3 = COLORS.AccentText }, 0.18)
+				Tween(toggleText, { TextColor3 = COLORS.Accent }, 0.18)
 			else
-				Tween(toggleSwitch, { BackgroundColor3 = COLORS.SliderRail }, 0.22)
+				Tween(toggleSwitch, { BackgroundColor3 = Color3.fromRGB(120, 120, 120) }, 0.22)
 				TweenSpring(toggleKnob, { Position = UDim2.new(0, 2, 0.5, -8) }, 0.3)
-				Tween(toggleText, { TextColor3 = COLORS.Text }, 0.18)
+				Tween(toggleText, { TextColor3 = COLORS.Text }, 0.18)  -- белый
 			end
 			Callback(isOn)
 		end
@@ -726,9 +802,9 @@ function ZenithLib:MakeTab(config)
 			Position = UDim2.new(1, -50, 0, 6),
 			BackgroundTransparency = 1,
 			Text = tostring(Default),
-			TextColor3 = COLORS.AccentText,
+			TextColor3 = COLORS.SubText,
 			TextSize = 12,
-			Font = Enum.Font.GothamBold,
+			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Right,
 		})
 		sliderValueLabel.Parent = sliderFrame
@@ -760,7 +836,7 @@ function ZenithLib:MakeTab(config)
 			Name = "Knob",
 			Size = UDim2.new(0, 12, 0, 12),
 			Position = UDim2.new((Default - Min) / (Max - Min), -7, 0.5, -7),
-			BackgroundColor3 = COLORS.Accent,
+			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 			BorderSizePixel = 0,
 		})
 		sliderKnob.Parent = sliderTrack
@@ -867,7 +943,7 @@ function ZenithLib:MakeTab(config)
 			Position = UDim2.new(1, -30, 0.5, -10),
 			BackgroundTransparency = 1,
 			Image = "rbxassetid://7733658504",
-			ImageColor3 = COLORS.Accent,
+			ImageColor3 = COLORS.SubText,
 		})
 		dropdownArrow.Parent = dropdownFrame
 		
@@ -1296,8 +1372,8 @@ function ZenithLib:MakeTab(config)
 		local separatorLine = CreateInstance("Frame", {
 			Size = UDim2.new(1, 0, 0, 1),
 			Position = UDim2.new(0, 0, 0.5, 0),
-			BackgroundColor3 = COLORS.Accent,
-			BackgroundTransparency = 0.75,
+			BackgroundColor3 = COLORS.TitleBarLine,
+			BackgroundTransparency = 0,
 			BorderSizePixel = 0,
 		})
 		
@@ -1470,8 +1546,8 @@ function ZenithLib:MakeTab(config)
 end
 
 function ZenithLib:Destroy()
-	if self._blur then
-		self._blur:Destroy()
+	if self._acrylicPart then
+		pcall(function() self._acrylicPart:Destroy() end)
 	end
 	if self.ScreenGui then
 		self.ScreenGui:Destroy()
@@ -1479,9 +1555,9 @@ function ZenithLib:Destroy()
 end
 
 -- Additional Window Methods
-function ZenithLib:SetBlur(size)
-	if self._blur then
-		self._blur.Size = size or 16
+function ZenithLib:SetAcrylic(enabled)
+	if self._acrylicPart then
+		self._acrylicPart.Transparency = enabled and 0.98 or 1
 	end
 end
 
