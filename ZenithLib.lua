@@ -346,6 +346,28 @@ function ZenithLib:MakeWindow(config)
 	-- Make Draggable
 	MakeDraggable(self.MainFrame, self.ScreenGui)
 	
+	-- SetTheme function for Window
+	function self:SetTheme(theme)
+		if theme.Accent then
+			COLORS.Accent = theme.Accent
+		end
+		if theme.MainBackground then
+			COLORS.MainBackground = theme.MainBackground
+		end
+		if theme.Text then
+			COLORS.Text = theme.Text
+		end
+		if theme.SubText then
+			COLORS.SubText = theme.SubText
+		end
+		if theme.InputBackground then
+			COLORS.InputBackground = theme.InputBackground
+		end
+		if theme.DarkerBackground then
+			COLORS.DarkerBackground = theme.DarkerBackground
+		end
+	end
+	
 	return self
 end
 
