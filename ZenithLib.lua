@@ -361,6 +361,14 @@ function ZenithLib:MakeWindow(config)
 	
 	-- Make Draggable
 	MakeDraggable(self.MainFrame, self.ScreenGui)
+
+	-- Blur Effect
+	local blur = Instance.new("BlurEffect")
+	blur.Size = 16
+	blur.Parent = game:GetService("Lighting")
+	self._blur = blur
+
+
 	
 	-- SetTheme function for Window
 	function self:SetTheme(theme)
@@ -1462,12 +1470,21 @@ function ZenithLib:MakeTab(config)
 end
 
 function ZenithLib:Destroy()
+	if self._blur then
+		self._blur:Destroy()
+	end
 	if self.ScreenGui then
 		self.ScreenGui:Destroy()
 	end
 end
 
 -- Additional Window Methods
+function ZenithLib:SetBlur(size)
+	if self._blur then
+		self._blur.Size = size or 16
+	end
+end
+
 function ZenithLib:SetTitle(newTitle)
 	if self.TitleText then
 		self.TitleText.Text = newTitle
