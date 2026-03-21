@@ -157,7 +157,7 @@ function ZenithLib:MakeWindow(config)
 		Size = windowSize,
 		Position = windowPos,
 		BackgroundColor3 = COLORS.MainBackground,
-		BackgroundTransparency = 0.9,
+		BackgroundTransparency = 0.1,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 	})
