@@ -956,276 +956,396 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		return sliderFrame
 	end
 	
+
 	function Tab:MakeDropdown(config)
 	print("[ZenithLib] >> Tab:MakeDropdown() name=", config and (config.Name or config.Title) or "?")
-		local Name = config.Name or "Dropdown"
-		local Options = config.Options or { "Option 1", "Option 2" }
-		local Default = config.Default or Options[1]
+		local Name     = config.Name    or "Dropdown"
+		local Options  = config.Options or {}
+		local Default  = config.Default or (Options[1] or "")
 		local Callback = config.Callback or function() end
-		
-		local dropdownFrame = CreateInstance("Frame", {
+
+		local selected = Default
+		local isOpen   = false
+
+		-- Основной фрейм
+		local frame = CreateInstance("Frame", {
 			Name = "Dropdown_" .. Name,
-			Size = UDim2.new(1, 0, 0, 40),
+			Size = UDim2.new(1, 0, 0, 38),
 			BackgroundColor3 = COLORS.InputBackground,
+			BackgroundTransparency = 0,
 			BorderSizePixel = 0,
 		})
-		
-		local dropdownCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
-		dropdownCorner.Parent = dropdownFrame
-		
-		local dropdownText = CreateInstance("TextLabel", {
-			Size = UDim2.new(1, -50, 1, 0),
-			Position = UDim2.new(0, 10, 0, 0),
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = frame
+		CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5, Transparency = 0.5,
+			Color = COLORS.ElementBorder,
+		}).Parent = frame
+
+		local label = CreateInstance("TextLabel", {
+			Size = UDim2.new(1, -40, 1, 0),
+			Position = UDim2.new(0, 12, 0, 0),
 			BackgroundTransparency = 1,
-			Text = Name .. ": " .. tostring(Default),
+			Text = Name .. ":  " .. tostring(selected),
 			TextColor3 = COLORS.Text,
-			TextSize = 14,
+			TextSize = 13,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
+			TextTruncate = Enum.TextTruncate.AtEnd,
 		})
-		dropdownText.Parent = dropdownFrame
-		
-		local dropdownArrow = CreateInstance("ImageLabel", {
-			Size = UDim2.new(0, 20, 0, 20),
-			Position = UDim2.new(1, -30, 0.5, -10),
+		label.Parent = frame
+
+		local arrow = CreateInstance("TextLabel", {
+			Size = UDim2.new(0, 24, 1, 0),
+			Position = UDim2.new(1, -28, 0, 0),
 			BackgroundTransparency = 1,
-			Image = "rbxassetid://7733658504",
-			ImageColor3 = COLORS.Text,
+			Text = "▾",
+			TextColor3 = COLORS.SubText,
+			TextSize = 14,
+			Font = Enum.Font.Gotham,
+			TextXAlignment = Enum.TextXAlignment.Center,
 		})
-		dropdownArrow.Parent = dropdownFrame
-		
-		local isOpen = false
-		local selectedOption = Default
-		
-		local dropdownList = CreateInstance("Frame", {
-			Name = "OptionsList",
-			Size = UDim2.new(1, 0, 0, #Options * 30),
-			Position = UDim2.new(0, 0, 1, 5),
-			BackgroundColor3 = COLORS.DarkerBackground,
+		arrow.Parent = frame
+
+		-- Список опций — прямо в ScreenGui поверх всего
+		local listFrame = CreateInstance("Frame", {
+			Name = "DropList_" .. Name,
+			Size = UDim2.new(0, 0, 0, 0),
+			BackgroundColor3 = Color3.fromRGB(10, 6, 8),
+			BackgroundTransparency = 0,
 			BorderSizePixel = 0,
 			Visible = false,
+			ZIndex = 300,
 		})
-		dropdownList.Parent = dropdownFrame
-		
-		local listCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
-		listCorner.Parent = dropdownList
-		
-		local optionsList = CreateInstance("UIListLayout", {
-			Padding = UDim.new(0, 0),
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = listFrame
+		CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5, Transparency = 0.4,
+			Color = COLORS.Accent,
+		}).Parent = listFrame
+
+		local listLayout = CreateInstance("UIListLayout", {
+			Padding = UDim.new(0, 1),
+			SortOrder = Enum.SortOrder.LayoutOrder,
 		})
-		optionsList.Parent = dropdownList
-		
-		for _, option in ipairs(Options) do
-			local optionButton = CreateInstance("TextButton", {
+		listLayout.Parent = listFrame
+		CreateInstance("UIPadding", {
+			PaddingTop = UDim.new(0, 4),
+			PaddingBottom = UDim.new(0, 4),
+			PaddingLeft = UDim.new(0, 4),
+			PaddingRight = UDim.new(0, 4),
+		}).Parent = listFrame
+
+		-- Строим опции
+		for _, opt in ipairs(Options) do
+			local btn = CreateInstance("TextButton", {
 				Size = UDim2.new(1, 0, 0, 30),
-				BackgroundColor3 = option == selectedOption and COLORS.Accent or COLORS.InputBackground,
+				BackgroundColor3 = opt == selected and COLORS.ActiveTab or Color3.fromRGB(0,0,0),
+				BackgroundTransparency = opt == selected and 0 or 1,
 				BorderSizePixel = 0,
-				Text = option,
-				TextColor3 = COLORS.Text,
-				TextSize = 13,
+				Text = opt,
+				TextColor3 = opt == selected and COLORS.AccentText or COLORS.Text,
+				TextSize = 12,
 				Font = Enum.Font.Gotham,
+				AutoButtonColor = false,
+				ZIndex = 301,
 			})
-			optionButton.Parent = dropdownList
-			
-			optionButton.MouseButton1Click:Connect(function()
-				selectedOption = option
-				dropdownText.Text = Name .. ": " .. option
-				isOpen = false
-				dropdownList.Visible = false
-				Tween(dropdownArrow, { Rotation = 0 })
-				Callback(option)
+			CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) }).Parent = btn
+
+			btn.MouseEnter:Connect(function()
+				if opt ~= selected then
+					btn.BackgroundTransparency = 0.5
+					btn.BackgroundColor3 = COLORS.InputBackground
+				end
 			end)
+			btn.MouseLeave:Connect(function()
+				if opt ~= selected then
+					btn.BackgroundTransparency = 1
+				end
+			end)
+			btn.MouseButton1Click:Connect(function()
+				selected = opt
+				label.Text = Name .. ":  " .. opt
+				-- Сбрасываем все кнопки
+				for _, child in ipairs(listFrame:GetChildren()) do
+					if child:IsA("TextButton") then
+						child.BackgroundTransparency = child.Text == opt and 0 or 1
+						child.BackgroundColor3 = COLORS.ActiveTab
+						child.TextColor3 = child.Text == opt and COLORS.AccentText or COLORS.Text
+					end
+				end
+				isOpen = false
+				listFrame.Visible = false
+				arrow.Text = "▾"
+				tabContent.ScrollingEnabled = true
+				Callback(opt)
+			end)
+			btn.Parent = listFrame
 		end
-		
-		local dropdownHitbox = CreateInstance("TextButton", {
+
+		-- Функция открытия/закрытия
+		local function openList()
+			-- Позиционируем список под кнопкой
+			local absPos  = frame.AbsolutePosition
+			local absSize = frame.AbsoluteSize
+			local itemH   = 31
+			local listH   = math.min(#Options, 8) * itemH + 8
+			local listW   = absSize.X
+
+			-- Проверяем не вылезет ли вниз
+			local screenH = workspace.CurrentCamera.ViewportSize.Y
+			local yPos = absPos.Y + absSize.Y + 4
+			if yPos + listH > screenH - 10 then
+				yPos = absPos.Y - listH - 4
+			end
+
+			listFrame.Position = UDim2.new(0, absPos.X, 0, yPos)
+			listFrame.Size = UDim2.new(0, listW, 0, listH)
+			listFrame.Parent = win.ScreenGui
+			listFrame.Visible = true
+			tabContent.ScrollingEnabled = false
+			arrow.Text = "▴"
+		end
+
+		local function closeList()
+			isOpen = false
+			listFrame.Visible = false
+			tabContent.ScrollingEnabled = true
+			arrow.Text = "▾"
+		end
+
+		local hitbox = CreateInstance("TextButton", {
 			Size = UDim2.new(1, 0, 1, 0),
 			BackgroundTransparency = 1,
 			Text = "",
+			ZIndex = 2,
 		})
-		dropdownHitbox.Parent = dropdownFrame
-		
-		dropdownHitbox.MouseButton1Click:Connect(function()
+		hitbox.Parent = frame
+		hitbox.MouseButton1Click:Connect(function()
 			isOpen = not isOpen
-			dropdownList.Visible = isOpen
-			Tween(dropdownArrow, { Rotation = isOpen and 180 or 0 })
+			if isOpen then openList() else closeList() end
 		end)
-		
-		-- Close dropdown when clicking outside
-		UserInputService.InputEnded:Connect(function(input)
+
+		-- Закрыть при клике вне
+		UserInputService.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 and isOpen then
-				local mousePos = UserInputService:GetMouseLocation()
-				local dropdownAbsPos = dropdownFrame.AbsolutePosition
-				local dropdownAbsSize = dropdownFrame.AbsoluteSize
-				
-				if mousePos.X < dropdownAbsPos.X or mousePos.X > dropdownAbsPos.X + dropdownAbsSize.X or
-				   mousePos.Y < dropdownAbsPos.Y or mousePos.Y > dropdownAbsPos.Y + dropdownAbsSize.Y then
-					isOpen = false
-					dropdownList.Visible = false
-					Tween(dropdownArrow, { Rotation = 0 })
+				local mp = UserInputService:GetMouseLocation()
+				local lp = listFrame.AbsolutePosition
+				local ls = listFrame.AbsoluteSize
+				if mp.X < lp.X or mp.X > lp.X+ls.X or mp.Y < lp.Y or mp.Y > lp.Y+ls.Y then
+					task.defer(closeList)
 				end
 			end
 		end)
-		
-		dropdownFrame.Parent = tabContent
-		return dropdownFrame
+
+		frame.Parent = tabContent
+		local obj = {}
+		function obj:SetValue(v)
+			selected = v
+			label.Text = Name .. ":  " .. v
+		end
+		function obj:GetValue() return selected end
+		return obj
 	end
-	
+
 	function Tab:MakeMultiDropdown(config)
 	print("[ZenithLib] >> Tab:MakeMultiDropdown() name=", config and (config.Name or config.Title) or "?")
-		local Name = config.Name or "MultiDropdown"
-		local Options = config.Options or { "Option 1", "Option 2" }
-		local Default = config.Default or {}
+		local Name     = config.Name    or "MultiDropdown"
+		local Options  = config.Options or {}
+		local Default  = config.Default or {}
 		local Callback = config.Callback or function() end
-		
-		local dropdownFrame = CreateInstance("Frame", {
-			Name = "MultiDropdown_" .. Name,
-			Size = UDim2.new(1, 0, 0, 40),
+
+		local selected = {}
+		for _, v in ipairs(Default) do selected[v] = true end
+
+		local isOpen = false
+
+		local function countSelected()
+			local n = 0
+			for _ in pairs(selected) do n = n + 1 end
+			return n
+		end
+
+		local function getDisplayText()
+			local n = countSelected()
+			if n == 0 then return Name .. ":  None" end
+			local parts = {}
+			for k in pairs(selected) do table.insert(parts, k) end
+			table.sort(parts)
+			if n <= 2 then
+				return Name .. ":  " .. table.concat(parts, ", ")
+			end
+			return Name .. ":  " .. parts[1] .. ", +" .. (n-1)
+		end
+
+		local frame = CreateInstance("Frame", {
+			Name = "MultiDD_" .. Name,
+			Size = UDim2.new(1, 0, 0, 38),
 			BackgroundColor3 = COLORS.InputBackground,
+			BackgroundTransparency = 0,
 			BorderSizePixel = 0,
 		})
-		
-		local dropdownCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
-		dropdownCorner.Parent = dropdownFrame
-		
-		local selectedCount = #Default > 0 and #Default or 0
-		local displayText = selectedCount > 0 and (tostring(selectedCount) .. " selected") or "None"
-		
-		local dropdownText = CreateInstance("TextLabel", {
-			Size = UDim2.new(1, -50, 1, 0),
-			Position = UDim2.new(0, 10, 0, 0),
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = frame
+		CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5, Transparency = 0.5,
+			Color = COLORS.ElementBorder,
+		}).Parent = frame
+
+		local label = CreateInstance("TextLabel", {
+			Size = UDim2.new(1, -40, 1, 0),
+			Position = UDim2.new(0, 12, 0, 0),
 			BackgroundTransparency = 1,
-			Text = Name .. ": " .. displayText,
+			Text = getDisplayText(),
 			TextColor3 = COLORS.Text,
-			TextSize = 14,
+			TextSize = 13,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
+			TextTruncate = Enum.TextTruncate.AtEnd,
 		})
-		dropdownText.Parent = dropdownFrame
-		
-		local dropdownArrow = CreateInstance("ImageLabel", {
-			Size = UDim2.new(0, 20, 0, 20),
-			Position = UDim2.new(1, -30, 0.5, -10),
+		label.Parent = frame
+
+		local arrow = CreateInstance("TextLabel", {
+			Size = UDim2.new(0, 24, 1, 0),
+			Position = UDim2.new(1, -28, 0, 0),
 			BackgroundTransparency = 1,
-			Image = "rbxassetid://7733658504",
-			ImageColor3 = COLORS.Text,
+			Text = "▾",
+			TextColor3 = COLORS.SubText,
+			TextSize = 14,
+			Font = Enum.Font.Gotham,
+			TextXAlignment = Enum.TextXAlignment.Center,
 		})
-		dropdownArrow.Parent = dropdownFrame
-		
-		local isOpen = false
-		local selectedItems = {}
-		for _, v in ipairs(Default) do
-			selectedItems[v] = true
-		end
-		
-		local dropdownList = CreateInstance("Frame", {
-			Name = "OptionsList",
-			Size = UDim2.new(1, 0, 0, #Options * 30),
-			Position = UDim2.new(0, 0, 1, 5),
-			BackgroundColor3 = COLORS.DarkerBackground,
+		arrow.Parent = frame
+
+		local listFrame = CreateInstance("Frame", {
+			Name = "MultiDDList_" .. Name,
+			BackgroundColor3 = Color3.fromRGB(10, 6, 8),
+			BackgroundTransparency = 0,
 			BorderSizePixel = 0,
 			Visible = false,
+			ZIndex = 300,
 		})
-		dropdownList.Parent = dropdownFrame
-		
-		local listCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
-		listCorner.Parent = dropdownList
-		
-		local optionsList = CreateInstance("UIListLayout", {
-			Padding = UDim.new(0, 0),
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = listFrame
+		CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5, Transparency = 0.4,
+			Color = COLORS.Accent,
+		}).Parent = listFrame
+		local listLayout = CreateInstance("UIListLayout", {
+			Padding = UDim.new(0, 1),
+			SortOrder = Enum.SortOrder.LayoutOrder,
 		})
-		optionsList.Parent = dropdownList
-		
-		local optionButtons = {}
-		
-		for _, option in ipairs(Options) do
-			local optionFrame = CreateInstance("Frame", {
-				Size = UDim2.new(1, 0, 0, 30),
-				BackgroundColor3 = selectedItems[option] and COLORS.Accent or COLORS.InputBackground,
-				BorderSizePixel = 0,
-			})
-			optionFrame.Parent = dropdownList
-			
-			local checkmark = CreateInstance("ImageLabel", {
-				Size = UDim2.new(0, 16, 0, 16),
-				Position = UDim2.new(0, 10, 0.5, -8),
-				BackgroundTransparency = 1,
-				Image = "rbxassetid://7733658504",
-				ImageColor3 = COLORS.Text,
-				Visible = selectedItems[option] or false,
-			})
-			checkmark.Parent = optionFrame
-			
-			local optionText = CreateInstance("TextLabel", {
-				Size = UDim2.new(1, 0, 1, 0),
-				Position = UDim2.new(0, 35, 0, 0),
-				BackgroundTransparency = 1,
-				Text = option,
-				TextColor3 = COLORS.Text,
-				TextSize = 13,
-				Font = Enum.Font.Gotham,
-				TextXAlignment = Enum.TextXAlignment.Left,
-			})
-			optionText.Parent = optionFrame
-			
-			local optionHitbox = CreateInstance("TextButton", {
-				Size = UDim2.new(1, 0, 1, 0),
-				BackgroundTransparency = 1,
-				Text = "",
-			})
-			optionHitbox.Parent = optionFrame
-			
-			optionHitbox.MouseButton1Click:Connect(function()
-				selectedItems[option] = not selectedItems[option]
-				checkmark.Visible = selectedItems[option]
-				optionFrame.BackgroundColor3 = selectedItems[option] and COLORS.Accent or COLORS.InputBackground
-				
-				local selected = {}
-				for k, v in pairs(selectedItems) do
-					if v then table.insert(selected, k) end
-				end
-				
-				local count = #selected
-				local display = count > 0 and (tostring(count) .. " selected") or "None"
-				dropdownText.Text = Name .. ": " .. display
-				Callback(selected)
-			end)
-			
-			optionButtons[option] = { frame = optionFrame, checkmark = checkmark }
+		listLayout.Parent = listFrame
+		CreateInstance("UIPadding", {
+			PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4),
+			PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4),
+		}).Parent = listFrame
+
+		local btnRefs = {}
+
+		local function refreshBtn(btn, opt)
+			local on = selected[opt] == true
+			btn.BackgroundTransparency = on and 0 or 1
+			btn.BackgroundColor3 = COLORS.ActiveTab
+			btn.TextColor3 = on and COLORS.AccentText or COLORS.Text
 		end
-		
-		local dropdownHitbox = CreateInstance("TextButton", {
+
+		for _, opt in ipairs(Options) do
+			local btn = CreateInstance("TextButton", {
+				Size = UDim2.new(1, 0, 0, 30),
+				BackgroundColor3 = COLORS.ActiveTab,
+				BackgroundTransparency = selected[opt] and 0 or 1,
+				BorderSizePixel = 0,
+				Text = opt,
+				TextColor3 = selected[opt] and COLORS.AccentText or COLORS.Text,
+				TextSize = 12,
+				Font = Enum.Font.Gotham,
+				AutoButtonColor = false,
+				ZIndex = 301,
+			})
+			CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) }).Parent = btn
+			btn.MouseEnter:Connect(function()
+				if not selected[opt] then
+					btn.BackgroundTransparency = 0.5
+					btn.BackgroundColor3 = COLORS.InputBackground
+				end
+			end)
+			btn.MouseLeave:Connect(function()
+				refreshBtn(btn, opt)
+			end)
+			btn.MouseButton1Click:Connect(function()
+				selected[opt] = not selected[opt] or nil
+				refreshBtn(btn, opt)
+				label.Text = getDisplayText()
+				local res = {}
+				for k in pairs(selected) do table.insert(res, k) end
+				Callback(res)
+			end)
+			btn.Parent = listFrame
+			btnRefs[opt] = btn
+		end
+
+		local function openList()
+			local absPos = frame.AbsolutePosition
+			local absSize = frame.AbsoluteSize
+			local itemH = 31
+			local listH = math.min(#Options, 8) * itemH + 8
+			local screenH = workspace.CurrentCamera.ViewportSize.Y
+			local yPos = absPos.Y + absSize.Y + 4
+			if yPos + listH > screenH - 10 then yPos = absPos.Y - listH - 4 end
+			listFrame.Position = UDim2.new(0, absPos.X, 0, yPos)
+			listFrame.Size = UDim2.new(0, absSize.X, 0, listH)
+			listFrame.Parent = win.ScreenGui
+			listFrame.Visible = true
+			tabContent.ScrollingEnabled = false
+			arrow.Text = "▴"
+		end
+
+		local function closeList()
+			isOpen = false
+			listFrame.Visible = false
+			tabContent.ScrollingEnabled = true
+			arrow.Text = "▾"
+		end
+
+		local hitbox = CreateInstance("TextButton", {
 			Size = UDim2.new(1, 0, 1, 0),
-			BackgroundTransparency = 1,
-			Text = "",
+			BackgroundTransparency = 1, Text = "", ZIndex = 2,
 		})
-		dropdownHitbox.Parent = dropdownFrame
-		
-		dropdownHitbox.MouseButton1Click:Connect(function()
+		hitbox.Parent = frame
+		hitbox.MouseButton1Click:Connect(function()
 			isOpen = not isOpen
-			dropdownList.Visible = isOpen
-			Tween(dropdownArrow, { Rotation = isOpen and 180 or 0 })
+			if isOpen then openList() else closeList() end
 		end)
-		
-		-- Close dropdown when clicking outside
-		UserInputService.InputEnded:Connect(function(input)
+
+		UserInputService.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 and isOpen then
-				local mousePos = UserInputService:GetMouseLocation()
-				local dropdownAbsPos = dropdownFrame.AbsolutePosition
-				local dropdownAbsSize = dropdownFrame.AbsoluteSize
-				
-				if mousePos.X < dropdownAbsPos.X or mousePos.X > dropdownAbsPos.X + dropdownAbsSize.X or
-				   mousePos.Y < dropdownAbsPos.Y or mousePos.Y > dropdownAbsPos.Y + dropdownAbsSize.Y then
-					isOpen = false
-					dropdownList.Visible = false
-					Tween(dropdownArrow, { Rotation = 0 })
+				local mp = UserInputService:GetMouseLocation()
+				local lp = listFrame.AbsolutePosition
+				local ls = listFrame.AbsoluteSize
+				if mp.X < lp.X or mp.X > lp.X+ls.X or mp.Y < lp.Y or mp.Y > lp.Y+ls.Y then
+					task.defer(closeList)
 				end
 			end
 		end)
-		
-		dropdownFrame.Parent = tabContent
-		return dropdownFrame
+
+		frame.Parent = tabContent
+		local obj = {}
+		function obj:SetValue(tbl)
+			selected = {}
+			for _, v in ipairs(tbl) do selected[v] = true end
+			for opt, btn in pairs(btnRefs) do refreshBtn(btn, opt) end
+			label.Text = getDisplayText()
+		end
+		function obj:GetValue()
+			local res = {}
+			for k in pairs(selected) do table.insert(res, k) end
+			return res
+		end
+		return obj
 	end
-	
+
+
 	function Tab:MakeKeybind(config)
 	print("[ZenithLib] >> Tab:MakeKeybind() name=", config and (config.Name or config.Title) or "?")
 		local Name = config.Name or "Keybind"
