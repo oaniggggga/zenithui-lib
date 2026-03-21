@@ -529,14 +529,9 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		ScrollBarThickness = 4,
-		ScrollBarImageColor3 = COLORS.Accent,
-		ScrollBarImageTransparency = 0.3,
+		ScrollBarThickness = 0,
 		CanvasSize = UDim2.new(0, 0, 0, 0),
 		ScrollingDirection = Enum.ScrollingDirection.Y,
-		TopImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
-		BottomImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
-		MidImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
 	})
 	
 	local contentList = CreateInstance("UIListLayout", {
