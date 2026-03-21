@@ -282,6 +282,13 @@ print("[ZenithLib] >> ZenithLib:MakeWindow()")
 		ClipsDescendants = true,
 	})
 	self.MainFrame.Parent = self.ScreenGui
+
+	-- Появление окна снизу вверх
+	self.MainFrame.BackgroundTransparency = 1
+	self.MainFrame.Position = UDim2.new(windowPos.X.Scale, windowPos.X.Offset, windowPos.Y.Scale, windowPos.Y.Offset + 24)
+	task.defer(function()
+		Tween(self.MainFrame, { BackgroundTransparency = 0, Position = windowPos }, 0.38, Enum.EasingStyle.Back)
+	end)
 	
 	-- Corner Radius
 	local mainCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
@@ -621,10 +628,21 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 	-- Tab Click Handler
 	local function SelectTab()
 	print("[ZenithLib] >> SelectTab()")
+		-- Fade out текущего таба
 		for _, frame in pairs(win.TabFrames) do
-			frame.Visible = false
+			if frame.Visible then
+				Tween(frame, { BackgroundTransparency = 1 }, 0.1)
+				task.delay(0.1, function()
+					frame.Visible = false
+					frame.BackgroundTransparency = 0
+				end)
+			end
 		end
-		tabContent.Visible = true
+		task.delay(0.08, function()
+			tabContent.Visible = true
+			tabContent.Position = UDim2.new(0, 8, 0, 0)
+			Tween(tabContent, { Position = UDim2.new(0, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quint)
+		end)
 		win.CurrentTab = Title
 		
 		-- Update button appearance — только Frame с именем Tab_*
@@ -643,20 +661,25 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 	end
 	
 	print("[ZenithLib] Connecting MouseButton1Click for tab:", Title)
+	local tabScale = CreateInstance("UIScale", { Scale = 1 })
+	tabScale.Parent = tabButton
+
 	tabButton.MouseButton1Click:Connect(function()
+		TweenService:Create(tabScale, TweenInfo.new(0.08, Enum.EasingStyle.Quint), { Scale = 0.95 }):Play()
+		task.delay(0.08, function()
+			TweenBack(tabScale, { Scale = 1 }, 0.25)
+		end)
 		SelectTab()
 	end)
 
 	tabButton.MouseEnter:Connect(function()
 		if win.CurrentTab ~= Title then
-			print("[ZenithLib] Tween tabButton")
 			Tween(tabButton, { BackgroundColor3 = COLORS.InputBackground, BackgroundTransparency = 0.4 }, 0.12)
 		end
 	end)
 
 	tabButton.MouseLeave:Connect(function()
 		if win.CurrentTab ~= Title then
-			print("[ZenithLib] Tween tabButton")
 			Tween(tabButton, { BackgroundTransparency = 1 }, 0.15)
 		end
 	end)
@@ -708,21 +731,28 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		})
 		buttonHitbox.Parent = buttonFrame
 		
+		local btnScale = CreateInstance("UIScale", { Scale = 1 })
+		btnScale.Parent = buttonFrame
+
 		buttonHitbox.MouseButton1Down:Connect(function()
-			Tween(buttonFrame, { BackgroundColor3 = COLORS.Accent })
+			Tween(buttonFrame, { BackgroundColor3 = COLORS.Accent }, 0.08)
+			TweenService:Create(btnScale, TweenInfo.new(0.1, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Scale = 0.96 }):Play()
 		end)
-		
+
 		buttonHitbox.MouseButton1Up:Connect(function()
-			Tween(buttonFrame, { BackgroundColor3 = COLORS.InputBackground })
+			Tween(buttonFrame, { BackgroundColor3 = COLORS.InputBackground }, 0.2)
+			TweenBack(btnScale, { Scale = 1 }, 0.3)
 			Callback()
 		end)
-		
+
 		buttonHitbox.MouseEnter:Connect(function()
-			Tween(buttonFrame, { BackgroundColor3 = COLORS.AccentDim })
+			Tween(buttonFrame, { BackgroundColor3 = COLORS.AccentDim }, 0.15)
+			TweenService:Create(btnScale, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1.02 }):Play()
 		end)
-		
+
 		buttonHitbox.MouseLeave:Connect(function()
-			Tween(buttonFrame, { BackgroundColor3 = COLORS.InputBackground })
+			Tween(buttonFrame, { BackgroundColor3 = COLORS.InputBackground }, 0.15)
+			TweenService:Create(btnScale, TweenInfo.new(0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Scale = 1 }):Play()
 		end)
 		
 		buttonFrame.Parent = tabContent
@@ -790,11 +820,26 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		local function UpdateToggle()
 		print("[ZenithLib] >> UpdateToggle()")
 			if isOn then
-				Tween(toggleSwitch, { BackgroundColor3 = COLORS.Accent })
-				Tween(toggleKnob, { Position = UDim2.new(1, -18, 0.5, -7) })
+				Tween(toggleSwitch, { BackgroundColor3 = COLORS.Accent }, 0.2)
+				-- Knob squeeze then spring to right
+				TweenService:Create(toggleKnob, TweenInfo.new(0.08, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 10, 0, 10) }):Play()
+				task.delay(0.08, function()
+					TweenService:Create(toggleKnob, TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+						Position = UDim2.new(1, -18, 0.5, -7),
+						Size = UDim2.new(0, 14, 0, 14),
+					}):Play()
+				end)
+				Tween(toggleText, { TextColor3 = COLORS.AccentText }, 0.18)
 			else
-				Tween(toggleSwitch, { BackgroundColor3 = COLORS.SliderRail })
-				Tween(toggleKnob, { Position = UDim2.new(0, 4, 0.5, -7) })
+				Tween(toggleSwitch, { BackgroundColor3 = Color3.fromRGB(50, 50, 50) }, 0.2)
+				TweenService:Create(toggleKnob, TweenInfo.new(0.08, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 10, 0, 10) }):Play()
+				task.delay(0.08, function()
+					TweenService:Create(toggleKnob, TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+						Position = UDim2.new(0, 4, 0.5, -7),
+						Size = UDim2.new(0, 14, 0, 14),
+					}):Play()
+				end)
+				Tween(toggleText, { TextColor3 = COLORS.Text }, 0.18)
 			end
 			Callback(isOn)
 		end
@@ -902,8 +947,8 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		local function UpdateSlider(value)
 		print("[ZenithLib] >> UpdateSlider()")
 			local percent = math.clamp((value - Min) / (Max - Min), 0, 1)
-			Tween(sliderFill, { Size = UDim2.new(percent, 0, 1, 0) })
-			Tween(sliderKnob, { Position = UDim2.new(percent, -7, 0.5, -7) })
+			Tween(sliderFill, { Size = UDim2.new(percent, 0, 1, 0) }, 0.05)
+			Tween(sliderKnob, { Position = UDim2.new(percent, -7, 0.5, -7) }, 0.05)
 			sliderValLabel.Text = tostring(value)
 			Callback(value)
 		end
@@ -917,10 +962,12 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		
 		sliderHitbox.MouseButton1Down:Connect(function()
 			isDragging = true
+			TweenService:Create(sliderKnob, TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = UDim2.new(0, 16, 0, 16) }):Play()
 		end)
-		
+
 		sliderHitbox.MouseButton1Up:Connect(function()
 			isDragging = false
+			TweenService:Create(sliderKnob, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = UDim2.new(0, 12, 0, 12) }):Play()
 		end)
 		
 		sliderHitbox.MouseMoved:Connect(function()
@@ -995,15 +1042,12 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		})
 		label.Parent = frame
 
-		local arrow = CreateInstance("TextLabel", {
-			Size = UDim2.new(0, 24, 1, 0),
-			Position = UDim2.new(1, -28, 0, 0),
+		local arrow = CreateInstance("ImageLabel", {
+			Size = UDim2.new(0, 16, 0, 16),
+			Position = UDim2.new(1, -26, 0.5, -8),
 			BackgroundTransparency = 1,
-			Text = "▾",
-			TextColor3 = COLORS.SubText,
-			TextSize = 14,
-			Font = Enum.Font.Gotham,
-			TextXAlignment = Enum.TextXAlignment.Center,
+			Image = "rbxassetid://7733658504",
+			ImageColor3 = COLORS.SubText,
 		})
 		arrow.Parent = frame
 
@@ -1076,7 +1120,7 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 				end
 				isOpen = false
 				listFrame.Visible = false
-				arrow.Text = "▾"
+				arrow.Image = "rbxassetid://7733658504"
 				Callback(opt)
 			end)
 			btn.Parent = listFrame
@@ -1085,8 +1129,9 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		-- Функция открытия/закрытия
 		local function openList()
 			listFrame.Parent = win.ScreenGui
+			listFrame.BackgroundTransparency = 1
 			listFrame.Visible = true
-			arrow.Text = "▴"
+			Tween(arrow, { Rotation = 180 }, 0.2)
 			task.defer(function()
 				local absPos  = frame.AbsolutePosition
 				local absSize = frame.AbsoluteSize
@@ -1097,15 +1142,20 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 				if yPos + listH > screenH - 10 then
 					yPos = absPos.Y - listH - 4
 				end
+				listFrame.Position = UDim2.new(0, absPos.X, 0, 0)
+				listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
 				listFrame.Position = UDim2.new(0, absPos.X, 0, yPos)
-				listFrame.Size     = UDim2.new(0, absSize.X, 0, listH)
+				Tween(listFrame, { BackgroundTransparency = 0, Size = UDim2.new(0, absSize.X, 0, listH) }, 0.18)
 			end)
 		end
 
 		local function closeList()
 			isOpen = false
-			listFrame.Visible = false
-			arrow.Text = "▾"
+			Tween(arrow, { Rotation = 0 }, 0.2)
+			Tween(listFrame, { BackgroundTransparency = 1, Size = UDim2.new(0, listFrame.Size.X.Offset, 0, 0) }, 0.15)
+			task.delay(0.16, function()
+				listFrame.Visible = false
+			end)
 		end
 
 		local hitbox = CreateInstance("TextButton", {
@@ -1120,15 +1170,18 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			if isOpen then openList() else closeList() end
 		end)
 
-		-- Закрыть при клике вне
+		-- Закрыть при клике вне (но не на самой кнопке)
 		UserInputService.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 and isOpen then
-				local mp = UserInputService:GetMouseLocation()
-				local lp = listFrame.AbsolutePosition
-				local ls = listFrame.AbsoluteSize
-				if mp.X < lp.X or mp.X > lp.X+ls.X or mp.Y < lp.Y or mp.Y > lp.Y+ls.Y then
-					task.defer(closeList)
-				end
+			if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+			if not isOpen then return end
+			local mp = UserInputService:GetMouseLocation()
+			-- Проверяем клик вне listFrame И вне frame
+			local lp, ls = listFrame.AbsolutePosition, listFrame.AbsoluteSize
+			local fp, fs = frame.AbsolutePosition, frame.AbsoluteSize
+			local inList  = mp.X >= lp.X and mp.X <= lp.X+ls.X and mp.Y >= lp.Y and mp.Y <= lp.Y+ls.Y
+			local inFrame = mp.X >= fp.X and mp.X <= fp.X+fs.X and mp.Y >= fp.Y and mp.Y <= fp.Y+fs.Y
+			if not inList and not inFrame then
+				closeList()
 			end
 		end)
 
@@ -1199,15 +1252,12 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		})
 		label.Parent = frame
 
-		local arrow = CreateInstance("TextLabel", {
-			Size = UDim2.new(0, 24, 1, 0),
-			Position = UDim2.new(1, -28, 0, 0),
+		local arrow = CreateInstance("ImageLabel", {
+			Size = UDim2.new(0, 16, 0, 16),
+			Position = UDim2.new(1, -26, 0.5, -8),
 			BackgroundTransparency = 1,
-			Text = "▾",
-			TextColor3 = COLORS.SubText,
-			TextSize = 14,
-			Font = Enum.Font.Gotham,
-			TextXAlignment = Enum.TextXAlignment.Center,
+			Image = "rbxassetid://7733658504",
+			ImageColor3 = COLORS.SubText,
 		})
 		arrow.Parent = frame
 
@@ -1281,8 +1331,9 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 
 		local function openList()
 			listFrame.Parent = win.ScreenGui
+			listFrame.BackgroundTransparency = 1
 			listFrame.Visible = true
-			arrow.Text = "▴"
+			Tween(arrow, { Rotation = 180 }, 0.2)
 			task.defer(function()
 				local absPos  = frame.AbsolutePosition
 				local absSize = frame.AbsoluteSize
@@ -1294,14 +1345,18 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 					yPos = absPos.Y - listH - 4
 				end
 				listFrame.Position = UDim2.new(0, absPos.X, 0, yPos)
-				listFrame.Size     = UDim2.new(0, absSize.X, 0, listH)
+				listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
+				Tween(listFrame, { BackgroundTransparency = 0, Size = UDim2.new(0, absSize.X, 0, listH) }, 0.18)
 			end)
 		end
 
 		local function closeList()
 			isOpen = false
-			listFrame.Visible = false
-			arrow.Text = "▾"
+			Tween(arrow, { Rotation = 0 }, 0.2)
+			Tween(listFrame, { BackgroundTransparency = 1, Size = UDim2.new(0, listFrame.Size.X.Offset, 0, 0) }, 0.15)
+			task.delay(0.16, function()
+				listFrame.Visible = false
+			end)
 		end
 
 		local hitbox = CreateInstance("TextButton", {
@@ -1315,13 +1370,15 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		end)
 
 		UserInputService.InputBegan:Connect(function(input)
-			if input.UserInputType == Enum.UserInputType.MouseButton1 and isOpen then
-				local mp = UserInputService:GetMouseLocation()
-				local lp = listFrame.AbsolutePosition
-				local ls = listFrame.AbsoluteSize
-				if mp.X < lp.X or mp.X > lp.X+ls.X or mp.Y < lp.Y or mp.Y > lp.Y+ls.Y then
-					task.defer(closeList)
-				end
+			if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+			if not isOpen then return end
+			local mp = UserInputService:GetMouseLocation()
+			local lp, ls = listFrame.AbsolutePosition, listFrame.AbsoluteSize
+			local fp, fs = frame.AbsolutePosition, frame.AbsoluteSize
+			local inList  = mp.X >= lp.X and mp.X <= lp.X+ls.X and mp.Y >= lp.Y and mp.Y <= lp.Y+ls.Y
+			local inFrame = mp.X >= fp.X and mp.X <= fp.X+fs.X and mp.Y >= fp.Y and mp.Y <= fp.Y+fs.Y
+			if not inList and not inFrame then
+				closeList()
 			end
 		end)
 
@@ -1412,10 +1469,17 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		})
 		keyHitbox.Parent = keybindButton
 		
+		local kbScale = CreateInstance("UIScale", { Scale = 1 })
+		kbScale.Parent = keybindButton
+
 		keyHitbox.MouseButton1Click:Connect(function()
 			isListening = true
 			keyText.Text = "..."
-			Tween(keybindButton, { BackgroundColor3 = COLORS.Accent })
+			Tween(keybindButton, { BackgroundColor3 = COLORS.Accent }, 0.15)
+			TweenElastic(kbScale, { Scale = 1.08 }, 0.4)
+			task.delay(0.4, function()
+				Tween(kbScale, { Scale = 1 }, 0.2)
+			end)
 		end)
 		
 		UserInputService.InputBegan:Connect(function(input, gameProcessed)
