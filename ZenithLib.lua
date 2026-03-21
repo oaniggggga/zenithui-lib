@@ -228,7 +228,7 @@ function ZenithLib:MakeWindow(config)
 	-- Title Bar
 	self.TitleBar = CreateInstance("Frame", {
 		Name = "TitleBar",
-		Size = UDim2.new(1, 0, 0, 40),
+		Size = UDim2.new(1, 0, 0, 44),
 		BackgroundColor3 = COLORS.DarkerBackground,
 		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
@@ -238,15 +238,17 @@ function ZenithLib:MakeWindow(config)
 	local titleBarCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	titleBarCorner.Parent = self.TitleBar
 	
-	-- Title Text
+	-- Маленький subtitle в центре тайтлбара (просто название скрипта)
 	self.TitleText = CreateInstance("TextLabel", {
 		Name = "TitleText",
-		Size = UDim2.new(1, 0, 1, 0),
+		Size = UDim2.new(1, -180, 1, 0),
+		Position = UDim2.new(0, 90, 0, 0),
 		BackgroundTransparency = 1,
 		Text = Title,
 		TextColor3 = COLORS.SubText,
-		TextSize = 12,
+		TextSize = 11,
 		Font = Enum.Font.Gotham,
+		TextXAlignment = Enum.TextXAlignment.Center,
 	})
 	self.TitleText.Parent = self.TitleBar
 	
@@ -335,8 +337,8 @@ function ZenithLib:MakeWindow(config)
 	-- Content Container
 	self.ContentContainer = CreateInstance("Frame", {
 		Name = "ContentContainer",
-		Size = UDim2.new(1, 0, 1, -40),
-		Position = UDim2.new(0, 0, 0, 40),
+		Size = UDim2.new(1, 0, 1, -44),
+		Position = UDim2.new(0, 0, 0, 44),
 		BackgroundTransparency = 1,
 	})
 	self.ContentContainer.Parent = self.MainFrame
@@ -350,21 +352,47 @@ function ZenithLib:MakeWindow(config)
 		BorderSizePixel = 0,
 	})
 	self.TabNav.Parent = self.ContentContainer
-	
+
 	local tabNavCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	tabNavCorner.Parent = self.TabNav
-	
+
+	-- Крупное название над табами
+	local navTitle = CreateInstance("TextLabel", {
+		Name = "NavTitle",
+		Size = UDim2.new(1, -12, 0, 46),
+		Position = UDim2.new(0, 10, 0, 0),
+		BackgroundTransparency = 1,
+		Text = Title,
+		TextColor3 = COLORS.Text,
+		TextSize = 18,
+		Font = Enum.Font.GothamBold,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		TextTruncate = Enum.TextTruncate.AtEnd,
+	})
+	navTitle.Parent = self.TabNav
+
+	-- Тонкая разделительная линия под названием
+	local navDivider = CreateInstance("Frame", {
+		Size = UDim2.new(1, -16, 0, 1),
+		Position = UDim2.new(0, 8, 0, 46),
+		BackgroundColor3 = COLORS.ElementBorder,
+		BackgroundTransparency = 0,
+		BorderSizePixel = 0,
+	})
+	navDivider.Parent = self.TabNav
+
 	self.TabList = CreateInstance("UIListLayout", {
-		Padding = UDim.new(0, 5),
+		Padding = UDim.new(0, 4),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	})
 	self.TabList.Parent = self.TabNav
-	
+
 	local tabPadding = CreateInstance("UIPadding", {
-		PaddingTop = UDim.new(0, 5),
+		PaddingTop = UDim.new(0, 54),  -- отступ под заголовок
 		PaddingLeft = UDim.new(0, 5),
 		PaddingRight = UDim.new(0, 5),
-		PaddingBottom = UDim.new(0, 5),
+		PaddingBottom = UDim.new(0, 8),
 	})
 	tabPadding.Parent = self.TabNav
 	
@@ -448,6 +476,72 @@ function ZenithLib:MakeWindow(config)
 		end
 	end)
 	
+	-- ── Toggle visibility on RightShift ──────────────────────────
+	self._visible = true
+	self._toggleKey = Enum.KeyCode.RightShift
+	UserInputService.InputBegan:Connect(function(input, gp)
+		if gp then return end
+		if input.KeyCode == self._toggleKey then
+			self._visible = not self._visible
+			self.MainFrame.Visible = self._visible
+		end
+	end)
+
+	-- ── Built-in Credits tab ───────────────────────────────────
+	task.defer(function()
+		local credTab = self:MakeTab({ Title = "Credits", Image = "" })
+		credTab:MakeParagraph({
+			Title = "ZenithLib",
+			Text  = "Version 2.0  •  Black & Rose Theme
+Modular UI library for Roblox.
+Featuring Fluent-style acrylic glass,
+spring animations & selector bar.",
+		})
+		credTab:MakeSeparator()
+		credTab:MakeLabel({ Name = "Toggle UI:  RightShift" })
+		credTab:MakeLabel({ Name = "Drag:  Title bar" })
+	end)
+
+	-- ── Built-in Settings tab ──────────────────────────────────
+	task.defer(function()
+		local setTab = self:MakeTab({ Title = "Settings", Image = "" })
+
+		-- Accent color picker
+		setTab:MakeParagraph({
+			Title = "UI Settings",
+			Text  = "Customize ZenithLib appearance.",
+		})
+		setTab:MakeSeparator()
+
+		-- Toggle key
+		setTab:MakeKeybind({
+			Name    = "Toggle Key",
+			Default = Enum.KeyCode.RightShift,
+			Callback = function(key)
+				self._toggleKey = key
+			end,
+		})
+
+		-- Acrylic toggle
+		setTab:MakeToggle({
+			Name     = "Acrylic Glass",
+			Default  = true,
+			Callback = function(v)
+				self:SetAcrylic(v)
+			end,
+		})
+
+		-- Accent colors
+		setTab:MakeColorPicker({
+			Name    = "Accent Color",
+			Default = COLORS.Accent,
+			Callback = function(color)
+				COLORS.Accent = color
+				mainStroke.Color = color
+			end,
+		})
+	end)
+
 	-- SetTheme function for Window
 	function self:SetTheme(theme)
 		if theme.Accent then
@@ -482,8 +576,9 @@ function ZenithLib:MakeTab(config)
 	-- Create Tab Button
 	local tabButton = CreateInstance("Frame", {
 		Name = "Tab_" .. Title,
-		Size = UDim2.new(1, -10, 0, 35),
+		Size = UDim2.new(1, -10, 0, 34),
 		BackgroundColor3 = COLORS.InputBackground,
+		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 	})
 	
@@ -515,8 +610,8 @@ function ZenithLib:MakeTab(config)
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
 		Text = Title,
-		TextColor3 = COLORS.Text,
-		TextSize = 13,
+		TextColor3 = COLORS.SubText,
+		TextSize = 12,
 		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
 	})
@@ -568,7 +663,7 @@ function ZenithLib:MakeTab(config)
 			end
 		end
 		Tween(tabButton, { BackgroundColor3 = COLORS.ActiveTab, BackgroundTransparency = 0 })
-		Tween(tabText, { TextColor3 = COLORS.AccentText })
+		Tween(tabText, { TextColor3 = COLORS.AccentText, TextSize = 13 })
 		-- Selector
 		if self._moveSelectorTo then
 			local relY = tabButton.AbsolutePosition.Y - self.TabNav.AbsolutePosition.Y
