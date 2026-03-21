@@ -89,6 +89,7 @@ local COLORS = {
 	SliderRail       = Color3.fromRGB(32,  12,  20),
 	DropdownHolder   = Color3.fromRGB(14,   8,  11),
 	ActiveTab        = Color3.fromRGB(28,   6,  15),
+	EL_HOVER         = Color3.fromRGB(30,  16,  22),   -- hover на элементах
 	TitleBarLine     = Color3.fromRGB(70,  28,  45),
 }
 
@@ -144,6 +145,7 @@ print("[ZenithLib] >> ZenithLib:MakeWindow()")
 	local self = setmetatable({}, ZenithLib)
 	
 	local Title = config.Title or "ZenithLib"
+	local Author = config.Author or nil
 	local ConfigName = config.ConfigName or "Default"
 	
 	-- Create ScreenGui
@@ -154,7 +156,102 @@ print("[ZenithLib] >> ZenithLib:MakeWindow()")
 		DisplayOrder = 100,
 	})
 	self.ScreenGui.Parent = game:GetService("CoreGui")
-	
+
+	-- ── INTRO SCREEN ─────────────────────────────────────────────
+	if config.Intro ~= false then
+		local introGui = CreateInstance("ScreenGui", {
+			Name = "ZenithIntro",
+			IgnoreGuiInset = true,
+			DisplayOrder = 999,
+			ResetOnSpawn = false,
+			Parent = game:GetService("CoreGui"),
+		})
+
+		local bg = CreateInstance("Frame", {
+			Size = UDim2.fromScale(1, 1),
+			BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+			BackgroundTransparency = 0,
+			BorderSizePixel = 0,
+			Parent = introGui,
+		})
+
+		-- Центральный контейнер
+		local center = CreateInstance("Frame", {
+			Size = UDim2.new(0, 320, 0, 100),
+			Position = UDim2.fromScale(0.5, 0.5),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			Parent = bg,
+		})
+
+		-- Акцентная линия сверху
+		local topLine = CreateInstance("Frame", {
+			Size = UDim2.new(0, 0, 0, 2),
+			Position = UDim2.fromScale(0.5, 0),
+			AnchorPoint = Vector2.new(0.5, 0),
+			BackgroundColor3 = COLORS.Accent,
+			BorderSizePixel = 0,
+			Parent = center,
+		})
+		CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = topLine
+
+		-- Название скрипта
+		local titleLbl = CreateInstance("TextLabel", {
+			Size = UDim2.new(1, 0, 0, 52),
+			Position = UDim2.new(0, 0, 0, 14),
+			BackgroundTransparency = 1,
+			Text = Title,
+			TextColor3 = Color3.fromRGB(255, 255, 255),
+			TextTransparency = 1,
+			TextSize = 36,
+			Font = Enum.Font.GothamBold,
+			TextXAlignment = Enum.TextXAlignment.Center,
+			Parent = center,
+		})
+
+		-- "by AuthorName"
+		local byLbl = CreateInstance("TextLabel", {
+			Size = UDim2.new(1, 0, 0, 24),
+			Position = UDim2.new(0, 0, 0, 66),
+			BackgroundTransparency = 1,
+			Text = Author and ("by " .. Author) or "ZenithLib",
+			TextColor3 = COLORS.Accent,
+			TextTransparency = 1,
+			TextSize = 14,
+			Font = Enum.Font.Gotham,
+			TextXAlignment = Enum.TextXAlignment.Center,
+			Parent = center,
+		})
+
+		-- Анимация появления
+		task.spawn(function()
+			task.wait(0.1)
+
+			-- Линия раскрывается
+			Tween(topLine, { Size = UDim2.new(0, 280, 0, 2) }, 0.5, Enum.EasingStyle.Quint)
+			task.wait(0.3)
+
+			-- Текст появляется
+			Tween(titleLbl, { TextTransparency = 0 }, 0.4, Enum.EasingStyle.Quint)
+			task.wait(0.15)
+			Tween(byLbl, { TextTransparency = 0 }, 0.35, Enum.EasingStyle.Quint)
+			task.wait(0.9)
+
+			-- Fade out всего
+			Tween(titleLbl, { TextTransparency = 1 }, 0.3)
+			Tween(byLbl,    { TextTransparency = 1 }, 0.3)
+			task.wait(0.15)
+			Tween(topLine, { Size = UDim2.new(0, 0, 0, 2) }, 0.3, Enum.EasingStyle.Quint)
+			task.wait(0.15)
+			Tween(bg, { BackgroundTransparency = 1 }, 0.35)
+			task.wait(0.4)
+
+			introGui:Destroy()
+		end)
+	end
+	-- ─────────────────────────────────────────────────────────────
+
 	-- Main Frame
 	local windowPos = config.Position or UDim2.new(0.5, -350, 0, 50)
 	local windowSize = config.Size or UDim2.new(0, 700, 0, 450)
@@ -226,6 +323,21 @@ print("[ZenithLib] >> ZenithLib:MakeWindow()")
 	})
 	self.TitleText.Parent = self.TitleBar
 	
+
+	if config.SubTitle then
+		CreateInstance("TextLabel", {
+			Name = "SubTitle",
+			Size = UDim2.new(1, -100, 0, 12),
+			Position = UDim2.new(0, 50, 1, -13),
+			BackgroundTransparency = 1,
+			Text = config.SubTitle,
+			TextColor3 = COLORS.SubText,
+			TextSize = 10,
+			Font = Enum.Font.Gotham,
+			TextXAlignment = Enum.TextXAlignment.Center,
+			Parent = self.TitleBar,
+		})
+	end
 	-- Window Controls Container
 	-- Window controls — правый верхний угол, UIListLayout для равного spacing
 	self.ControlsContainer = CreateInstance("Frame", {
@@ -303,9 +415,7 @@ print("[ZenithLib] >> ZenithLib:MakeWindow()")
 	self.minimizedHeight = 40
 	
 	minHitbox.MouseButton1Click:Connect(function()
-		self.isMinimized = not self.isMinimized
-		local targetHeight = self.isMinimized and self.minimizedHeight or (self.isMaximized and 600 or self.normalHeight)
-		Tween(self.MainFrame, { Size = UDim2.new(0, 700, 0, targetHeight) })
+		self:Minimize()
 	end)
 	
 	-- Content Container
@@ -354,34 +464,6 @@ print("[ZenithLib] >> ZenithLib:MakeWindow()")
 		PaddingBottom = UDim.new(0, 8),
 	}).Parent = tabScroll
 
-
-	-- Selector bar — розовая полоска слева от активного таба
-	local selBar = CreateInstance("Frame", {
-		Name = "SelectorBar",
-		Size = UDim2.new(0, 3, 0, 26),
-		Position = UDim2.new(0, 0, 0, 0),
-		BackgroundColor3 = COLORS.Accent,
-		BackgroundTransparency = 1,  -- скрыта пока нет выбранного таба
-		BorderSizePixel = 0,
-		ZIndex = 5,
-	})
-	CreateInstance("UICorner", { CornerRadius = UDim.new(0, 2) }).Parent = selBar
-	selBar.Parent = tabScroll
-
-	-- Двигаем selector по индексу таба (без AbsolutePosition)
-	local tabH = 34   -- высота кнопки таба
-	local tabGap = 4  -- Padding между табами
-	local tabPadTop = 2  -- PaddingTop
-
-	self._tabCount = 0
-	self._moveSelector = function(idx)
-		local yPos = tabPadTop + (idx - 1) * (tabH + tabGap)
-		Tween(selBar, {
-			Position = UDim2.new(0, 0, 0, yPos + 4),
-			Size = UDim2.new(0, 3, 0, tabH - 8),
-			BackgroundTransparency = 0,
-		}, 0.15)
-	end
 
 
 	print("[ZenithLib] _tabScroll assigned:", tabScroll ~= nil)
@@ -550,11 +632,7 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		end
 		print("[ZenithLib] Tween tabButton")
 		Tween(tabButton, { BackgroundColor3 = COLORS.ActiveTab, BackgroundTransparency = 0 }, 0.15)
-		Tween(tabText, { TextColor3 = COLORS.AccentText }, 0.15)
-		-- Двигаем selector по индексу
-		if win._moveSelector then
-			win._moveSelector(tabIdx)
-		end
+		Tween(tabText, { TextColor3 = COLORS.AccentText, TextSize = 13 }, 0.15)
 	end
 	
 	print("[ZenithLib] Connecting MouseButton1Click for tab:", Title)
@@ -656,9 +734,13 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			BackgroundColor3 = COLORS.InputBackground,
 			BorderSizePixel = 0,
 		})
-		
-		local toggleCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
+		local toggleCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 		toggleCorner.Parent = toggleFrame
+		CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5, Transparency = 0.5,
+			Color = COLORS.ElementBorder,
+		}).Parent = toggleFrame
 		
 		local toggleText = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, -50, 1, 0),
@@ -742,8 +824,13 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			BorderSizePixel = 0,
 		})
 		
-		local sliderCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
+		local sliderCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 		sliderCorner.Parent = sliderFrame
+		CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5, Transparency = 0.5,
+			Color = COLORS.ElementBorder,
+		}).Parent = sliderFrame
 		
 		local sliderText = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, -50, 0, 20),
@@ -1145,8 +1232,13 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			BorderSizePixel = 0,
 		})
 		
-		local keybindCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
+		local keybindCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 		keybindCorner.Parent = keybindFrame
+		CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5, Transparency = 0.5,
+			Color = COLORS.ElementBorder,
+		}).Parent = keybindFrame
 		
 		local keybindText = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, -100, 1, 0),
@@ -1308,25 +1400,29 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 	
 	function Tab:MakeLabel(config)
 	print("[ZenithLib] >> Tab:MakeLabel() name=", config and (config.Name or config.Title) or "?")
-		local Name = config.Name or "Label"
-		
+		local Name   = config.Name  or config.Title or "Label"
+		local Color  = config.Color or COLORS.SubText
+		local Size   = config.TextSize or 12
+
 		local labelFrame = CreateInstance("Frame", {
 			Name = "Label_" .. Name,
-			Size = UDim2.new(1, 0, 0, 30),
+			Size = UDim2.new(1, 0, 0, 24),
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 		})
-		
-		local labelText = CreateInstance("TextLabel", {
-			Size = UDim2.new(1, 0, 1, 0),
+
+		CreateInstance("TextLabel", {
+			Size = UDim2.new(1, -8, 1, 0),
+			Position = UDim2.new(0, 4, 0, 0),
 			BackgroundTransparency = 1,
 			Text = Name,
-			TextColor3 = COLORS.Text,
-			TextSize = 14,
+			TextColor3 = Color,
+			TextSize = Size,
 			Font = Enum.Font.Gotham,
-		})
-		labelText.Parent = labelFrame
-		
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextWrapped = true,
+		}).Parent = labelFrame
+
 		labelFrame.Parent = tabContent
 		return labelFrame
 	end
@@ -1496,6 +1592,137 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		return paragraphFrame
 	end
 	
+
+	function Tab:MakeSection(config)
+	print("[ZenithLib] >> Tab:MakeSection() name=", config and (config.Name or config.Title) or "?")
+		local Name = config.Name or "Section"
+
+		local sectionFrame = CreateInstance("Frame", {
+			Name = "Section_" .. Name,
+			Size = UDim2.new(1, 0, 0, 0),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			AutomaticSize = Enum.AutomaticSize.Y,
+		})
+
+		-- Header строка
+		local headerRow = CreateInstance("Frame", {
+			Size = UDim2.new(1, 0, 0, 20),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+		})
+		headerRow.Parent = sectionFrame
+
+		CreateInstance("TextLabel", {
+			Size = UDim2.new(1, -12, 1, 0),
+			Position = UDim2.new(0, 4, 0, 0),
+			BackgroundTransparency = 1,
+			Text = string.upper(Name),
+			TextColor3 = COLORS.Accent,
+			TextSize = 10,
+			Font = Enum.Font.GothamBold,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextYAlignment = Enum.TextYAlignment.Center,
+		}).Parent = headerRow
+
+		-- Линия
+		local line = CreateInstance("Frame", {
+			Size = UDim2.new(1, 0, 0, 1),
+			Position = UDim2.new(0, 0, 1, -1),
+			BackgroundColor3 = COLORS.Accent,
+			BackgroundTransparency = 0.7,
+			BorderSizePixel = 0,
+		})
+		CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = line
+		line.Parent = headerRow
+
+		sectionFrame.Parent = tabContent
+		return sectionFrame
+	end
+
+
+	function Tab:MakeInput(config)
+		return self:MakeTextbox(config)
+	end
+
+
+	function Tab:MakeProgressBar(config)
+	print("[ZenithLib] >> Tab:MakeProgressBar() name=", config and (config.Name or config.Title) or "?")
+		local Name     = config.Name    or "Progress"
+		local Default  = config.Default or 0   -- 0..100
+		local Callback = config.Callback or function() end
+
+		local frame = CreateInstance("Frame", {
+			Name = "Progress_" .. Name,
+			Size = UDim2.new(1, 0, 0, 44),
+			BackgroundColor3 = COLORS.InputBackground,
+			BackgroundTransparency = 0,
+			BorderSizePixel = 0,
+		})
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = frame
+		CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5, Transparency = 0.5,
+			Color = COLORS.ElementBorder,
+		}).Parent = frame
+
+		-- Label + процент
+		CreateInstance("TextLabel", {
+			Size = UDim2.new(1, -50, 0, 18),
+			Position = UDim2.new(0, 10, 0, 4),
+			BackgroundTransparency = 1,
+			Text = Name,
+			TextColor3 = COLORS.Text,
+			TextSize = 12,
+			Font = Enum.Font.Gotham,
+			TextXAlignment = Enum.TextXAlignment.Left,
+		}).Parent = frame
+
+		local pctLabel = CreateInstance("TextLabel", {
+			Size = UDim2.new(0, 44, 0, 18),
+			Position = UDim2.new(1, -54, 0, 4),
+			BackgroundTransparency = 1,
+			Text = tostring(Default) .. "%",
+			TextColor3 = COLORS.AccentText,
+			TextSize = 11,
+			Font = Enum.Font.GothamBold,
+			TextXAlignment = Enum.TextXAlignment.Right,
+		})
+		pctLabel.Parent = frame
+
+		-- Track
+		local track = CreateInstance("Frame", {
+			Size = UDim2.new(1, -20, 0, 4),
+			Position = UDim2.new(0, 10, 0, 30),
+			BackgroundColor3 = COLORS.SliderRail,
+			BorderSizePixel = 0,
+		})
+		CreateInstance("UICorner", { CornerRadius = UDim.new(1,0) }).Parent = track
+		track.Parent = frame
+
+		local fill = CreateInstance("Frame", {
+			Size = UDim2.new(Default / 100, 0, 1, 0),
+			BackgroundColor3 = COLORS.Accent,
+			BorderSizePixel = 0,
+		})
+		CreateInstance("UICorner", { CornerRadius = UDim.new(1,0) }).Parent = fill
+		fill.Parent = track
+
+		local obj = {}
+		function obj:SetValue(v)
+			v = math.clamp(v, 0, 100)
+			Tween(fill, { Size = UDim2.new(v/100, 0, 1, 0) }, 0.2)
+			pctLabel.Text = tostring(math.floor(v)) .. "%"
+			Callback(v)
+		end
+		function obj:GetValue()
+			return math.floor(fill.Size.X.Scale * 100)
+		end
+
+		frame.Parent = tabContent
+		return obj
+	end
+
 	print("[ZenithLib] MakeTab complete, returning Tab object for:", Title)
 	return Tab
 end
@@ -1555,18 +1782,85 @@ print("[ZenithLib] >> ZenithLib:Restore()")
 	Tween(self.MainFrame, { Size = self.normalSize })
 end
 
+function ZenithLib:Toggle()
+	self._visible = not self._visible
+	self.MainFrame.Visible = self._visible
+end
+
+function ZenithLib:Show()
+	self._visible = true
+	self.MainFrame.Visible = true
+end
+
+function ZenithLib:Hide()
+	self._visible = false
+	self.MainFrame.Visible = false
+end
+
+function ZenithLib:SetToggleKey(key)
+	self._toggleKey = key
+end
+
+function ZenithLib:GetVersion()
+	return "2.0.0"
+end
+
+function ZenithLib:SetWindowSize(w, h)
+	local s = UDim2.new(0, w, 0, h)
+	self.normalSize = s
+	Tween(self.MainFrame, { Size = s }, 0.25, Enum.EasingStyle.Quint)
+end
+
+function ZenithLib:SetWindowPosition(x, y)
+	Tween(self.MainFrame, { Position = UDim2.new(0, x, 0, y) }, 0.2)
+end
+
+function ZenithLib:SetAccent(color)
+	COLORS.Accent     = color
+	COLORS.AccentText = Color3.new(math.min(color.R+0.35,1), math.min(color.G+0.35,1), math.min(color.B+0.35,1))
+	COLORS.ActiveTab  = Color3.new(color.R*0.13, color.G*0.07, color.B*0.1)
+	COLORS.ElementBorder = Color3.new(color.R*0.25, color.G*0.09, color.B*0.15)
+	COLORS.AccentDim  = Color3.new(color.R*0.41, color.G*0.09, color.B*0.21)
+	if self._mainStroke then self._mainStroke.Color = color end
+end
+
+-- Обновляет ContentContainer.Size если меняется TabNav ширина
+function ZenithLib:SetTabWidth(w)
+	self.TabNav.Size = UDim2.new(0, w, 1, 0)
+	self.TabContent.Size = UDim2.new(1, -w, 1, 0)
+	self.TabContent.Position = UDim2.new(0, w, 0, 0)
+end
+
+-- Возвращает список названий всех табов
+function ZenithLib:GetTabs()
+	local names = {}
+	for k in pairs(self.TabFrames) do
+		table.insert(names, k)
+	end
+	return names
+end
+
+
 
 function ZenithLib:_InitBuiltinTabs()
 print("[ZenithLib] >> ZenithLib:_InitBuiltinTabs()")
 	local credTab = self:MakeTab({ Title = "Credits" })
 	credTab:MakeParagraph({
 		Title = "ZenithLib  v2.0",
-		Text  = "Black & Rose Theme\nFluent-style acrylic, spring animations,\nselector bar. Toggle: RightShift.",
+		Text  = "Black & Rose Theme — модульная UI библиотека для Roblox. Чистый дизайн, гибкие элементы, простое API.",
 	})
 	credTab:MakeSeparator()
-	credTab:MakeLabel({ Name = "• Toggle UI — RightShift" })
-	credTab:MakeLabel({ Name = "• Drag — Title bar" })
-	credTab:MakeLabel({ Name = "• Close — Red dot (top right)" })
+	credTab:MakeSection({ Name = "Управление" })
+	credTab:MakeLabel({ Name = "• RightShift — показать/скрыть" })
+	credTab:MakeLabel({ Name = "• Тайтлбар — перетащить окно" })
+	credTab:MakeLabel({ Name = "• Красная точка — закрыть" })
+	credTab:MakeLabel({ Name = "• Зелёная точка — свернуть" })
+	credTab:MakeSeparator()
+	credTab:MakeSection({ Name = "Элементы" })
+	credTab:MakeLabel({ Name = "MakeButton, MakeToggle, MakeSlider" })
+	credTab:MakeLabel({ Name = "MakeDropdown, MakeMultiDropdown" })
+	credTab:MakeLabel({ Name = "MakeKeybind, MakeTextbox, MakeLabel" })
+	credTab:MakeLabel({ Name = "MakeParagraph, MakeSeparator, MakeSection" })
 
 	local setTab = self:MakeTab({ Title = "Settings" })
 	setTab:MakeParagraph({
@@ -1591,6 +1885,125 @@ print("[ZenithLib] >> ZenithLib:_InitBuiltinTabs()")
 	})
 end
 
+
+-- ═══════════════════════════════════════════
+-- Notification System
+-- ═══════════════════════════════════════════
+local NotifHolder = nil
+
+local function GetNotifHolder(gui)
+	if NotifHolder and NotifHolder.Parent then return NotifHolder end
+	NotifHolder = CreateInstance("Frame", {
+		Name = "ZenithNotifHolder",
+		Size = UDim2.new(0, 280, 1, -20),
+		Position = UDim2.new(1, -296, 0, 10),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ZIndex = 200,
+		Parent = gui,
+	})
+	CreateInstance("UIListLayout", {
+		Padding = UDim.new(0, 8),
+		VerticalAlignment = Enum.VerticalAlignment.Bottom,
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		Parent = NotifHolder,
+	})
+	return NotifHolder
+end
+
+function ZenithLib:Notify(cfg)
+	local title    = cfg.Title    or "Notification"
+	local content  = cfg.Content  or ""
+	local duration = cfg.Duration or 4
+	local holder   = GetNotifHolder(self.ScreenGui)
+
+	local card = CreateInstance("Frame", {
+		Name = "Notif",
+		Size = UDim2.new(1, 0, 0, 70),
+		BackgroundColor3 = COLORS.DarkerBackground,
+		BackgroundTransparency = 0,
+		BorderSizePixel = 0,
+		ClipsDescendants = true,
+		Parent = holder,
+	})
+	CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = card
+	CreateInstance("UIStroke", {
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		Thickness = 0.5, Transparency = 0.4,
+		Color = COLORS.Accent,
+	}).Parent = card
+
+	-- Акцентная полоска слева
+	local stripe = CreateInstance("Frame", {
+		Size = UDim2.new(0, 3, 1, -16),
+		Position = UDim2.new(0, 0, 0, 8),
+		BackgroundColor3 = COLORS.Accent,
+		BorderSizePixel = 0,
+	})
+	CreateInstance("UICorner", { CornerRadius = UDim.new(0, 2) }).Parent = stripe
+	stripe.Parent = card
+
+	-- Title
+	CreateInstance("TextLabel", {
+		Size = UDim2.new(1, -20, 0, 18),
+		Position = UDim2.new(0, 14, 0, 10),
+		BackgroundTransparency = 1,
+		Text = title,
+		TextColor3 = COLORS.AccentText,
+		TextSize = 13,
+		Font = Enum.Font.GothamBold,
+		TextXAlignment = Enum.TextXAlignment.Left,
+	}).Parent = card
+
+	-- Content
+	CreateInstance("TextLabel", {
+		Size = UDim2.new(1, -20, 0, 28),
+		Position = UDim2.new(0, 14, 0, 30),
+		BackgroundTransparency = 1,
+		Text = content,
+		TextColor3 = COLORS.SubText,
+		TextSize = 12,
+		Font = Enum.Font.Gotham,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Top,
+		TextWrapped = true,
+	}).Parent = card
+
+	-- Progress bar
+	local bar = CreateInstance("Frame", {
+		Size = UDim2.new(1, 0, 0, 2),
+		Position = UDim2.new(0, 0, 1, -2),
+		BackgroundColor3 = COLORS.Accent,
+		BackgroundTransparency = 0.4,
+		BorderSizePixel = 0,
+	})
+	bar.Parent = card
+
+	-- Animate in: slide from right
+	card.Position = UDim2.new(1, 10, 0, 0)
+	Tween(card, { Position = UDim2.new(0, 0, 0, 0) }, 0.3, Enum.EasingStyle.Back)
+
+	-- Progress shrink
+	task.spawn(function()
+		local steps = duration * 20
+		for i = 1, steps do
+			if not card.Parent then return end
+			bar.Size = UDim2.new(1 - (i / steps), 0, 0, 2)
+			task.wait(1 / 20)
+		end
+	end)
+
+	-- Dismiss
+	task.delay(duration, function()
+		if not card.Parent then return end
+		Tween(card, { Position = UDim2.new(1, 10, 0, 0), BackgroundTransparency = 1 }, 0.25)
+		task.wait(0.3)
+		pcall(function() card:Destroy() end)
+	end)
+
+	return card
+end
+
 -- Make library global
 -- Сохраняем глобально если возможно
 pcall(function()
@@ -1599,3 +2012,79 @@ end)
 _G.ZenithLib = ZenithLib
 
 return ZenithLib
+
+
+
+-- ═══════════════════════════════════════════════════════════
+-- ZenithLib API Reference (inline docs)
+-- ═══════════════════════════════════════════════════════════
+--[[
+
+WINDOW CREATION:
+  local win = ZenithLib:MakeWindow({
+    Title      = "MyScript",    -- название окна
+    SubTitle   = "v1.0",        -- подназвание под title (опционально)
+    ConfigName = "main",        -- уникальный ключ
+    Size       = UDim2.new(0, 680, 0, 440),
+    Position   = UDim2.new(0.5, -340, 0.5, -220),
+  })
+
+TAB CREATION:
+  local tab = win:MakeTab({
+    Title = "Main",
+    Image = "rbxassetid://...",  -- опционально
+  })
+
+ELEMENTS:
+  tab:MakeButton({ Name="", Callback=fn })
+  tab:MakeToggle({ Name="", Default=false, Callback=fn })
+  tab:MakeSlider({ Name="", Min=0, Max=100, Default=50, Callback=fn })
+  tab:MakeDropdown({ Name="", Options={}, Default="", Callback=fn })
+  tab:MakeMultiDropdown({ Name="", Options={}, Default={}, Callback=fn })
+  tab:MakeKeybind({ Name="", Default=Enum.KeyCode.E, Callback=fn })
+  tab:MakeTextbox({ Name="", Default="", Placeholder="", Callback=fn })
+  tab:MakeColorPicker({ Name="", Default=Color3.new(1,0,0), Callback=fn })
+  tab:MakeLabel({ Name="", Color=COLORS.SubText, TextSize=12 })
+  tab:MakeParagraph({ Title="", Text="" })
+  tab:MakeSeparator()
+  tab:MakeSection({ Name="" })
+  tab:MakeInput(config)  -- алиас MakeTextbox
+
+WINDOW METHODS:
+  win:Notify({ Title="", Content="", Duration=4 })
+  win:Minimize()            -- свернуть/развернуть
+  win:Toggle()              -- показать/скрыть
+  win:Show() / win:Hide()
+  win:SetAccent(Color3)     -- поменять акцентный цвет
+  win:SetToggleKey(KeyCode) -- поменять кнопку показа/скрытия
+  win:SetWindowSize(w, h)   -- изменить размер окна
+  win:SetWindowPosition(x, y)
+  win:SetTabWidth(w)        -- ширина панели табов
+  win:GetTabs()             -- список всех табов
+  win:GetVersion()          -- "2.0.0"
+  win:_InitBuiltinTabs()    -- добавить Credits + Settings вкладки
+  win:Destroy()             -- удалить UI
+
+BUILT-IN TABS:
+  win:_InitBuiltinTabs()
+  -- Добавляет Credits и Settings вкладки автоматически.
+  -- Settings содержит: Toggle Key, Accent Color.
+  -- Credits содержит: описание, список элементов, управление.
+
+THEMING:
+  win:SetAccent(Color3.fromRGB(220, 80, 120))  -- розовый (default)
+  win:SetAccent(Color3.fromRGB(96, 205, 255))  -- голубой (Fluent)
+  win:SetAccent(Color3.fromRGB(97, 62, 167))   -- фиолетовый
+
+TOGGLE KEY:
+  По умолчанию RightShift. Можно сменить:
+  win:SetToggleKey(Enum.KeyCode.Insert)
+  -- или через Settings вкладку
+
+]]
+-- ═══════════════════════════════════════════════════════════
+-- MakeProgressBar usage:
+--   local bar = tab:MakeProgressBar({ Name="Loading", Default=0 })
+--   bar:SetValue(75)   -- устанавливает 75%
+--   bar:GetValue()     -- возвращает текущее значение
+-- ═══════════════════════════════════════════════════════════
