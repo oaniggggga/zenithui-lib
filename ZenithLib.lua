@@ -1,6 +1,6 @@
 --[[
 	ZenithLib - Modular UI Library for Roblox
-	Version 1.0.0
+	Version 1.2.0
 	Created for Roblox Luau
 ]]
 
@@ -17,8 +17,19 @@ local function CreateInstance(className, properties)
 	return instance
 end
 
-local function Tween(instance, properties, duration)
-	local tweenInfo = TweenInfo.new(duration or 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local function Tween(instance, properties, duration, style, direction)
+	local tweenInfo = TweenInfo.new(
+		duration or 0.18,
+		style or Enum.EasingStyle.Quint,
+		direction or Enum.EasingDirection.Out
+	)
+	local tween = TweenService:Create(instance, tweenInfo, properties)
+	tween:Play()
+	return tween
+end
+
+local function TweenSpring(instance, properties, duration)
+	local tweenInfo = TweenInfo.new(duration or 0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 	local tween = TweenService:Create(instance, tweenInfo, properties)
 	tween:Play()
 	return tween
@@ -62,20 +73,23 @@ local function MakeDraggable(frame, parent)
 	end)
 end
 
--- Color Constants (Glass Dark Theme)
+-- Color Constants (Black & Rose Theme)
 local COLORS = {
-	MainBackground = Color3.fromRGB(30, 30, 30),
-	Accent = Color3.fromRGB(0, 170, 255),
-	Text = Color3.fromRGB(245, 245, 245),
-	SubText = Color3.fromRGB(160, 160, 160),
-	CloseRed = Color3.fromRGB(255, 95, 85),
-	MaximizeYellow = Color3.fromRGB(255, 190, 40),
-	MinimizeGreen = Color3.fromRGB(40, 205, 65),
-	DarkerBackground = Color3.fromRGB(25, 25, 25),
-	InputBackground = Color3.fromRGB(45, 45, 45),
-	ElementBorder = Color3.fromRGB(60, 60, 60),
-	SliderRail = Color3.fromRGB(90, 90, 90),
-	DropdownHolder = Color3.fromRGB(40, 40, 40),
+	MainBackground = Color3.fromRGB(0, 0, 0),         -- чистый чёрный
+	Accent = Color3.fromRGB(220, 80, 120),            -- тёмно-розовый акцент
+	AccentDim = Color3.fromRGB(100, 30, 55),          -- приглушённый акцент для фона кнопок
+	AccentText = Color3.fromRGB(255, 170, 195),       -- светло-розовый для текста
+	Text = Color3.fromRGB(240, 235, 238),             -- основной текст (чуть тёплый белый)
+	SubText = Color3.fromRGB(130, 110, 118),          -- вторичный текст
+	CloseRed = Color3.fromRGB(255, 95, 87),
+	MaximizeYellow = Color3.fromRGB(254, 188, 46),
+	MinimizeGreen = Color3.fromRGB(40, 200, 64),
+	DarkerBackground = Color3.fromRGB(0, 0, 0),      -- тоже чёрный
+	InputBackground = Color3.fromRGB(12, 8, 10),     -- почти чёрный с розовым оттенком
+	ElementBorder = Color3.fromRGB(60, 25, 38),      -- тёмно-розовый бордер
+	SliderRail = Color3.fromRGB(35, 15, 22),         -- трек слайдера
+	DropdownHolder = Color3.fromRGB(8, 4, 6),
+	ActiveTab = Color3.fromRGB(30, 8, 16),           -- фон активного таба
 }
 
 -- Function to update accent color globally
@@ -143,13 +157,13 @@ function ZenithLib:MakeWindow(config)
 	-- Shadow Effect
 	local shadow = CreateInstance("ImageLabel", {
 		Name = "Shadow",
-		Size = UDim2.new(1, 20, 1, 20),
-		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.new(1, 47, 1, 47),
+		Position = UDim2.new(0.5, 0, 0.5, 8),
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://5273142107",
-		ImageColor3 = Color3.new(0, 0, 0),
-		ImageTransparency = 0.5,
+		ImageColor3 = Color3.fromRGB(180, 30, 70),
+		ImageTransparency = 0.82,
 		ScaleType = Enum.ScaleType.Slice,
 		SliceCenter = Rect.new(20, 20, 20, 20),
 	})
@@ -160,30 +174,31 @@ function ZenithLib:MakeWindow(config)
 		Size = windowSize,
 		Position = windowPos,
 		BackgroundColor3 = COLORS.MainBackground,
-		BackgroundTransparency = 0.15,
+		BackgroundTransparency = 0.45,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 	})
 	self.MainFrame.Parent = self.ScreenGui
 	
 	-- Corner Radius
-	local mainCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
+	local mainCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	mainCorner.Parent = self.MainFrame
 	
 	-- Border Stroke
 	local mainStroke = CreateInstance("UIStroke", {
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		Thickness = 0.5,
 		Transparency = 0.5,
-		Color = COLORS.ElementBorder,
+		Color = COLORS.Accent,
 	})
 	mainStroke.Parent = self.MainFrame
 	
 	-- Title Bar
 	self.TitleBar = CreateInstance("Frame", {
 		Name = "TitleBar",
-		Size = UDim2.new(1, 0, 0, 40),
+		Size = UDim2.new(1, 0, 0, 44),
 		BackgroundColor3 = COLORS.DarkerBackground,
-		BackgroundTransparency = 0.4,
+		BackgroundTransparency = 0.45,
 		BorderSizePixel = 0,
 	})
 	self.TitleBar.Parent = self.MainFrame
@@ -197,9 +212,10 @@ function ZenithLib:MakeWindow(config)
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
 		Text = Title,
-		TextColor3 = COLORS.Text,
-		TextSize = 14,
-		Font = Enum.Font.GothamBold,
+		TextColor3 = COLORS.SubText,
+		TextSize = 12,
+		Font = Enum.Font.Gotham,
+		TextTransparency = 0,
 	})
 	self.TitleText.Parent = self.TitleBar
 	
@@ -308,7 +324,7 @@ function ZenithLib:MakeWindow(config)
 		Name = "TabNav",
 		Size = UDim2.new(0, 150, 1, 0),
 		BackgroundColor3 = COLORS.DarkerBackground,
-		BackgroundTransparency = 0.6,
+		BackgroundTransparency = 0.55,
 		BorderSizePixel = 0,
 	})
 	self.TabNav.Parent = self.ContentContainer
@@ -381,7 +397,8 @@ function ZenithLib:MakeTab(config)
 	local tabButton = CreateInstance("Frame", {
 		Name = "Tab_" .. Title,
 		Size = UDim2.new(1, -10, 0, 35),
-		BackgroundColor3 = COLORS.InputBackground,
+		BackgroundColor3 = Color3.fromRGB(0,0,0),
+		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 	})
 	
@@ -413,8 +430,8 @@ function ZenithLib:MakeTab(config)
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
 		Text = Title,
-		TextColor3 = COLORS.Text,
-		TextSize = 13,
+		TextColor3 = COLORS.SubText,
+		TextSize = 12,
 		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
 	})
@@ -462,10 +479,13 @@ function ZenithLib:MakeTab(config)
 		-- Update button appearance
 		for _, button in ipairs(self.TabNav:GetChildren()) do
 			if button:IsA("Frame") then
-				Tween(button, { BackgroundColor3 = COLORS.InputBackground })
+				Tween(button, { BackgroundColor3 = Color3.fromRGB(0,0,0), BackgroundTransparency = 1 })
+				local txt = button:FindFirstChildWhichIsA("TextLabel")
+				if txt then Tween(txt, { TextColor3 = COLORS.SubText }) end
 			end
 		end
-		Tween(tabButton, { BackgroundColor3 = COLORS.Accent })
+		Tween(tabButton, { BackgroundColor3 = COLORS.ActiveTab, BackgroundTransparency = 0 })
+		Tween(tabText, { TextColor3 = COLORS.AccentText })
 	end
 	
 	tabButton.InputBegan:Connect(function(input)
@@ -510,16 +530,25 @@ function ZenithLib:MakeTab(config)
 			BorderSizePixel = 0,
 		})
 		
-		local buttonCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
+		local buttonCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 		buttonCorner.Parent = buttonFrame
+		
+		local buttonStroke = CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5,
+			Transparency = 0.3,
+			Color = COLORS.Accent,
+		})
+		buttonStroke.Parent = buttonFrame
 		
 		local buttonText = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, 0, 1, 0),
 			BackgroundTransparency = 1,
 			Text = Name,
-			TextColor3 = COLORS.Text,
-			TextSize = 14,
-			Font = Enum.Font.Gotham,
+			TextColor3 = COLORS.AccentText,
+			TextSize = 13,
+			Font = Enum.Font.GothamMedium,
+			TextTransparency = 0.05,
 		})
 		buttonText.Parent = buttonFrame
 		
@@ -531,16 +560,18 @@ function ZenithLib:MakeTab(config)
 		buttonHitbox.Parent = buttonFrame
 		
 		buttonHitbox.MouseButton1Down:Connect(function()
-			Tween(buttonFrame, { BackgroundColor3 = COLORS.Accent })
+			Tween(buttonFrame, { BackgroundColor3 = COLORS.Accent }, 0.1)
+			Tween(buttonText, { TextTransparency = 0 }, 0.08)
 		end)
 		
 		buttonHitbox.MouseButton1Up:Connect(function()
-			Tween(buttonFrame, { BackgroundColor3 = COLORS.InputBackground })
+			Tween(buttonFrame, { BackgroundColor3 = COLORS.InputBackground }, 0.22)
+			Tween(buttonText, { TextTransparency = 0.05 }, 0.15)
 			Callback()
 		end)
 		
 		buttonHitbox.MouseEnter:Connect(function()
-			Tween(buttonFrame, { BackgroundColor3 = Color3.new(45, 45, 45) })
+			Tween(buttonFrame, { BackgroundColor3 = COLORS.AccentDim })
 		end)
 		
 		buttonHitbox.MouseLeave:Connect(function()
@@ -563,8 +594,16 @@ function ZenithLib:MakeTab(config)
 			BorderSizePixel = 0,
 		})
 		
-		local toggleCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
+		local toggleCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 		toggleCorner.Parent = toggleFrame
+		
+		local toggleStroke = CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5,
+			Transparency = 0.55,
+			Color = COLORS.ElementBorder,
+		})
+		toggleStroke.Parent = toggleFrame
 		
 		local toggleText = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, -50, 1, 0),
@@ -592,8 +631,8 @@ function ZenithLib:MakeTab(config)
 		
 		local toggleKnob = CreateInstance("Frame", {
 			Name = "Knob",
-			Size = UDim2.new(0, 16, 0, 16),
-			Position = Default and UDim2.new(1, -20, 0.5, -8) or UDim2.new(0, 2, 0.5, -8),
+			Size = UDim2.new(0, 14, 0, 14),
+			Position = Default and UDim2.new(1, -18, 0.5, -7) or UDim2.new(0, 4, 0.5, -7),
 			BackgroundColor3 = COLORS.Text,
 			BorderSizePixel = 0,
 		})
@@ -603,14 +642,19 @@ function ZenithLib:MakeTab(config)
 		knobCorner.Parent = toggleKnob
 		
 		local isOn = Default
+		if isOn then
+			toggleText.TextColor3 = COLORS.AccentText
+		end
 		
 		local function UpdateToggle()
 			if isOn then
-				Tween(toggleSwitch, { BackgroundColor3 = COLORS.Accent })
-				Tween(toggleKnob, { Position = UDim2.new(1, -20, 0.5, -8) })
+				Tween(toggleSwitch, { BackgroundColor3 = COLORS.Accent }, 0.22)
+				TweenSpring(toggleKnob, { Position = UDim2.new(1, -20, 0.5, -8) }, 0.3)
+				Tween(toggleText, { TextColor3 = COLORS.AccentText }, 0.18)
 			else
-				Tween(toggleSwitch, { BackgroundColor3 = COLORS.DarkerBackground })
-				Tween(toggleKnob, { Position = UDim2.new(0, 2, 0.5, -8) })
+				Tween(toggleSwitch, { BackgroundColor3 = COLORS.SliderRail }, 0.22)
+				TweenSpring(toggleKnob, { Position = UDim2.new(0, 2, 0.5, -8) }, 0.3)
+				Tween(toggleText, { TextColor3 = COLORS.Text }, 0.18)
 			end
 			Callback(isOn)
 		end
@@ -646,26 +690,46 @@ function ZenithLib:MakeTab(config)
 			BorderSizePixel = 0,
 		})
 		
-		local sliderCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
+		local sliderCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 		sliderCorner.Parent = sliderFrame
 		
+		local sliderStroke = CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5,
+			Transparency = 0.55,
+			Color = COLORS.ElementBorder,
+		})
+		sliderStroke.Parent = sliderFrame
+		
 		local sliderText = CreateInstance("TextLabel", {
-			Size = UDim2.new(1, 0, 0, 20),
-			Position = UDim2.new(0, 10, 0, 5),
+			Size = UDim2.new(1, -50, 0, 20),
+			Position = UDim2.new(0, 10, 0, 6),
 			BackgroundTransparency = 1,
-			Text = Name .. ": " .. tostring(Default),
+			Text = Name,
 			TextColor3 = COLORS.Text,
-			TextSize = 14,
+			TextSize = 13,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
 		})
 		sliderText.Parent = sliderFrame
 		
+		local sliderValueLabel = CreateInstance("TextLabel", {
+			Size = UDim2.new(0, 40, 0, 20),
+			Position = UDim2.new(1, -50, 0, 6),
+			BackgroundTransparency = 1,
+			Text = tostring(Default),
+			TextColor3 = COLORS.AccentText,
+			TextSize = 12,
+			Font = Enum.Font.GothamBold,
+			TextXAlignment = Enum.TextXAlignment.Right,
+		})
+		sliderValueLabel.Parent = sliderFrame
+		
 		local sliderTrack = CreateInstance("Frame", {
 			Name = "Track",
-			Size = UDim2.new(1, -20, 0, 6),
+			Size = UDim2.new(1, -20, 0, 4),
 			Position = UDim2.new(0, 10, 0, 35),
-			BackgroundColor3 = COLORS.DarkerBackground,
+			BackgroundColor3 = COLORS.SliderRail,
 			BorderSizePixel = 0,
 		})
 		sliderTrack.Parent = sliderFrame
@@ -686,9 +750,9 @@ function ZenithLib:MakeTab(config)
 		
 		local sliderKnob = CreateInstance("Frame", {
 			Name = "Knob",
-			Size = UDim2.new(0, 14, 0, 14),
+			Size = UDim2.new(0, 12, 0, 12),
 			Position = UDim2.new((Default - Min) / (Max - Min), -7, 0.5, -7),
-			BackgroundColor3 = COLORS.Text,
+			BackgroundColor3 = COLORS.Accent,
 			BorderSizePixel = 0,
 		})
 		sliderKnob.Parent = sliderTrack
@@ -702,7 +766,7 @@ function ZenithLib:MakeTab(config)
 			local percent = math.clamp((value - Min) / (Max - Min), 0, 1)
 			Tween(sliderFill, { Size = UDim2.new(percent, 0, 1, 0) })
 			Tween(sliderKnob, { Position = UDim2.new(percent, -7, 0.5, -7) })
-			sliderText.Text = Name .. ": " .. tostring(value)
+			sliderValueLabel.Text = tostring(value)
 			Callback(value)
 		end
 		
@@ -767,8 +831,16 @@ function ZenithLib:MakeTab(config)
 			BorderSizePixel = 0,
 		})
 		
-		local dropdownCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
+		local dropdownCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 		dropdownCorner.Parent = dropdownFrame
+		
+		local dropdownStroke = CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5,
+			Transparency = 0.55,
+			Color = COLORS.ElementBorder,
+		})
+		dropdownStroke.Parent = dropdownFrame
 		
 		local dropdownText = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, -50, 1, 0),
@@ -787,7 +859,7 @@ function ZenithLib:MakeTab(config)
 			Position = UDim2.new(1, -30, 0.5, -10),
 			BackgroundTransparency = 1,
 			Image = "rbxassetid://7733658504",
-			ImageColor3 = COLORS.Text,
+			ImageColor3 = COLORS.Accent,
 		})
 		dropdownArrow.Parent = dropdownFrame
 		
@@ -804,8 +876,16 @@ function ZenithLib:MakeTab(config)
 		})
 		dropdownList.Parent = dropdownFrame
 		
-		local listCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
+		local listCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 		listCorner.Parent = dropdownList
+		
+		local listStroke = CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5,
+			Transparency = 0.4,
+			Color = COLORS.ElementBorder,
+		})
+		listStroke.Parent = dropdownList
 		
 		local optionsList = CreateInstance("UIListLayout", {
 			Padding = UDim.new(0, 0),
@@ -1119,8 +1199,16 @@ function ZenithLib:MakeTab(config)
 			BorderSizePixel = 0,
 		})
 		
-		local textboxCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
+		local textboxCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 		textboxCorner.Parent = textboxFrame
+		
+		local textboxStroke = CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5,
+			Transparency = 0.55,
+			Color = COLORS.ElementBorder,
+		})
+		textboxStroke.Parent = textboxFrame
 		
 		local textboxLabel = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, 0, 0, 20),
@@ -1152,7 +1240,12 @@ function ZenithLib:MakeTab(config)
 		local inputCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 4) })
 		inputCorner.Parent = textboxInput
 		
+		textboxInput.Focused:Connect(function()
+			Tween(textboxStroke, { Color = COLORS.Accent, Transparency = 0.2 }, 0.18)
+		end)
+		
 		textboxInput.FocusLost:Connect(function()
+			Tween(textboxStroke, { Color = COLORS.ElementBorder, Transparency = 0.55 }, 0.18)
 			Callback(textboxInput.Text)
 		end)
 		
@@ -1185,15 +1278,26 @@ function ZenithLib:MakeTab(config)
 	end
 	
 	function Tab:MakeSeparator()
-		local separatorFrame = CreateInstance("Frame", {
+		local separatorOuter = CreateInstance("Frame", {
 			Name = "Separator",
-			Size = UDim2.new(1, 0, 0, 1),
-			BackgroundColor3 = COLORS.DarkerBackground,
+			Size = UDim2.new(1, 0, 0, 9),
+			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 		})
 		
-		separatorFrame.Parent = tabContent
-		return separatorFrame
+		local separatorLine = CreateInstance("Frame", {
+			Size = UDim2.new(1, 0, 0, 1),
+			Position = UDim2.new(0, 0, 0.5, 0),
+			BackgroundColor3 = COLORS.Accent,
+			BackgroundTransparency = 0.75,
+			BorderSizePixel = 0,
+		})
+		
+		local sepCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) })
+		sepCorner.Parent = separatorLine
+		separatorLine.Parent = separatorOuter
+		separatorOuter.Parent = tabContent
+		return separatorOuter
 	end
 	
 	function Tab:MakeColorPicker(config)
@@ -1208,8 +1312,16 @@ function ZenithLib:MakeTab(config)
 			BorderSizePixel = 0,
 		})
 		
-		local pickerCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
+		local pickerCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 		pickerCorner.Parent = pickerFrame
+		
+		local pickerStroke = CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5,
+			Transparency = 0.55,
+			Color = COLORS.ElementBorder,
+		})
+		pickerStroke.Parent = pickerFrame
 		
 		local pickerText = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, -50, 0, 20),
@@ -1305,8 +1417,16 @@ function ZenithLib:MakeTab(config)
 			BorderSizePixel = 0,
 		})
 		
-		local paragraphCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
+		local paragraphCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 		paragraphCorner.Parent = paragraphFrame
+		
+		local paragraphStroke = CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5,
+			Transparency = 0.55,
+			Color = COLORS.ElementBorder,
+		})
+		paragraphStroke.Parent = paragraphFrame
 		
 		local titleLabel = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, 0, 0, 20),
@@ -1394,5 +1514,3 @@ end
 getgenv().ZenithLib = ZenithLib
 
 return ZenithLib
-
-
