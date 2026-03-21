@@ -232,7 +232,7 @@ function ZenithLib:MakeWindow(config)
 	})
 	self.TitleBar.Parent = self.MainFrame
 	
-	local titleBarCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 0) })
+	local titleBarCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	titleBarCorner.Parent = self.TitleBar
 	
 	-- Title Text
@@ -250,8 +250,8 @@ function ZenithLib:MakeWindow(config)
 	-- Window Controls Container
 	self.ControlsContainer = CreateInstance("Frame", {
 		Name = "ControlsContainer",
-		Size = UDim2.new(0, 80, 0, 20),
-		Position = UDim2.new(0, 15, 0.5, -10),
+		Size = UDim2.new(0, 68, 0, 20),
+		Position = UDim2.new(1, -80, 0.5, -10),
 		BackgroundTransparency = 1,
 	})
 	self.ControlsContainer.Parent = self.TitleBar
@@ -260,7 +260,7 @@ function ZenithLib:MakeWindow(config)
 	self.CloseButton = CreateInstance("Frame", {
 		Name = "CloseButton",
 		Size = UDim2.new(0, 12, 0, 12),
-		Position = UDim2.new(0, 0, 0.5, -6),
+		Position = UDim2.new(1, -12, 0.5, -6),
 		BackgroundColor3 = COLORS.CloseRed,
 		BorderSizePixel = 0,
 	})
@@ -283,7 +283,7 @@ function ZenithLib:MakeWindow(config)
 	self.MaximizeButton = CreateInstance("Frame", {
 		Name = "MaximizeButton",
 		Size = UDim2.new(0, 12, 0, 12),
-		Position = UDim2.new(0, 28, 0.5, -6),
+		Position = UDim2.new(1, -32, 0.5, -6),
 		BackgroundColor3 = COLORS.MaximizeYellow,
 		BorderSizePixel = 0,
 	})
@@ -312,7 +312,7 @@ function ZenithLib:MakeWindow(config)
 	self.MinimizeButton = CreateInstance("Frame", {
 		Name = "MinimizeButton",
 		Size = UDim2.new(0, 12, 0, 12),
-		Position = UDim2.new(0, 56, 0.5, -6),
+		Position = UDim2.new(0, 0, 0.5, -6),
 		BackgroundColor3 = COLORS.MinimizeGreen,
 		BorderSizePixel = 0,
 	})
@@ -357,7 +357,7 @@ function ZenithLib:MakeWindow(config)
 	})
 	self.TabNav.Parent = self.ContentContainer
 	
-	local tabNavCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 0) })
+	local tabNavCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	tabNavCorner.Parent = self.TabNav
 	
 	self.TabList = CreateInstance("UIListLayout", {
@@ -446,7 +446,7 @@ function ZenithLib:MakeWindow(config)
 	self.CurrentTab = nil
 	
 	-- Make Draggable
-	MakeDraggable(self.MainFrame, self.ScreenGui)
+	MakeDraggable(self.TitleBar, self.ScreenGui)
 	self._acrylicPart = nil
 	task.defer(function()
 		if self.MainFrame and self.MainFrame.Parent then
@@ -1242,51 +1242,84 @@ function ZenithLib:MakeTab(config)
 		local Default = config.Default or ""
 		local TextDisappear = config.TextDisappear or false
 		local Callback = config.Callback or function() end
-		
+
+		-- Высота: 8 отступ + 16 лейбл + 4 gap + 28 инпут + 8 отступ = 64
 		local textboxFrame = CreateInstance("Frame", {
 			Name = "Textbox_" .. Name,
-			Size = UDim2.new(1, 0, 0, 40),
+			Size = UDim2.new(1, 0, 0, 64),
 			BackgroundColor3 = COLORS.InputBackground,
 			BorderSizePixel = 0,
 		})
-		
-		local textboxCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
+
+		local textboxCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 		textboxCorner.Parent = textboxFrame
-		
+
+		local textboxStroke = CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5,
+			Transparency = 0.4,
+			Color = COLORS.ElementBorder,
+		})
+		textboxStroke.Parent = textboxFrame
+
+		-- Лейбл сверху
 		local textboxLabel = CreateInstance("TextLabel", {
-			Size = UDim2.new(1, 0, 0, 20),
-			Position = UDim2.new(0, 10, 0, 5),
+			Size = UDim2.new(1, -20, 0, 16),
+			Position = UDim2.new(0, 10, 0, 8),
 			BackgroundTransparency = 1,
 			Text = Name,
-			TextColor3 = COLORS.Text,
-			TextSize = 14,
+			TextColor3 = COLORS.SubText,
+			TextSize = 11,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
 		})
 		textboxLabel.Parent = textboxFrame
-		
+
+		-- TextBox под лейблом
 		local textboxInput = CreateInstance("TextBox", {
-			Size = UDim2.new(1, -20, 0, 24),
-			Position = UDim2.new(0, 10, 0, 30),
+			Size = UDim2.new(1, -20, 0, 28),
+			Position = UDim2.new(0, 10, 0, 28),
 			BackgroundColor3 = COLORS.DarkerBackground,
+			BackgroundTransparency = 0,
 			BorderSizePixel = 0,
 			Text = Default,
 			TextColor3 = COLORS.Text,
 			TextSize = 13,
 			Font = Enum.Font.Gotham,
-			PlaceholderText = "Enter text...",
+			TextXAlignment = Enum.TextXAlignment.Left,
+			PlaceholderText = config.Placeholder or "Enter text...",
 			PlaceholderColor3 = COLORS.SubText,
 			ClearTextOnFocus = TextDisappear,
 		})
 		textboxInput.Parent = textboxFrame
-		
-		local inputCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 4) })
+
+		local inputCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 5) })
 		inputCorner.Parent = textboxInput
-		
+
+		local inputPadding = CreateInstance("UIPadding", {
+			PaddingLeft = UDim.new(0, 8),
+		})
+		inputPadding.Parent = textboxInput
+
+		-- Подсветка при фокусе
+		local inputStroke = CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5,
+			Transparency = 1,
+			Color = COLORS.Accent,
+		})
+		inputStroke.Parent = textboxInput
+
+		textboxInput.Focused:Connect(function()
+			Tween(inputStroke, { Transparency = 0.2 }, 0.18)
+			Tween(textboxLabel, { TextColor3 = COLORS.AccentText }, 0.18)
+		end)
 		textboxInput.FocusLost:Connect(function()
+			Tween(inputStroke, { Transparency = 1 }, 0.18)
+			Tween(textboxLabel, { TextColor3 = COLORS.SubText }, 0.18)
 			Callback(textboxInput.Text)
 		end)
-		
+
 		textboxFrame.Parent = tabContent
 		return textboxFrame
 	end
