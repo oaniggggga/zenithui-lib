@@ -355,68 +355,40 @@ print("[ZenithLib] >> ZenithLib:MakeWindow()")
 	}).Parent = tabScroll
 
 
+	-- Selector bar — розовая полоска слева от активного таба
+	local selBar = CreateInstance("Frame", {
+		Name = "SelectorBar",
+		Size = UDim2.new(0, 3, 0, 26),
+		Position = UDim2.new(0, 0, 0, 0),
+		BackgroundColor3 = COLORS.Accent,
+		BackgroundTransparency = 1,  -- скрыта пока нет выбранного таба
+		BorderSizePixel = 0,
+		ZIndex = 5,
+	})
+	CreateInstance("UICorner", { CornerRadius = UDim.new(0, 2) }).Parent = selBar
+	selBar.Parent = tabScroll
+
+	-- Двигаем selector по индексу таба (без AbsolutePosition)
+	local tabH = 34   -- высота кнопки таба
+	local tabGap = 4  -- Padding между табами
+	local tabPadTop = 2  -- PaddingTop
+
+	self._tabCount = 0
+	self._moveSelector = function(idx)
+		local yPos = tabPadTop + (idx - 1) * (tabH + tabGap)
+		Tween(selBar, {
+			Position = UDim2.new(0, 0, 0, yPos + 4),
+			Size = UDim2.new(0, 3, 0, tabH - 8),
+			BackgroundTransparency = 0,
+		}, 0.15)
+	end
+
+
 	print("[ZenithLib] _tabScroll assigned:", tabScroll ~= nil)
 	self._tabScroll = tabScroll
 	
 
-	-- Selector bar (Fluent-style) — в tabScroll
-	self.SelectorBar = CreateInstance("Frame", {
-		Name = "SelectorBar",
-		Size = UDim2.new(0, 3, 0, 16),
-		Position = UDim2.new(0, 0, 0, 6),
-		BackgroundColor3 = COLORS.Accent,
-		BackgroundTransparency = 0,
-		BorderSizePixel = 0,
-		ZIndex = 5,
-	})
-	CreateInstance("UICorner", { CornerRadius = UDim.new(0, 2) }).Parent = self.SelectorBar
-	self.SelectorBar.Parent = self._tabScroll
 
-	-- Spring-анимация для selector
-	local selBar = self.SelectorBar
-	local selPosS  = {value=22, velocity=0}
-	local selSizeS = {value=16, velocity=0}
-	local selPosT, selSizeT = 22, 16
-	local selConn
-
-	local function selSpring(s, target, freq, damp, dt)
-	print("[ZenithLib] >> selSpring()")
-		local f = freq*2*math.pi
-		local k = s.value - target
-		local e = math.exp(-damp*f*dt)
-		local nv = (k*(1+f*dt)+s.velocity*dt)*e + target
-		local nvel = (s.velocity*(1-f*dt)-k*f*f*dt)*e
-		local done = math.abs(nvel)<0.3 and math.abs(nv-target)<0.3
-		return {value=done and target or nv, velocity=done and 0 or nvel, done=done}
-	end
-
-	local function stepSel(dt)
-	print("[ZenithLib] >> stepSel()")
-		selPosS  = selSpring(selPosS,  selPosT,  7, 1,   dt)
-		selSizeS = selSpring(selSizeS, selSizeT, 5, 0.7, dt)
-		selBar.Position = UDim2.new(0,0,0, selPosS.value)
-		selBar.Size     = UDim2.new(0,3,0, selSizeS.value)
-		if selPosS.done and selSizeS.done and selConn then
-			selConn:Disconnect(); selConn = nil
-		end
-	end
-
-	local lastSelY, lastSelT = 22, tick()
-	self._moveSelectorTo = function(tabY, tabH)
-		local now = tick()
-		local spd = math.abs(tabY - lastSelY) / math.max(now - lastSelT, 0.001)
-		lastSelY, lastSelT = tabY, now
-		selPosT  = tabY + (tabH or 35)/2 - 8
-		selSizeT = math.clamp(16 + spd*0.05, 16, (tabH or 35)*1.6)
-		selPosS.done = false; selSizeS.done = false
-		if not selConn then
-			selConn = RunService.RenderStepped:Connect(stepSel)
-		end
-		task.delay(0.13, function()
-			selSizeT = 16; selSizeS.done = false
-			if not selConn then selConn = RunService.RenderStepped:Connect(stepSel) end
-		end)
-	end
 
 	-- Tab Content Area
 	print("[ZenithLib] Creating TabContent...")
@@ -478,7 +450,10 @@ end
 function ZenithLib:MakeTab(config)
 print("[ZenithLib] >> ZenithLib:MakeTab()")
 	local win = self  -- window объект, не перезаписываем
-	
+
+	win._tabCount = (win._tabCount or 0) + 1
+	local tabIdx = win._tabCount
+
 	local Title = config.Title or "Tab"
 	local Image = config.Image
 	
@@ -524,14 +499,12 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 	tabButton.Parent = win._tabScroll
 	
 	-- Create Tab Content Frame
-	local tabContent = CreateInstance("ScrollingFrame", {
+	local tabContent = CreateInstance("Frame", {
 		Name = "Content_" .. Title,
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		ScrollBarThickness = 0,
-		CanvasSize = UDim2.new(0, 0, 0, 0),
-		ScrollingDirection = Enum.ScrollingDirection.Y,
+		ClipsDescendants = true,
 	})
 	
 	local contentList = CreateInstance("UIListLayout", {
@@ -540,10 +513,6 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 	})
 	contentList.Parent = tabContent
 
-	-- Авто-обновление CanvasSize
-	contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		tabContent.CanvasSize = UDim2.new(0, 0, 0, contentList.AbsoluteContentSize.Y + 20)
-	end)
 	
 	local contentPadding = CreateInstance("UIPadding", {
 		PaddingTop = UDim.new(0, 4),
@@ -582,12 +551,9 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		print("[ZenithLib] Tween tabButton")
 		Tween(tabButton, { BackgroundColor3 = COLORS.ActiveTab, BackgroundTransparency = 0 }, 0.15)
 		Tween(tabText, { TextColor3 = COLORS.AccentText }, 0.15)
-		-- Selector
-		if win._moveSelectorTo then
-			local scrollRef = win._tabScroll or win.TabNav
-			local relY = tabButton.AbsolutePosition.Y - scrollRef.AbsolutePosition.Y
-			print("[ZenithLib] moveSelectorTo relY=", relY, "tabH=", tabButton.AbsoluteSize.Y)
-			win._moveSelectorTo(relY, tabButton.AbsoluteSize.Y)
+		-- Двигаем selector по индексу
+		if win._moveSelector then
+			win._moveSelector(tabIdx)
 		end
 	end
 	
