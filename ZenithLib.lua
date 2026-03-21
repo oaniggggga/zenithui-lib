@@ -465,7 +465,7 @@ function ZenithLib:MakeWindow(config)
 end
 
 function ZenithLib:MakeTab(config)
-	local self = setmetatable({}, { __index = self })
+	local win = self  -- window объект, не перезаписываем
 	
 	local Title = config.Title or "Tab"
 	local Image = config.Image
@@ -508,7 +508,7 @@ function ZenithLib:MakeTab(config)
 	})
 	tabText.Parent = tabButton
 	
-	tabButton.Parent = self._tabScroll
+	tabButton.Parent = win._tabScroll
 	
 	-- Create Tab Content Frame
 	local tabContent = CreateInstance("ScrollingFrame", {
@@ -545,21 +545,21 @@ function ZenithLib:MakeTab(config)
 	})
 	contentPadding.Parent = tabContent
 	
-	tabContent.Parent = self.TabContent
+	tabContent.Parent = win.TabContent
 	tabContent.Visible = false
 	
-	self.TabFrames[Title] = tabContent
+	win.TabFrames[Title] = tabContent
 	
 	-- Tab Click Handler
 	local function SelectTab()
-		for _, frame in pairs(self.TabFrames) do
+		for _, frame in pairs(win.TabFrames) do
 			frame.Visible = false
 		end
 		tabContent.Visible = true
-		self.CurrentTab = Title
+		win.CurrentTab = Title
 		
 		-- Update button appearance — только Frame с именем Tab_*
-		local tabContainer = self._tabScroll or self.TabNav
+		local tabContainer = win._tabScroll or win.TabNav
 		for _, button in ipairs(tabContainer:GetChildren()) do
 			if (button:IsA("Frame") or button:IsA("TextButton")) and button.Name:sub(1,4) == "Tab_" then
 				button.BackgroundColor3 = COLORS.InputBackground
@@ -571,10 +571,10 @@ function ZenithLib:MakeTab(config)
 		Tween(tabButton, { BackgroundColor3 = COLORS.ActiveTab, BackgroundTransparency = 0 }, 0.15)
 		Tween(tabText, { TextColor3 = COLORS.AccentText }, 0.15)
 		-- Selector
-		if self._moveSelectorTo then
-			local scrollRef = self._tabScroll or self.TabNav
+		if win._moveSelectorTo then
+			local scrollRef = win._tabScroll or win.TabNav
 			local relY = tabButton.AbsolutePosition.Y - scrollRef.AbsolutePosition.Y
-			self._moveSelectorTo(relY, tabButton.AbsoluteSize.Y)
+			win._moveSelectorTo(relY, tabButton.AbsoluteSize.Y)
 		end
 	end
 	
@@ -583,19 +583,19 @@ function ZenithLib:MakeTab(config)
 	end)
 
 	tabButton.MouseEnter:Connect(function()
-		if self.CurrentTab ~= Title then
+		if win.CurrentTab ~= Title then
 			Tween(tabButton, { BackgroundColor3 = COLORS.InputBackground, BackgroundTransparency = 0.4 }, 0.12)
 		end
 	end)
 
 	tabButton.MouseLeave:Connect(function()
-		if self.CurrentTab ~= Title then
+		if win.CurrentTab ~= Title then
 			Tween(tabButton, { BackgroundTransparency = 1 }, 0.15)
 		end
 	end)
 	
 	-- Auto-select first tab
-	if not self.CurrentTab then
+	if not win.CurrentTab then
 		SelectTab()
 	end
 	
