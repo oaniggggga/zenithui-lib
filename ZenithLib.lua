@@ -238,7 +238,7 @@ function ZenithLib:MakeWindow(config)
 	local titleBarCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	titleBarCorner.Parent = self.TitleBar
 	
-	-- Название — по центру, белое, заметное
+	-- Название по центру тайтлбара
 	self.TitleText = CreateInstance("TextLabel", {
 		Name = "TitleText",
 		Size = UDim2.new(1, -100, 1, 0),
@@ -246,7 +246,7 @@ function ZenithLib:MakeWindow(config)
 		BackgroundTransparency = 1,
 		Text = Title,
 		TextColor3 = COLORS.Text,
-		TextSize = 14,
+		TextSize = 13,
 		Font = Enum.Font.GothamBold,
 		TextXAlignment = Enum.TextXAlignment.Center,
 	})
@@ -356,33 +356,108 @@ function ZenithLib:MakeWindow(config)
 	local tabNavCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	tabNavCorner.Parent = self.TabNav
 
+	-- Логотип / иконка в левом верхнем углу TabNav
+	local logoFrame = CreateInstance("Frame", {
+		Name = "Logo",
+		Size = UDim2.new(1, 0, 0, 46),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+	})
+	logoFrame.Parent = self.TabNav
+
+	-- Акцентный квадратик — логотип "Z"
+	local logoBox = CreateInstance("Frame", {
+		Size = UDim2.new(0, 26, 0, 26),
+		Position = UDim2.new(0, 12, 0.5, -13),
+		BackgroundColor3 = COLORS.Accent,
+		BackgroundTransparency = 0,
+		BorderSizePixel = 0,
+	})
+	CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) }).Parent = logoBox
+	logoBox.Parent = logoFrame
+
+	CreateInstance("TextLabel", {
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		Text = "Z",
+		TextColor3 = Color3.fromRGB(255, 255, 255),
+		TextSize = 14,
+		Font = Enum.Font.GothamBold,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		TextYAlignment = Enum.TextYAlignment.Center,
+	}).Parent = logoBox
+
+	-- Название рядом с логотипом
+	CreateInstance("TextLabel", {
+		Size = UDim2.new(1, -50, 1, 0),
+		Position = UDim2.new(0, 46, 0, 0),
+		BackgroundTransparency = 1,
+		Text = Title,
+		TextColor3 = COLORS.Text,
+		TextSize = 13,
+		Font = Enum.Font.GothamBold,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		TextTruncate = Enum.TextTruncate.AtEnd,
+	}).Parent = logoFrame
+
+	-- Разделитель
+	local logoDivider = CreateInstance("Frame", {
+		Size = UDim2.new(1, -16, 0, 1),
+		Position = UDim2.new(0, 8, 1, -1),
+		BackgroundColor3 = COLORS.ElementBorder,
+		BackgroundTransparency = 0,
+		BorderSizePixel = 0,
+	})
+	logoDivider.Parent = logoFrame
+
+	-- ScrollingFrame для списка табов — скроллбар скрыт
+	local tabScroll = CreateInstance("ScrollingFrame", {
+		Name = "TabScroll",
+		Size = UDim2.new(1, 0, 1, -46),
+		Position = UDim2.new(0, 0, 0, 46),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ScrollBarThickness = 0,
+		ScrollingDirection = Enum.ScrollingDirection.Y,
+		CanvasSize = UDim2.new(0, 0, 0, 0),
+		ClipsDescendants = true,
+	})
+	tabScroll.Parent = self.TabNav
+
 	self.TabList = CreateInstance("UIListLayout", {
 		Padding = UDim.new(0, 4),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	})
-	self.TabList.Parent = self.TabNav
+	self.TabList.Parent = tabScroll
 
-	local tabPadding = CreateInstance("UIPadding", {
-		PaddingTop = UDim.new(0, 8),
+	CreateInstance("UIPadding", {
+		PaddingTop = UDim.new(0, 6),
 		PaddingLeft = UDim.new(0, 5),
 		PaddingRight = UDim.new(0, 5),
 		PaddingBottom = UDim.new(0, 8),
-	})
-	tabPadding.Parent = self.TabNav
+	}).Parent = tabScroll
+
+	-- Авто-обновление CanvasSize
+	self.TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		tabScroll.CanvasSize = UDim2.new(0, 0, 0, self.TabList.AbsoluteContentSize.Y + 14)
+	end)
+
+	self._tabScroll = tabScroll
 	
 
-	-- Selector bar (Fluent-style)
+	-- Selector bar (Fluent-style) — в tabScroll
 	self.SelectorBar = CreateInstance("Frame", {
 		Name = "SelectorBar",
 		Size = UDim2.new(0, 3, 0, 16),
-		Position = UDim2.new(0, 0, 0, 22),
+		Position = UDim2.new(0, 0, 0, 6),
 		BackgroundColor3 = COLORS.Accent,
 		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
 		ZIndex = 5,
 	})
 	CreateInstance("UICorner", { CornerRadius = UDim.new(0, 2) }).Parent = self.SelectorBar
-	self.SelectorBar.Parent = self.TabNav
+	self.SelectorBar.Parent = self._tabScroll
 
 	-- Spring-анимация для selector
 	local selBar = self.SelectorBar
@@ -533,7 +608,7 @@ function ZenithLib:MakeTab(config)
 	})
 	tabText.Parent = tabButton
 	
-	tabButton.Parent = self.TabNav
+	tabButton.Parent = self._tabScroll
 	
 	-- Create Tab Content Frame
 	local tabContent = CreateInstance("ScrollingFrame", {
@@ -573,8 +648,9 @@ function ZenithLib:MakeTab(config)
 		self.CurrentTab = Title
 		
 		-- Update button appearance — только Frame с именем Tab_*
-		for _, button in ipairs(self.TabNav:GetChildren()) do
-			if button:IsA("Frame") and button.Name:sub(1,4) == "Tab_" then
+		local tabContainer = self._tabScroll or self.TabNav
+		for _, button in ipairs(tabContainer:GetChildren()) do
+			if (button:IsA("Frame") or button:IsA("TextButton")) and button.Name:sub(1,4) == "Tab_" then
 				button.BackgroundColor3 = COLORS.InputBackground
 				button.BackgroundTransparency = 1
 				local txt = button:FindFirstChildWhichIsA("TextLabel")
@@ -585,7 +661,8 @@ function ZenithLib:MakeTab(config)
 		Tween(tabText, { TextColor3 = COLORS.AccentText }, 0.15)
 		-- Selector
 		if self._moveSelectorTo then
-			local relY = tabButton.AbsolutePosition.Y - self.TabNav.AbsolutePosition.Y
+			local scrollRef = self._tabScroll or self.TabNav
+			local relY = tabButton.AbsolutePosition.Y - scrollRef.AbsolutePosition.Y
 			self._moveSelectorTo(relY, tabButton.AbsoluteSize.Y)
 		end
 	end
