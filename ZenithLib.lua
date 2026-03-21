@@ -487,60 +487,8 @@ function ZenithLib:MakeWindow(config)
 		end
 	end)
 
-	-- ── Built-in Credits tab ───────────────────────────────────
-	task.defer(function()
-		local credTab = self:MakeTab({ Title = "Credits", Image = "" })
-		credTab:MakeParagraph({
-			Title = "ZenithLib",
-			Text  = "Version 2.0  •  Black & Rose Theme
-Modular UI library for Roblox.
-Featuring Fluent-style acrylic glass,
-spring animations & selector bar.",
-		})
-		credTab:MakeSeparator()
-		credTab:MakeLabel({ Name = "Toggle UI:  RightShift" })
-		credTab:MakeLabel({ Name = "Drag:  Title bar" })
-	end)
-
-	-- ── Built-in Settings tab ──────────────────────────────────
-	task.defer(function()
-		local setTab = self:MakeTab({ Title = "Settings", Image = "" })
-
-		-- Accent color picker
-		setTab:MakeParagraph({
-			Title = "UI Settings",
-			Text  = "Customize ZenithLib appearance.",
-		})
-		setTab:MakeSeparator()
-
-		-- Toggle key
-		setTab:MakeKeybind({
-			Name    = "Toggle Key",
-			Default = Enum.KeyCode.RightShift,
-			Callback = function(key)
-				self._toggleKey = key
-			end,
-		})
-
-		-- Acrylic toggle
-		setTab:MakeToggle({
-			Name     = "Acrylic Glass",
-			Default  = true,
-			Callback = function(v)
-				self:SetAcrylic(v)
-			end,
-		})
-
-		-- Accent colors
-		setTab:MakeColorPicker({
-			Name    = "Accent Color",
-			Default = COLORS.Accent,
-			Callback = function(color)
-				COLORS.Accent = color
-				mainStroke.Color = color
-			end,
-		})
-	end)
+	-- сохраняем stroke для Settings
+	self._mainStroke = mainStroke
 
 	-- SetTheme function for Window
 	function self:SetTheme(theme)
@@ -574,38 +522,32 @@ function ZenithLib:MakeTab(config)
 	local Image = config.Image
 	
 	-- Create Tab Button
-	local tabButton = CreateInstance("Frame", {
+	local tabButton = CreateInstance("TextButton", {
 		Name = "Tab_" .. Title,
 		Size = UDim2.new(1, -10, 0, 34),
 		BackgroundColor3 = COLORS.InputBackground,
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
+		Text = "",
+		AutoButtonColor = false,
 	})
 	
 	local tabCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
 	tabCorner.Parent = tabButton
 	
-	local tabLayout = CreateInstance("UIListLayout", {
-		Padding = UDim.new(0, 5),
-		FillDirection = Enum.FillDirection.Horizontal,
-		VerticalAlignment = Enum.VerticalAlignment.Center,
-	})
-	tabLayout.Parent = tabButton
+	CreateInstance("UIPadding", { PaddingLeft = UDim.new(0, 10) }).Parent = tabButton
 	
-	local tabPadding = CreateInstance("UIPadding", {
-		PaddingLeft = UDim.new(0, 10),
-	})
-	tabPadding.Parent = tabButton
-	
-	if Image then
+	if Image and Image ~= "" then
 		local tabImage = CreateInstance("ImageLabel", {
-			Size = UDim2.new(0, 18, 0, 18),
+			Size = UDim2.new(0, 16, 0, 16),
+			Position = UDim2.new(0, 10, 0.5, -8),
 			BackgroundTransparency = 1,
 			Image = Image,
+			ImageColor3 = COLORS.SubText,
 		})
 		tabImage.Parent = tabButton
 	end
-	
+
 	local tabText = CreateInstance("TextLabel", {
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
@@ -656,14 +598,17 @@ function ZenithLib:MakeTab(config)
 		tabContent.Visible = true
 		self.CurrentTab = Title
 		
-		-- Update button appearance
+		-- Update button appearance — только Frame с именем Tab_*
 		for _, button in ipairs(self.TabNav:GetChildren()) do
-			if button:IsA("Frame") then
-				Tween(button, { BackgroundColor3 = COLORS.InputBackground })
+			if button:IsA("Frame") and button.Name:sub(1,4) == "Tab_" then
+				button.BackgroundColor3 = COLORS.InputBackground
+				button.BackgroundTransparency = 1
+				local txt = button:FindFirstChildWhichIsA("TextLabel")
+				if txt then txt.TextColor3 = COLORS.SubText; txt.TextSize = 12 end
 			end
 		end
-		Tween(tabButton, { BackgroundColor3 = COLORS.ActiveTab, BackgroundTransparency = 0 })
-		Tween(tabText, { TextColor3 = COLORS.AccentText, TextSize = 13 })
+		Tween(tabButton, { BackgroundColor3 = COLORS.ActiveTab, BackgroundTransparency = 0 }, 0.15)
+		Tween(tabText, { TextColor3 = COLORS.AccentText }, 0.15)
 		-- Selector
 		if self._moveSelectorTo then
 			local relY = tabButton.AbsolutePosition.Y - self.TabNav.AbsolutePosition.Y
@@ -671,26 +616,19 @@ function ZenithLib:MakeTab(config)
 		end
 	end
 	
-	tabButton.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			SelectTab()
+	tabButton.MouseButton1Click:Connect(function()
+		SelectTab()
+	end)
+
+	tabButton.MouseEnter:Connect(function()
+		if self.CurrentTab ~= Title then
+			Tween(tabButton, { BackgroundColor3 = COLORS.InputBackground, BackgroundTransparency = 0.4 }, 0.12)
 		end
 	end)
-	
-	-- Hover effect for tab button
-	tabButton.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement then
-			if self.CurrentTab ~= Title then
-				Tween(tabButton, { BackgroundColor3 = COLORS.InputBackground, BackgroundTransparency = 0.3 })
-			end
-		end
-	end)
-	
-	tabButton.InputEnded:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement then
-			if self.CurrentTab ~= Title then
-				Tween(tabButton, { BackgroundColor3 = COLORS.InputBackground })
-			end
+
+	tabButton.MouseLeave:Connect(function()
+		if self.CurrentTab ~= Title then
+			Tween(tabButton, { BackgroundTransparency = 1 }, 0.15)
 		end
 	end)
 	
@@ -1652,6 +1590,48 @@ function ZenithLib:Restore()
 	self.isMinimized = false
 	self.isMaximized = false
 	Tween(self.MainFrame, { Size = self.normalSize })
+end
+
+
+function ZenithLib:_InitBuiltinTabs()
+	local credTab = self:MakeTab({ Title = "Credits" })
+	credTab:MakeParagraph({
+		Title = "ZenithLib  v2.0",
+		Text  = "Black & Rose Theme\nFluent-style acrylic, spring animations,\nselector bar. Toggle: RightShift.",
+	})
+	credTab:MakeSeparator()
+	credTab:MakeLabel({ Name = "• Toggle UI — RightShift" })
+	credTab:MakeLabel({ Name = "• Drag — Title bar" })
+	credTab:MakeLabel({ Name = "• Close — Red dot (top right)" })
+
+	local setTab = self:MakeTab({ Title = "Settings" })
+	setTab:MakeParagraph({
+		Title = "UI Settings",
+		Text  = "Customize the library appearance.",
+	})
+	setTab:MakeSeparator()
+	setTab:MakeKeybind({
+		Name     = "Toggle Key",
+		Default  = Enum.KeyCode.RightShift,
+		Callback = function(key)
+			self._toggleKey = key
+		end,
+	})
+	setTab:MakeToggle({
+		Name     = "Acrylic Glass",
+		Default  = true,
+		Callback = function(v)
+			self:SetAcrylic(v)
+		end,
+	})
+	setTab:MakeColorPicker({
+		Name    = "Accent Color",
+		Default = COLORS.Accent,
+		Callback = function(color)
+			COLORS.Accent = color
+			if self._mainStroke then self._mainStroke.Color = color end
+		end,
+	})
 end
 
 -- Make library global
