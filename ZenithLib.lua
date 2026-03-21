@@ -332,6 +332,20 @@ function ZenithLib:MakeWindow(config)
 		ClipsDescendants = true,
 	})
 	tabScroll.Parent = self.TabNav
+
+	self.TabList = CreateInstance("UIListLayout", {
+		Padding = UDim.new(0, 4),
+		SortOrder = Enum.SortOrder.LayoutOrder,
+	})
+	self.TabList.Parent = tabScroll
+
+	CreateInstance("UIPadding", {
+		PaddingTop = UDim.new(0, 6),
+		PaddingLeft = UDim.new(0, 5),
+		PaddingRight = UDim.new(0, 5),
+		PaddingBottom = UDim.new(0, 8),
+	}).Parent = tabScroll
+
 	self.TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 		tabScroll.CanvasSize = UDim2.new(0, 0, 0, self.TabList.AbsoluteContentSize.Y + 14)
 	end)
@@ -1560,13 +1574,6 @@ function ZenithLib:_InitBuiltinTabs()
 		Default  = Enum.KeyCode.RightShift,
 		Callback = function(key)
 			self._toggleKey = key
-		end,
-	})
-	setTab:MakeToggle({
-		Name     = "Acrylic Glass",
-		Default  = true,
-		Callback = function(v)
-			self:SetAcrylic(v)
 		end,
 	})
 	setTab:MakeColorPicker({
