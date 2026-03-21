@@ -62,17 +62,20 @@ local function MakeDraggable(frame, parent)
 	end)
 end
 
--- Color Constants
+-- Color Constants (Dark Theme - Fluent inspired)
 local COLORS = {
-	MainBackground = Color3.fromRGB(25, 25, 25),
-	Accent = Color3.fromRGB(180, 50, 110),
-	Text = Color3.fromRGB(255, 255, 255),
-	SubText = Color3.fromRGB(180, 180, 180),
+	MainBackground = Color3.fromRGB(60, 60, 60),
+	Accent = Color3.fromRGB(96, 205, 255),
+	Text = Color3.fromRGB(240, 240, 240),
+	SubText = Color3.fromRGB(170, 170, 170),
 	CloseRed = Color3.fromRGB(255, 95, 85),
 	MaximizeYellow = Color3.fromRGB(255, 190, 40),
 	MinimizeGreen = Color3.fromRGB(40, 205, 65),
-	DarkerBackground = Color3.fromRGB(20, 20, 20),
-	InputBackground = Color3.fromRGB(35, 35, 35),
+	DarkerBackground = Color3.fromRGB(45, 45, 45),
+	InputBackground = Color3.fromRGB(120, 120, 120),
+	ElementBorder = Color3.fromRGB(35, 35, 35),
+	SliderRail = Color3.fromRGB(120, 120, 120),
+	DropdownHolder = Color3.fromRGB(45, 45, 45),
 }
 
 -- Function to update accent color globally
@@ -157,22 +160,30 @@ function ZenithLib:MakeWindow(config)
 		Size = windowSize,
 		Position = windowPos,
 		BackgroundColor3 = COLORS.MainBackground,
-		BackgroundTransparency = 0,
+		BackgroundTransparency = 0.87,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 	})
 	self.MainFrame.Parent = self.ScreenGui
 	
 	-- Corner Radius
-	local mainCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 10) })
+	local mainCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 	mainCorner.Parent = self.MainFrame
+	
+	-- Border Stroke
+	local mainStroke = CreateInstance("UIStroke", {
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		Transparency = 0.5,
+		Color = COLORS.ElementBorder,
+	})
+	mainStroke.Parent = self.MainFrame
 	
 	-- Title Bar
 	self.TitleBar = CreateInstance("Frame", {
 		Name = "TitleBar",
 		Size = UDim2.new(1, 0, 0, 40),
 		BackgroundColor3 = COLORS.DarkerBackground,
-		BackgroundTransparency = 0.3,
+		BackgroundTransparency = 0.7,
 		BorderSizePixel = 0,
 	})
 	self.TitleBar.Parent = self.MainFrame
@@ -297,7 +308,7 @@ function ZenithLib:MakeWindow(config)
 		Name = "TabNav",
 		Size = UDim2.new(0, 150, 1, 0),
 		BackgroundColor3 = COLORS.DarkerBackground,
-		BackgroundTransparency = 0.5,
+		BackgroundTransparency = 0.82,
 		BorderSizePixel = 0,
 	})
 	self.TabNav.Parent = self.ContentContainer
