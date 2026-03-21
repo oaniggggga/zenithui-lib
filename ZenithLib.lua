@@ -1077,7 +1077,6 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 				isOpen = false
 				listFrame.Visible = false
 				arrow.Text = "▾"
-				tabContent.ScrollingEnabled = true
 				Callback(opt)
 			end)
 			btn.Parent = listFrame
@@ -1085,32 +1084,27 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 
 		-- Функция открытия/закрытия
 		local function openList()
-			-- Позиционируем список под кнопкой
-			local absPos  = frame.AbsolutePosition
-			local absSize = frame.AbsoluteSize
-			local itemH   = 31
-			local listH   = math.min(#Options, 8) * itemH + 8
-			local listW   = absSize.X
-
-			-- Проверяем не вылезет ли вниз
-			local screenH = workspace.CurrentCamera.ViewportSize.Y
-			local yPos = absPos.Y + absSize.Y + 4
-			if yPos + listH > screenH - 10 then
-				yPos = absPos.Y - listH - 4
-			end
-
-			listFrame.Position = UDim2.new(0, absPos.X, 0, yPos)
-			listFrame.Size = UDim2.new(0, listW, 0, listH)
 			listFrame.Parent = win.ScreenGui
 			listFrame.Visible = true
-			tabContent.ScrollingEnabled = false
 			arrow.Text = "▴"
+			task.defer(function()
+				local absPos  = frame.AbsolutePosition
+				local absSize = frame.AbsoluteSize
+				local itemH   = 31
+				local listH   = math.min(#Options, 8) * itemH + 8
+				local screenH = workspace.CurrentCamera.ViewportSize.Y
+				local yPos = absPos.Y + absSize.Y + 4
+				if yPos + listH > screenH - 10 then
+					yPos = absPos.Y - listH - 4
+				end
+				listFrame.Position = UDim2.new(0, absPos.X, 0, yPos)
+				listFrame.Size     = UDim2.new(0, absSize.X, 0, listH)
+			end)
 		end
 
 		local function closeList()
 			isOpen = false
 			listFrame.Visible = false
-			tabContent.ScrollingEnabled = true
 			arrow.Text = "▾"
 		end
 
@@ -1286,25 +1280,27 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		end
 
 		local function openList()
-			local absPos = frame.AbsolutePosition
-			local absSize = frame.AbsoluteSize
-			local itemH = 31
-			local listH = math.min(#Options, 8) * itemH + 8
-			local screenH = workspace.CurrentCamera.ViewportSize.Y
-			local yPos = absPos.Y + absSize.Y + 4
-			if yPos + listH > screenH - 10 then yPos = absPos.Y - listH - 4 end
-			listFrame.Position = UDim2.new(0, absPos.X, 0, yPos)
-			listFrame.Size = UDim2.new(0, absSize.X, 0, listH)
 			listFrame.Parent = win.ScreenGui
 			listFrame.Visible = true
-			tabContent.ScrollingEnabled = false
 			arrow.Text = "▴"
+			task.defer(function()
+				local absPos  = frame.AbsolutePosition
+				local absSize = frame.AbsoluteSize
+				local itemH   = 31
+				local listH   = math.min(#Options, 8) * itemH + 8
+				local screenH = workspace.CurrentCamera.ViewportSize.Y
+				local yPos = absPos.Y + absSize.Y + 4
+				if yPos + listH > screenH - 10 then
+					yPos = absPos.Y - listH - 4
+				end
+				listFrame.Position = UDim2.new(0, absPos.X, 0, yPos)
+				listFrame.Size     = UDim2.new(0, absSize.X, 0, listH)
+			end)
 		end
 
 		local function closeList()
 			isOpen = false
 			listFrame.Visible = false
-			tabContent.ScrollingEnabled = true
 			arrow.Text = "▾"
 		end
 
