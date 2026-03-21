@@ -129,6 +129,7 @@ function ZenithLib:MakeWindow(config)
 		Name = "ZenithLib_" .. ConfigName,
 		IgnoreGuiInset = true,
 		ResetOnSpawn = false,
+		DisplayOrder = 100,
 	})
 	self.ScreenGui.Parent = game:GetService("CoreGui")
 	
@@ -156,7 +157,7 @@ function ZenithLib:MakeWindow(config)
 		Size = windowSize,
 		Position = windowPos,
 		BackgroundColor3 = COLORS.MainBackground,
-		BackgroundTransparency = 0.15,
+		BackgroundTransparency = 0.9,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 	})
