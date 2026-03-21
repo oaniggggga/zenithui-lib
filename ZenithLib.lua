@@ -238,16 +238,16 @@ function ZenithLib:MakeWindow(config)
 	local titleBarCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	titleBarCorner.Parent = self.TitleBar
 	
-	-- Маленький subtitle в центре тайтлбара (просто название скрипта)
+	-- Название — по центру, белое, заметное
 	self.TitleText = CreateInstance("TextLabel", {
 		Name = "TitleText",
-		Size = UDim2.new(1, -180, 1, 0),
-		Position = UDim2.new(0, 90, 0, 0),
+		Size = UDim2.new(1, -100, 1, 0),
+		Position = UDim2.new(0, 50, 0, 0),
 		BackgroundTransparency = 1,
 		Text = Title,
-		TextColor3 = COLORS.SubText,
-		TextSize = 11,
-		Font = Enum.Font.Gotham,
+		TextColor3 = COLORS.Text,
+		TextSize = 14,
+		Font = Enum.Font.GothamBold,
 		TextXAlignment = Enum.TextXAlignment.Center,
 	})
 	self.TitleText.Parent = self.TitleBar
@@ -356,32 +356,6 @@ function ZenithLib:MakeWindow(config)
 	local tabNavCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	tabNavCorner.Parent = self.TabNav
 
-	-- Крупное название над табами
-	local navTitle = CreateInstance("TextLabel", {
-		Name = "NavTitle",
-		Size = UDim2.new(1, -12, 0, 46),
-		Position = UDim2.new(0, 10, 0, 0),
-		BackgroundTransparency = 1,
-		Text = Title,
-		TextColor3 = COLORS.Text,
-		TextSize = 18,
-		Font = Enum.Font.GothamBold,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		TextYAlignment = Enum.TextYAlignment.Center,
-		TextTruncate = Enum.TextTruncate.AtEnd,
-	})
-	navTitle.Parent = self.TabNav
-
-	-- Тонкая разделительная линия под названием
-	local navDivider = CreateInstance("Frame", {
-		Size = UDim2.new(1, -16, 0, 1),
-		Position = UDim2.new(0, 8, 0, 46),
-		BackgroundColor3 = COLORS.ElementBorder,
-		BackgroundTransparency = 0,
-		BorderSizePixel = 0,
-	})
-	navDivider.Parent = self.TabNav
-
 	self.TabList = CreateInstance("UIListLayout", {
 		Padding = UDim.new(0, 4),
 		SortOrder = Enum.SortOrder.LayoutOrder,
@@ -389,7 +363,7 @@ function ZenithLib:MakeWindow(config)
 	self.TabList.Parent = self.TabNav
 
 	local tabPadding = CreateInstance("UIPadding", {
-		PaddingTop = UDim.new(0, 54),  -- отступ под заголовок
+		PaddingTop = UDim.new(0, 8),
 		PaddingLeft = UDim.new(0, 5),
 		PaddingRight = UDim.new(0, 5),
 		PaddingBottom = UDim.new(0, 8),
