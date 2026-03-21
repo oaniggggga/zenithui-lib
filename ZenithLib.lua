@@ -6,9 +6,11 @@
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local TextService = game:GetService("TextService")
 
 -- Utility Functions
+print("[ZenithLib] FILE LOADED - line 1 reached")
 local function CreateInstance(className, properties)
 print("[ZenithLib] >> CreateInstance()")
 	local instance = Instance.new(className)
@@ -415,11 +417,11 @@ print("[ZenithLib] >> ZenithLib:MakeWindow()")
 		selSizeT = math.clamp(16 + spd*0.05, 16, (tabH or 35)*1.6)
 		selPosS.done = false; selSizeS.done = false
 		if not selConn then
-			selConn = game:GetService("RunService").RenderStepped:Connect(stepSel)
+			selConn = RunService.RenderStepped:Connect(stepSel)
 		end
 		task.delay(0.13, function()
 			selSizeT = 16; selSizeS.done = false
-			if not selConn then selConn = game:GetService("RunService").RenderStepped:Connect(stepSel) end
+			if not selConn then selConn = RunService.RenderStepped:Connect(stepSel) end
 		end)
 	end
 
@@ -1637,6 +1639,10 @@ print("[ZenithLib] >> ZenithLib:_InitBuiltinTabs()")
 end
 
 -- Make library global
-getgenv().ZenithLib = ZenithLib
+-- Сохраняем глобально если возможно
+pcall(function()
+	getgenv().ZenithLib = ZenithLib
+end)
+_G.ZenithLib = ZenithLib
 
 return ZenithLib
