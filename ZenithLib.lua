@@ -10,6 +10,7 @@ local TextService = game:GetService("TextService")
 
 -- Utility Functions
 local function CreateInstance(className, properties)
+print("[ZenithLib] >> CreateInstance()")
 	local instance = Instance.new(className)
 	for prop, value in pairs(properties) do
 		instance[prop] = value
@@ -18,6 +19,7 @@ local function CreateInstance(className, properties)
 end
 
 local function Tween(instance, properties, duration)
+print("[ZenithLib] >> Tween()")
 	local tweenInfo = TweenInfo.new(duration or 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 	local tween = TweenService:Create(instance, tweenInfo, properties)
 	tween:Play()
@@ -26,12 +28,14 @@ end
 
 -- handle = откуда начинается drag (TitleBar), frame = что двигается (MainFrame)
 local function MakeDraggable(frame, handle)
+print("[ZenithLib] >> MakeDraggable()")
 	local dragging = false
 	local dragInput
 	local dragStart
 	local startPos
 
 	local function Update(input)
+	print("[ZenithLib] >> Update()")
 		local delta = input.Position - dragStart
 		frame.Position = UDim2.new(
 			startPos.X.Scale, startPos.X.Offset + delta.X,
@@ -89,6 +93,7 @@ local COLORS = {
 
 -- Function to update accent color globally
 local function SetAccentColor(color)
+print("[ZenithLib] >> SetAccentColor()")
 	COLORS.Accent = color
 end
 
@@ -98,6 +103,7 @@ ZenithLib.__index = ZenithLib
 
 -- Theme customization (after ZenithLib is defined)
 function ZenithLib:SetTheme(theme)
+print("[ZenithLib] >> ZenithLib:SetTheme()")
 	if theme.Accent then
 		COLORS.Accent = theme.Accent
 	end
@@ -120,6 +126,7 @@ end
 
 -- Get current theme
 function ZenithLib:GetTheme()
+print("[ZenithLib] >> ZenithLib:GetTheme()")
 	return {
 		Accent = COLORS.Accent,
 		MainBackground = COLORS.MainBackground,
@@ -131,6 +138,7 @@ function ZenithLib:GetTheme()
 end
 
 function ZenithLib:MakeWindow(config)
+print("[ZenithLib] >> ZenithLib:MakeWindow()")
 	local self = setmetatable({}, ZenithLib)
 	
 	local Title = config.Title or "ZenithLib"
@@ -164,6 +172,7 @@ function ZenithLib:MakeWindow(config)
 	})
 	shadow.Parent = self.ScreenGui
 	
+	print("[ZenithLib] Creating MainFrame...")
 	self.MainFrame = CreateInstance("Frame", {
 		Name = "MainFrame",
 		Size = windowSize,
@@ -307,6 +316,7 @@ function ZenithLib:MakeWindow(config)
 	self.ContentContainer.Parent = self.MainFrame
 	
 	-- Tab Navigation
+	print("[ZenithLib] Creating TabNav...")
 	self.TabNav = CreateInstance("Frame", {
 		Name = "TabNav",
 		Size = UDim2.new(0, 150, 1, 0),
@@ -320,6 +330,7 @@ function ZenithLib:MakeWindow(config)
 	tabNavCorner.Parent = self.TabNav
 
 	-- ScrollingFrame для табов без скроллбара
+	print("[ZenithLib] Creating TabScroll...")
 	local tabScroll = CreateInstance("ScrollingFrame", {
 		Name = "TabScroll",
 		Size = UDim2.new(1, 0, 1, 0),
@@ -349,6 +360,7 @@ function ZenithLib:MakeWindow(config)
 	self.TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 		tabScroll.CanvasSize = UDim2.new(0, 0, 0, self.TabList.AbsoluteContentSize.Y + 14)
 	end)
+	print("[ZenithLib] _tabScroll assigned:", tabScroll ~= nil)
 	self._tabScroll = tabScroll
 	
 
@@ -373,6 +385,7 @@ function ZenithLib:MakeWindow(config)
 	local selConn
 
 	local function selSpring(s, target, freq, damp, dt)
+	print("[ZenithLib] >> selSpring()")
 		local f = freq*2*math.pi
 		local k = s.value - target
 		local e = math.exp(-damp*f*dt)
@@ -383,6 +396,7 @@ function ZenithLib:MakeWindow(config)
 	end
 
 	local function stepSel(dt)
+	print("[ZenithLib] >> stepSel()")
 		selPosS  = selSpring(selPosS,  selPosT,  7, 1,   dt)
 		selSizeS = selSpring(selSizeS, selSizeT, 5, 0.7, dt)
 		selBar.Position = UDim2.new(0,0,0, selPosS.value)
@@ -410,6 +424,7 @@ function ZenithLib:MakeWindow(config)
 	end
 
 	-- Tab Content Area
+	print("[ZenithLib] Creating TabContent...")
 	self.TabContent = CreateInstance("Frame", {
 		Name = "TabContent",
 		Size = UDim2.new(1, -150, 1, 0),
@@ -461,10 +476,12 @@ function ZenithLib:MakeWindow(config)
 		end
 	end
 	
+	print("[ZenithLib] MakeWindow complete, returning window object")
 	return self
 end
 
 function ZenithLib:MakeTab(config)
+print("[ZenithLib] >> ZenithLib:MakeTab()")
 	local win = self  -- window объект, не перезаписываем
 	
 	local Title = config.Title or "Tab"
@@ -508,6 +525,7 @@ function ZenithLib:MakeTab(config)
 	})
 	tabText.Parent = tabButton
 	
+	print("[ZenithLib] Adding tab button to _tabScroll, _tabScroll=", win._tabScroll ~= nil)
 	tabButton.Parent = win._tabScroll
 	
 	-- Create Tab Content Frame
@@ -545,13 +563,16 @@ function ZenithLib:MakeTab(config)
 	})
 	contentPadding.Parent = tabContent
 	
+	print("[ZenithLib] Adding tabContent to TabContent frame, TabContent=", win.TabContent ~= nil)
 	tabContent.Parent = win.TabContent
 	tabContent.Visible = false
 	
+	print("[ZenithLib] Registered tab frame:", Title)
 	win.TabFrames[Title] = tabContent
 	
 	-- Tab Click Handler
 	local function SelectTab()
+	print("[ZenithLib] >> SelectTab()")
 		for _, frame in pairs(win.TabFrames) do
 			frame.Visible = false
 		end
@@ -568,33 +589,39 @@ function ZenithLib:MakeTab(config)
 				if txt then txt.TextColor3 = COLORS.SubText; txt.TextSize = 12 end
 			end
 		end
+		print("[ZenithLib] Tween tabButton")
 		Tween(tabButton, { BackgroundColor3 = COLORS.ActiveTab, BackgroundTransparency = 0 }, 0.15)
 		Tween(tabText, { TextColor3 = COLORS.AccentText }, 0.15)
 		-- Selector
 		if win._moveSelectorTo then
 			local scrollRef = win._tabScroll or win.TabNav
 			local relY = tabButton.AbsolutePosition.Y - scrollRef.AbsolutePosition.Y
+			print("[ZenithLib] moveSelectorTo relY=", relY, "tabH=", tabButton.AbsoluteSize.Y)
 			win._moveSelectorTo(relY, tabButton.AbsoluteSize.Y)
 		end
 	end
 	
+	print("[ZenithLib] Connecting MouseButton1Click for tab:", Title)
 	tabButton.MouseButton1Click:Connect(function()
 		SelectTab()
 	end)
 
 	tabButton.MouseEnter:Connect(function()
 		if win.CurrentTab ~= Title then
+			print("[ZenithLib] Tween tabButton")
 			Tween(tabButton, { BackgroundColor3 = COLORS.InputBackground, BackgroundTransparency = 0.4 }, 0.12)
 		end
 	end)
 
 	tabButton.MouseLeave:Connect(function()
 		if win.CurrentTab ~= Title then
+			print("[ZenithLib] Tween tabButton")
 			Tween(tabButton, { BackgroundTransparency = 1 }, 0.15)
 		end
 	end)
 	
 	-- Auto-select first tab
+	print("[ZenithLib] Auto-selecting first tab:", Title)
 	if not win.CurrentTab then
 		SelectTab()
 	end
@@ -603,6 +630,7 @@ function ZenithLib:MakeTab(config)
 	local Tab = {}
 	
 	function Tab:MakeButton(config)
+	print("[ZenithLib] >> Tab:MakeButton() name=", config and (config.Name or config.Title) or "?")
 		local Name = config.Name or "Button"
 		local Callback = config.Callback or function() end
 		
@@ -661,6 +689,7 @@ function ZenithLib:MakeTab(config)
 	end
 	
 	function Tab:MakeToggle(config)
+	print("[ZenithLib] >> Tab:MakeToggle() name=", config and (config.Name or config.Title) or "?")
 		local Name = config.Name or "Toggle"
 		local Default = config.Default or false
 		local Callback = config.Callback or function() end
@@ -714,6 +743,7 @@ function ZenithLib:MakeTab(config)
 		local isOn = Default
 		
 		local function UpdateToggle()
+		print("[ZenithLib] >> UpdateToggle()")
 			if isOn then
 				Tween(toggleSwitch, { BackgroundColor3 = COLORS.Accent })
 				Tween(toggleKnob, { Position = UDim2.new(1, -18, 0.5, -7) })
@@ -741,6 +771,7 @@ function ZenithLib:MakeTab(config)
 	end
 	
 	function Tab:MakeSlider(config)
+	print("[ZenithLib] >> Tab:MakeSlider() name=", config and (config.Name or config.Title) or "?")
 		local Name = config.Name or "Slider"
 		local Min = config.Min or 0
 		local Max = config.Max or 100
@@ -819,6 +850,7 @@ function ZenithLib:MakeTab(config)
 		local isDragging = false
 		
 		local function UpdateSlider(value)
+		print("[ZenithLib] >> UpdateSlider()")
 			local percent = math.clamp((value - Min) / (Max - Min), 0, 1)
 			Tween(sliderFill, { Size = UDim2.new(percent, 0, 1, 0) })
 			Tween(sliderKnob, { Position = UDim2.new(percent, -7, 0.5, -7) })
@@ -875,6 +907,7 @@ function ZenithLib:MakeTab(config)
 	end
 	
 	function Tab:MakeDropdown(config)
+	print("[ZenithLib] >> Tab:MakeDropdown() name=", config and (config.Name or config.Title) or "?")
 		local Name = config.Name or "Dropdown"
 		local Options = config.Options or { "Option 1", "Option 2" }
 		local Default = config.Default or Options[1]
@@ -988,6 +1021,7 @@ function ZenithLib:MakeTab(config)
 	end
 	
 	function Tab:MakeMultiDropdown(config)
+	print("[ZenithLib] >> Tab:MakeMultiDropdown() name=", config and (config.Name or config.Title) or "?")
 		local Name = config.Name or "MultiDropdown"
 		local Options = config.Options or { "Option 1", "Option 2" }
 		local Default = config.Default or {}
@@ -1143,6 +1177,7 @@ function ZenithLib:MakeTab(config)
 	end
 	
 	function Tab:MakeKeybind(config)
+	print("[ZenithLib] >> Tab:MakeKeybind() name=", config and (config.Name or config.Title) or "?")
 		local Name = config.Name or "Keybind"
 		local Default = config.Default or Enum.KeyCode.Unknown
 		local Callback = config.Callback or function() end
@@ -1195,6 +1230,7 @@ function ZenithLib:MakeTab(config)
 		local isListening = false
 		
 		local function UpdateKeyText()
+		print("[ZenithLib] >> UpdateKeyText()")
 			keyText.Text = tostring(currentKey):gsub("Enum.KeyCode.", "")
 		end
 		
@@ -1227,6 +1263,7 @@ function ZenithLib:MakeTab(config)
 	end
 	
 	function Tab:MakeTextbox(config)
+	print("[ZenithLib] >> Tab:MakeTextbox() name=", config and (config.Name or config.Title) or "?")
 		local Name = config.Name or "Textbox"
 		local Default = config.Default or ""
 		local TextDisappear = config.TextDisappear or false
@@ -1314,6 +1351,7 @@ function ZenithLib:MakeTab(config)
 	end
 	
 	function Tab:MakeLabel(config)
+	print("[ZenithLib] >> Tab:MakeLabel() name=", config and (config.Name or config.Title) or "?")
 		local Name = config.Name or "Label"
 		
 		local labelFrame = CreateInstance("Frame", {
@@ -1338,6 +1376,7 @@ function ZenithLib:MakeTab(config)
 	end
 	
 	function Tab:MakeSeparator()
+	print("[ZenithLib] >> Tab:MakeSeparator()")
 		local sep = CreateInstance("Frame", {
 			Name = "Separator",
 			Size = UDim2.new(1, 0, 0, 10),
@@ -1358,6 +1397,7 @@ function ZenithLib:MakeTab(config)
 	end
 	
 	function Tab:MakeColorPicker(config)
+	print("[ZenithLib] >> Tab:MakeColorPicker() name=", config and (config.Name or config.Title) or "?")
 		local Name = config.Name or "ColorPicker"
 		local Default = config.Default or Color3.new(1, 1, 1)
 		local Callback = config.Callback or function() end
@@ -1456,6 +1496,7 @@ function ZenithLib:MakeTab(config)
 	end
 	
 	function Tab:MakeParagraph(config)
+	print("[ZenithLib] >> Tab:MakeParagraph() name=", config and (config.Name or config.Title) or "?")
 		local Title = config.Title or "Title"
 		local Text = config.Text or "Description text here..."
 		
@@ -1499,10 +1540,12 @@ function ZenithLib:MakeTab(config)
 		return paragraphFrame
 	end
 	
+	print("[ZenithLib] MakeTab complete, returning Tab object for:", Title)
 	return Tab
 end
 
 function ZenithLib:Destroy()
+print("[ZenithLib] >> ZenithLib:Destroy()")
 	if self.ScreenGui then self.ScreenGui:Destroy() end
 end
 
@@ -1510,12 +1553,14 @@ end
 
 -- Additional Window Methods
 function ZenithLib:SetTitle(newTitle)
+print("[ZenithLib] >> ZenithLib:SetTitle()")
 	if self.TitleText then
 		self.TitleText.Text = newTitle
 	end
 end
 
 function ZenithLib:SetSize(size)
+print("[ZenithLib] >> ZenithLib:SetSize()")
 	if self.MainFrame then
 		self.normalSize = size
 		if not self.isMaximized then
@@ -1525,12 +1570,14 @@ function ZenithLib:SetSize(size)
 end
 
 function ZenithLib:SetPosition(position)
+print("[ZenithLib] >> ZenithLib:SetPosition()")
 	if self.MainFrame then
 		Tween(self.MainFrame, { Position = position })
 	end
 end
 
 function ZenithLib:Minimize()
+print("[ZenithLib] >> ZenithLib:Minimize()")
 	if not self.isMinimized then
 		self.isMinimized = true
 		local targetHeight = self.isMaximized and 600 or self.normalHeight
@@ -1539,6 +1586,7 @@ function ZenithLib:Minimize()
 end
 
 function ZenithLib:Maximize()
+print("[ZenithLib] >> ZenithLib:Maximize()")
 	if not self.isMaximized then
 		self.isMaximized = true
 		Tween(self.MainFrame, { Size = self.expandedSize })
@@ -1546,6 +1594,7 @@ function ZenithLib:Maximize()
 end
 
 function ZenithLib:Restore()
+print("[ZenithLib] >> ZenithLib:Restore()")
 	self.isMinimized = false
 	self.isMaximized = false
 	Tween(self.MainFrame, { Size = self.normalSize })
@@ -1553,6 +1602,7 @@ end
 
 
 function ZenithLib:_InitBuiltinTabs()
+print("[ZenithLib] >> ZenithLib:_InitBuiltinTabs()")
 	local credTab = self:MakeTab({ Title = "Credits" })
 	credTab:MakeParagraph({
 		Title = "ZenithLib  v2.0",
