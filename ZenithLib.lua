@@ -87,43 +87,6 @@ local COLORS = {
 }
 
 
--- Acrylic (Fluent-style glass Part)
-local _acrylicCam = workspace.CurrentCamera
-local function MakeAcrylic(frame)
-	local vy = _acrylicCam.ViewportSize.Y
-	local depth = math.clamp(vy * (56-8)/2560 + 8, 8, 56)
-	local part = Instance.new("Part")
-	part.Name="ZenithAcrylic"; part.Color=Color3.new(0,0,0)
-	part.Material=Enum.Material.Glass; part.Size=Vector3.new(1,1,0)
-	part.Anchored=true; part.CanCollide=false; part.Locked=true
-	part.CastShadow=false; part.Transparency=0.98
-	local mesh=Instance.new("SpecialMesh")
-	mesh.MeshType=Enum.MeshType.Brick; mesh.Offset=Vector3.new(0,0,-1e-6); mesh.Parent=part
-	part.Parent=workspace
-	local conns={}
-	local function upd()
-		if not frame or not frame.Parent then return end
-		local p,s=frame.AbsolutePosition,frame.AbsoluteSize
-		local function sw(x,y) local r=_acrylicCam:ScreenPointToRay(x,y) return r.Origin+r.Direction*depth end
-		local tl=sw(p.X,p.Y); local tr=sw(p.X+s.X,p.Y); local br=sw(p.X+s.X,p.Y+s.Y)
-		local cf=_acrylicCam.CFrame
-		part.CFrame=CFrame.fromMatrix((tl+br)/2,cf.XVector,cf.YVector,cf.ZVector)
-		part.Mesh.Scale=Vector3.new((tr-tl).Magnitude,(tr-br).Magnitude,0)
-	end
-	table.insert(conns,_acrylicCam:GetPropertyChangedSignal("CFrame"):Connect(upd))
-	table.insert(conns,_acrylicCam:GetPropertyChangedSignal("ViewportSize"):Connect(upd))
-	table.insert(conns,frame:GetPropertyChangedSignal("AbsolutePosition"):Connect(upd))
-	table.insert(conns,frame:GetPropertyChangedSignal("AbsoluteSize"):Connect(upd))
-	frame.AncestryChanged:Connect(function()
-		if not frame.Parent then
-			for _,cn in ipairs(conns) do pcall(cn.Disconnect,cn) end
-			pcall(function() part:Destroy() end)
-		end
-	end)
-	task.defer(upd)
-	return part
-end
-
 -- Function to update accent color globally
 local function SetAccentColor(color)
 	COLORS.Accent = color
@@ -356,66 +319,11 @@ function ZenithLib:MakeWindow(config)
 	local tabNavCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	tabNavCorner.Parent = self.TabNav
 
-	-- Логотип / иконка в левом верхнем углу TabNav
-	local logoFrame = CreateInstance("Frame", {
-		Name = "Logo",
-		Size = UDim2.new(1, 0, 0, 46),
-		BackgroundTransparency = 1,
-		BorderSizePixel = 0,
-	})
-	logoFrame.Parent = self.TabNav
-
-	-- Акцентный квадратик — логотип "Z"
-	local logoBox = CreateInstance("Frame", {
-		Size = UDim2.new(0, 26, 0, 26),
-		Position = UDim2.new(0, 12, 0.5, -13),
-		BackgroundColor3 = COLORS.Accent,
-		BackgroundTransparency = 0,
-		BorderSizePixel = 0,
-	})
-	CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) }).Parent = logoBox
-	logoBox.Parent = logoFrame
-
-	CreateInstance("TextLabel", {
-		Size = UDim2.new(1, 0, 1, 0),
-		BackgroundTransparency = 1,
-		Text = "Z",
-		TextColor3 = Color3.fromRGB(255, 255, 255),
-		TextSize = 14,
-		Font = Enum.Font.GothamBold,
-		TextXAlignment = Enum.TextXAlignment.Center,
-		TextYAlignment = Enum.TextYAlignment.Center,
-	}).Parent = logoBox
-
-	-- Название рядом с логотипом
-	CreateInstance("TextLabel", {
-		Size = UDim2.new(1, -50, 1, 0),
-		Position = UDim2.new(0, 46, 0, 0),
-		BackgroundTransparency = 1,
-		Text = Title,
-		TextColor3 = COLORS.Text,
-		TextSize = 13,
-		Font = Enum.Font.GothamBold,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		TextYAlignment = Enum.TextYAlignment.Center,
-		TextTruncate = Enum.TextTruncate.AtEnd,
-	}).Parent = logoFrame
-
-	-- Разделитель
-	local logoDivider = CreateInstance("Frame", {
-		Size = UDim2.new(1, -16, 0, 1),
-		Position = UDim2.new(0, 8, 1, -1),
-		BackgroundColor3 = COLORS.ElementBorder,
-		BackgroundTransparency = 0,
-		BorderSizePixel = 0,
-	})
-	logoDivider.Parent = logoFrame
-
-	-- ScrollingFrame для списка табов — скроллбар скрыт
+	-- ScrollingFrame для табов без скроллбара
 	local tabScroll = CreateInstance("ScrollingFrame", {
 		Name = "TabScroll",
-		Size = UDim2.new(1, 0, 1, -46),
-		Position = UDim2.new(0, 0, 0, 46),
+		Size = UDim2.new(1, 0, 1, 0),
+		Position = UDim2.new(0, 0, 0, 0),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		ScrollBarThickness = 0,
@@ -424,25 +332,9 @@ function ZenithLib:MakeWindow(config)
 		ClipsDescendants = true,
 	})
 	tabScroll.Parent = self.TabNav
-
-	self.TabList = CreateInstance("UIListLayout", {
-		Padding = UDim.new(0, 4),
-		SortOrder = Enum.SortOrder.LayoutOrder,
-	})
-	self.TabList.Parent = tabScroll
-
-	CreateInstance("UIPadding", {
-		PaddingTop = UDim.new(0, 6),
-		PaddingLeft = UDim.new(0, 5),
-		PaddingRight = UDim.new(0, 5),
-		PaddingBottom = UDim.new(0, 8),
-	}).Parent = tabScroll
-
-	-- Авто-обновление CanvasSize
 	self.TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 		tabScroll.CanvasSize = UDim2.new(0, 0, 0, self.TabList.AbsoluteContentSize.Y + 14)
 	end)
-
 	self._tabScroll = tabScroll
 	
 
@@ -518,12 +410,6 @@ function ZenithLib:MakeWindow(config)
 	
 	-- Make Draggable
 	MakeDraggable(self.MainFrame, self.TitleBar)
-	self._acrylicPart = nil
-	task.defer(function()
-		if self.MainFrame and self.MainFrame.Parent then
-			self._acrylicPart = MakeAcrylic(self.MainFrame)
-		end
-	end)
 	
 	-- ── Toggle visibility on RightShift ──────────────────────────
 	self._visible = true
@@ -616,20 +502,31 @@ function ZenithLib:MakeTab(config)
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		ScrollBarThickness = 3,
+		ScrollBarThickness = 4,
 		ScrollBarImageColor3 = COLORS.Accent,
+		ScrollBarImageTransparency = 0.3,
+		CanvasSize = UDim2.new(0, 0, 0, 0),
+		ScrollingDirection = Enum.ScrollingDirection.Y,
+		TopImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
+		BottomImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
+		MidImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
 	})
 	
 	local contentList = CreateInstance("UIListLayout", {
-		Padding = UDim.new(0, 10),
+		Padding = UDim.new(0, 8),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	})
 	contentList.Parent = tabContent
+
+	-- Авто-обновление CanvasSize
+	contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		tabContent.CanvasSize = UDim2.new(0, 0, 0, contentList.AbsoluteContentSize.Y + 20)
+	end)
 	
 	local contentPadding = CreateInstance("UIPadding", {
 		PaddingTop = UDim.new(0, 10),
 		PaddingLeft = UDim.new(0, 10),
-		PaddingRight = UDim.new(0, 10),
+		PaddingRight = UDim.new(0, 14),
 		PaddingBottom = UDim.new(0, 10),
 	})
 	contentPadding.Parent = tabContent
@@ -1592,12 +1489,9 @@ function ZenithLib:MakeTab(config)
 end
 
 function ZenithLib:Destroy()
-	pcall(function() if self._acrylicPart then self._acrylicPart:Destroy() end end)
 	if self.ScreenGui then self.ScreenGui:Destroy() end
 end
 
-function ZenithLib:SetAcrylic(on)
-	if self._acrylicPart then self._acrylicPart.Transparency = on and 0.98 or 1 end
 end
 
 -- Additional Window Methods
