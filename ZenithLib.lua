@@ -581,21 +581,28 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 	tabButton.Parent = win._tabScroll
 	
 	-- Create Tab Content Frame
-	local tabContent = CreateInstance("Frame", {
+	local tabContent = CreateInstance("ScrollingFrame", {
 		Name = "Content_" .. Title,
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		ClipsDescendants = true,
+		ScrollBarThickness = 0,
+		ScrollingDirection = Enum.ScrollingDirection.Y,
+		CanvasSize = UDim2.new(0, 0, 0, 0),
+		ScrollBarImageTransparency = 1,
+		ElasticBehavior = Enum.ElasticBehavior.Never,
 	})
-	
+
 	local contentList = CreateInstance("UIListLayout", {
 		Padding = UDim.new(0, 8),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	})
 	contentList.Parent = tabContent
 
-	
+	contentList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		tabContent.CanvasSize = UDim2.new(0, 0, 0, contentList.AbsoluteContentSize.Y + 14)
+	end)
+
 	local contentPadding = CreateInstance("UIPadding", {
 		PaddingTop = UDim.new(0, 4),
 		PaddingLeft = UDim.new(0, 10),
@@ -1895,16 +1902,17 @@ local function GetNotifHolder(gui)
 	if NotifHolder and NotifHolder.Parent then return NotifHolder end
 	NotifHolder = CreateInstance("Frame", {
 		Name = "ZenithNotifHolder",
-		Size = UDim2.new(0, 280, 1, -20),
-		Position = UDim2.new(1, -296, 0, 10),
+		Size = UDim2.new(0, 260, 1, -16),
+		Position = UDim2.new(1, -272, 0, 8),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		ZIndex = 200,
 		Parent = gui,
 	})
 	CreateInstance("UIListLayout", {
-		Padding = UDim.new(0, 8),
+		Padding = UDim.new(0, 6),
 		VerticalAlignment = Enum.VerticalAlignment.Bottom,
+		HorizontalAlignment = Enum.HorizontalAlignment.Right,
 		SortOrder = Enum.SortOrder.LayoutOrder,
 		Parent = NotifHolder,
 	})
@@ -1917,88 +1925,92 @@ function ZenithLib:Notify(cfg)
 	local duration = cfg.Duration or 4
 	local holder   = GetNotifHolder(self.ScreenGui)
 
+	-- Карточка
 	local card = CreateInstance("Frame", {
 		Name = "Notif",
-		Size = UDim2.new(1, 0, 0, 70),
-		BackgroundColor3 = COLORS.DarkerBackground,
+		Size = UDim2.new(1, 0, 0, 62),
+		BackgroundColor3 = Color3.fromRGB(12, 7, 9),
 		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
+		Position = UDim2.new(1, 10, 0, 0),
+		ZIndex = 200,
 		Parent = holder,
 	})
 	CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = card
 	CreateInstance("UIStroke", {
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-		Thickness = 0.5, Transparency = 0.4,
+		Thickness = 1,
+		Transparency = 0.55,
 		Color = COLORS.Accent,
 	}).Parent = card
 
-	-- Акцентная полоска слева
-	local stripe = CreateInstance("Frame", {
-		Size = UDim2.new(0, 3, 1, -16),
-		Position = UDim2.new(0, 0, 0, 8),
+	-- Акцентный левый border
+	local accent = CreateInstance("Frame", {
+		Size = UDim2.new(0, 3, 0, 36),
+		Position = UDim2.new(0, 0, 0.5, -18),
 		BackgroundColor3 = COLORS.Accent,
 		BorderSizePixel = 0,
+		ZIndex = 201,
 	})
-	CreateInstance("UICorner", { CornerRadius = UDim.new(0, 2) }).Parent = stripe
-	stripe.Parent = card
+	CreateInstance("UICorner", { CornerRadius = UDim.new(0, 2) }).Parent = accent
+	accent.Parent = card
 
-	-- Title
+	-- Заголовок
 	CreateInstance("TextLabel", {
-		Size = UDim2.new(1, -20, 0, 18),
-		Position = UDim2.new(0, 14, 0, 10),
+		Size = UDim2.new(1, -16, 0, 20),
+		Position = UDim2.new(0, 12, 0, 9),
 		BackgroundTransparency = 1,
 		Text = title,
-		TextColor3 = COLORS.AccentText,
+		TextColor3 = COLORS.Text,
 		TextSize = 13,
 		Font = Enum.Font.GothamBold,
 		TextXAlignment = Enum.TextXAlignment.Left,
+		ZIndex = 201,
 	}).Parent = card
 
-	-- Content
+	-- Контент
 	CreateInstance("TextLabel", {
-		Size = UDim2.new(1, -20, 0, 28),
-		Position = UDim2.new(0, 14, 0, 30),
+		Size = UDim2.new(1, -16, 0, 20),
+		Position = UDim2.new(0, 12, 0, 31),
 		BackgroundTransparency = 1,
 		Text = content,
 		TextColor3 = COLORS.SubText,
-		TextSize = 12,
+		TextSize = 11,
 		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
-		TextYAlignment = Enum.TextYAlignment.Top,
 		TextWrapped = true,
+		TextTruncate = Enum.TextTruncate.AtEnd,
+		ZIndex = 201,
 	}).Parent = card
 
-	-- Progress bar
-	local bar = CreateInstance("Frame", {
+	-- Таймер-линия снизу
+	local timerBar = CreateInstance("Frame", {
 		Size = UDim2.new(1, 0, 0, 2),
 		Position = UDim2.new(0, 0, 1, -2),
 		BackgroundColor3 = COLORS.Accent,
-		BackgroundTransparency = 0.4,
+		BackgroundTransparency = 0.5,
 		BorderSizePixel = 0,
+		ZIndex = 201,
 	})
-	bar.Parent = card
+	timerBar.Parent = card
 
-	-- Animate in: slide from right
-	card.Position = UDim2.new(1, 10, 0, 0)
-	Tween(card, { Position = UDim2.new(0, 0, 0, 0) }, 0.3, Enum.EasingStyle.Back)
+	-- Slide in
+	Tween(card, { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Quint)
 
-	-- Progress shrink
-	task.spawn(function()
-		local steps = duration * 20
-		for i = 1, steps do
-			if not card.Parent then return end
-			bar.Size = UDim2.new(1 - (i / steps), 0, 0, 2)
-			task.wait(1 / 20)
-		end
-	end)
+	-- Таймер
+	TweenService:Create(timerBar,
+		TweenInfo.new(duration, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
+		{ Size = UDim2.new(0, 0, 0, 2) }
+	):Play()
 
 	-- Dismiss
 	task.delay(duration, function()
 		if not card.Parent then return end
-		Tween(card, { Position = UDim2.new(1, 10, 0, 0), BackgroundTransparency = 1 }, 0.25)
-		task.wait(0.3)
-		pcall(function() card:Destroy() end)
+		Tween(card, { Position = UDim2.new(1, 10, 0, 0) }, 0.2, Enum.EasingStyle.Quint)
+		task.delay(0.22, function()
+			pcall(function() card:Destroy() end)
+		end)
 	end)
 
 	return card
