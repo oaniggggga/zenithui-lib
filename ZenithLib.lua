@@ -331,17 +331,12 @@ print("[ZenithLib] >> ZenithLib:MakeWindow()")
 	local tabNavCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	tabNavCorner.Parent = self.TabNav
 
-	-- ScrollingFrame для табов без скроллбара
-	print("[ZenithLib] Creating TabScroll...")
-	local tabScroll = CreateInstance("ScrollingFrame", {
+	-- Обычный Frame для табов — никакого скроллбара
+	local tabScroll = CreateInstance("Frame", {
 		Name = "TabScroll",
 		Size = UDim2.new(1, 0, 1, 0),
-		Position = UDim2.new(0, 0, 0, 0),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		ScrollBarThickness = 0,
-		ScrollingDirection = Enum.ScrollingDirection.Y,
-		CanvasSize = UDim2.new(0, 0, 0, 0),
 		ClipsDescendants = true,
 	})
 	tabScroll.Parent = self.TabNav
@@ -353,15 +348,13 @@ print("[ZenithLib] >> ZenithLib:MakeWindow()")
 	self.TabList.Parent = tabScroll
 
 	CreateInstance("UIPadding", {
-		PaddingTop = UDim.new(0, 6),
+		PaddingTop = UDim.new(0, 2),
 		PaddingLeft = UDim.new(0, 5),
 		PaddingRight = UDim.new(0, 5),
 		PaddingBottom = UDim.new(0, 8),
 	}).Parent = tabScroll
 
-	self.TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		tabScroll.CanvasSize = UDim2.new(0, 0, 0, self.TabList.AbsoluteContentSize.Y + 14)
-	end)
+
 	print("[ZenithLib] _tabScroll assigned:", tabScroll ~= nil)
 	self._tabScroll = tabScroll
 	
@@ -558,7 +551,7 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 	end)
 	
 	local contentPadding = CreateInstance("UIPadding", {
-		PaddingTop = UDim.new(0, 10),
+		PaddingTop = UDim.new(0, 4),
 		PaddingLeft = UDim.new(0, 10),
 		PaddingRight = UDim.new(0, 14),
 		PaddingBottom = UDim.new(0, 10),
