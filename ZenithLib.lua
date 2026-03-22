@@ -365,7 +365,7 @@ print("[ZenithLib] >> ZenithLib:MakeWindow()")
 	self.ControlsContainer = CreateInstance("Frame", {
 		Name = "ControlsContainer",
 		Size = UDim2.new(0, 76, 1, 0),
-		Position = UDim2.new(1, -84, 0, 0),
+		Position = UDim2.new(1, -96, 0, 0),
 		BackgroundTransparency = 1,
 	})
 	self.ControlsContainer.Parent = self.TitleBar
@@ -577,10 +577,12 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 	
 	CreateInstance("UIPadding", { PaddingLeft = UDim.new(0, 10) }).Parent = tabButton
 	
+	local tabImage = nil
 	if Image and Image ~= "" then
-		local tabImage = CreateInstance("ImageLabel", {
+		tabImage = CreateInstance("ImageLabel", {
+			Name = "TabIcon",
 			Size = UDim2.new(0, 16, 0, 16),
-			Position = UDim2.new(0, 10, 0.5, -8),
+			Position = UDim2.new(0, 0, 0.5, -8),
 			BackgroundTransparency = 1,
 			Image = Image,
 			ImageColor3 = COLORS.SubText,
@@ -588,11 +590,13 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		tabImage.Parent = tabButton
 	end
 
+	local textOffset = (Image and Image ~= "") and 22 or 0
 	local tabText = CreateInstance("TextLabel", {
-		Size = UDim2.new(1, 0, 1, 0),
+		Size = UDim2.new(1, -textOffset, 1, 0),
+		Position = UDim2.new(0, textOffset, 0, 0),
 		BackgroundTransparency = 1,
 		Text = Title,
-		TextColor3 = COLORS.SubText,
+		TextColor3 = Color3.fromRGB(220, 215, 218),
 		TextSize = 12,
 		Font = Enum.Font.Gotham,
 		TextXAlignment = Enum.TextXAlignment.Left,
@@ -665,12 +669,17 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 				button.BackgroundColor3 = COLORS.InputBackground
 				button.BackgroundTransparency = 1
 				local txt = button:FindFirstChildWhichIsA("TextLabel")
-				if txt then txt.TextColor3 = COLORS.SubText; txt.TextSize = 12 end
+				if txt then txt.TextColor3 = Color3.fromRGB(150, 140, 145); txt.TextSize = 12 end
+				local ico = button:FindFirstChild("TabIcon")
+				if ico then ico.ImageColor3 = Color3.fromRGB(130, 120, 125) end
 			end
 		end
 		print("[ZenithLib] Tween tabButton")
 		Tween(tabButton, { BackgroundColor3 = COLORS.ActiveTab, BackgroundTransparency = 0 }, 0.15)
 		Tween(tabText, { TextColor3 = COLORS.AccentText, TextSize = 13 }, 0.15)
+		if tabImage then
+			Tween(tabImage, { ImageColor3 = COLORS.AccentText }, 0.15)
+		end
 	end
 	
 	print("[ZenithLib] Connecting MouseButton1Click for tab:", Title)
