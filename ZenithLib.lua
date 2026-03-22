@@ -275,9 +275,16 @@ function ZenithLib:MakeWindow(config)
 print("[ZenithLib] >> ZenithLib:MakeWindow()")
 	local self = setmetatable({}, ZenithLib)
 	
-	local Title = config.Title or "ZenithLib"
-	local Author = config.Author or nil
+	local Title      = config.Title      or "ZenithLib"
+	local Author     = config.Author     or nil
 	local ConfigName = config.ConfigName or "Default"
+	self._configName = ConfigName
+	self._cfgPath    = nil
+	self._cfgRegistry = {}
+	-- Устанавливаем путь для конфигов
+	_configPath = "ZenithLib/" .. ConfigName .. "/"
+	pcall(makefolder, "ZenithLib")
+	pcall(makefolder, _configPath)
 	
 	-- Create ScreenGui
 	self.ScreenGui = CreateInstance("ScreenGui", {
@@ -621,8 +628,9 @@ print("[ZenithLib] >> ZenithLib:MakeWindow()")
 	})
 	self.TabContent.Parent = self.ContentContainer
 	
-	self.TabFrames = {}
+	self.TabFrames  = {}
 	self.CurrentTab = nil
+	self._tabIndex  = 0   -- счётчик для LayoutOrder
 	
 	-- Make Draggable
 	MakeDraggable(self.MainFrame, self.TitleBar)
@@ -677,6 +685,10 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 	local Title = config.Title or "Tab"
 	local Image = config.Image
 	
+	-- Индекс таба для LayoutOrder
+	win._tabIndex = (win._tabIndex or 0) + 1
+	local _tabOrder = config.LayoutOrder or win._tabIndex
+
 	-- Create Tab Button
 	local tabButton = CreateInstance("TextButton", {
 		Name = "Tab_" .. Title,
@@ -686,6 +698,7 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		BorderSizePixel = 0,
 		Text = "",
 		AutoButtonColor = false,
+		LayoutOrder = _tabOrder,
 	})
 	
 	local tabCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
@@ -1025,7 +1038,29 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			isOn = not isOn
 			UpdateToggle()
 		end)
+
+		-- Config registration
+		if config.ConfigKey then
+			win:_RegisterCfgItem(config.ConfigKey,
+				function() return isOn end,
+				function(v) isOn = v == true; UpdateToggle() end,
+				"bool"
+			)
+		end
 		
+		-- Регистрируем в конфиге
+		_registerConfigItem("toggle_" .. Name,
+			function() return isOn end,
+			function(v)
+				if type(v) == "boolean" then
+					isOn = not isOn  -- сбрасываем в противоположное чтобы UpdateToggle правильно сработал
+					if v ~= isOn then isOn = v end
+					isOn = v
+					UpdateToggle()
+				end
+			end,
+			"boolean"
+		)
 		toggleFrame.Parent = tabContent
 		return toggleFrame
 	end
@@ -1182,6 +1217,24 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			end
 		end)
 		
+		-- Config registration
+		local _sliderVal = Default
+		local _origUpdate = UpdateSlider
+		UpdateSlider = function(value)
+			_sliderVal = value
+			_origUpdate(value)
+		end
+		if config.ConfigKey then
+			win:_RegisterCfgItem(config.ConfigKey,
+				function() return _sliderVal end,
+				function(v)
+					local n = tonumber(v)
+					if n then UpdateSlider(math.clamp(n, Min, Max)) end
+				end,
+				"number"
+			)
+		end
+
 		sliderFrame.Parent = tabContent
 		return sliderFrame
 	end
@@ -1707,6 +1760,17 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			end
 		end)
 		
+		if config.ConfigKey then
+			win:_RegisterCfgItem(config.ConfigKey,
+				function() return tostring(currentKey):gsub("Enum.KeyCode.", "") end,
+				function(v)
+					local ok, key = pcall(function() return Enum.KeyCode[tostring(v)] end)
+					if ok and key then currentKey = key; UpdateKeyText() end
+				end,
+				"keybind"
+			)
+		end
+
 		keybindFrame.Parent = tabContent
 		return keybindFrame
 	end
@@ -2470,9 +2534,151 @@ end
 
 
 
+
+function ZenithLib:MakeConfigTab(config)
+	local self = self
+	config = config or {}
+	local tabTitle   = config.Title  or "Configs"
+	local autoSave   = config.AutoSave ~= false  -- по умолчанию true
+	local autoSaveInterval = config.AutoSaveInterval or 10  -- секунды
+	local defaultCfg = config.Default or "default"
+
+	-- Вкладка всегда снизу но выше Credits/Settings
+	local tab = self:MakeTab({ Title = tabTitle, Image = config.Image or "save", LayoutOrder = 8999 })
+
+	-- Текущий активный конфиг
+	local currentCfg = defaultCfg
+
+	tab:MakeSection({ Name = "Config" })
+
+	-- Список конфигов
+	local function getCfgList()
+		local list = _cfgList()
+		if #list == 0 then list = { defaultCfg } end
+		return list
+	end
+
+	local cfgDropdown = tab:MakeDropdown({
+		Name    = "Active Config",
+		Options = getCfgList(),
+		Default = defaultCfg,
+		Callback = function(name)
+			currentCfg = name
+		end,
+	})
+
+	tab:MakeSeparator()
+
+	-- Новое имя конфига
+	local newCfgName = ""
+	tab:MakeTextbox({
+		Name        = "Config Name",
+		Placeholder = "my_config",
+		Default     = "",
+		Callback    = function(text)
+			newCfgName = text
+		end,
+	})
+
+	-- Кнопки
+	tab:MakeButton({
+		Name = "Save Config",
+		Icon = "save",
+		Callback = function()
+			local name = (newCfgName ~= "" and newCfgName) or currentCfg
+			_saveConfig(name)
+			currentCfg = name
+			self:Notify({ Title = "Saved", Content = "Config "" .. name .. "" saved.", Duration = 3 })
+		end,
+	})
+
+	tab:MakeButton({
+		Name = "Load Config",
+		Icon = "folder-open",
+		Callback = function()
+			local ok = _loadConfig(currentCfg)
+			if ok then
+				self:Notify({ Title = "Loaded", Content = "Config "" .. currentCfg .. "" loaded.", Duration = 3 })
+			else
+				self:Notify({ Title = "Not Found", Content = "Config "" .. currentCfg .. "" does not exist.", Duration = 3 })
+			end
+		end,
+	})
+
+	tab:MakeButton({
+		Name = "Refresh List",
+		Icon = "refresh-cw",
+		Callback = function()
+			local list = getCfgList()
+			cfgDropdown:SetValue(list[1] or defaultCfg)
+		end,
+	})
+
+	tab:MakeSeparator()
+
+	-- Автосейв тогл
+	local autoSaveActive = autoSave
+	local autoSaveConn   = nil
+
+	local function startAutoSave()
+		if autoSaveConn then autoSaveConn:Disconnect() end
+		autoSaveConn = RunService.Heartbeat:Connect(function()
+			-- Используем tick() для интервала
+		end)
+		-- Используем task.spawn с циклом
+		task.spawn(function()
+			while autoSaveActive do
+				task.wait(autoSaveInterval)
+				if autoSaveActive then
+					_saveConfig(currentCfg)
+					print("[ZenithLib] Autosaved config:", currentCfg)
+				end
+			end
+		end)
+	end
+
+	tab:MakeToggle({
+		Name    = "Auto Save",
+		Icon    = "clock",
+		Default = autoSave,
+		Callback = function(state)
+			autoSaveActive = state
+			if state then
+				startAutoSave()
+				self:Notify({ Title = "Auto Save On", Content = "Every " .. autoSaveInterval .. "s", Duration = 2 })
+			else
+				self:Notify({ Title = "Auto Save Off", Content = "", Duration = 2 })
+			end
+		end,
+	})
+
+	tab:MakeSlider({
+		Name    = "Save Interval",
+		Icon    = "timer",
+		Min     = 5,
+		Max     = 120,
+		Default = autoSaveInterval,
+		Callback = function(val)
+			autoSaveInterval = val
+		end,
+	})
+
+	if autoSave then
+		startAutoSave()
+	end
+
+	-- Метод для регистрации элементов в конфиге
+	-- Используется внутри MakeToggle/MakeSlider/MakeDropdown/MakeTextbox
+	self._configTab = tab
+	self._cfgAutoSaveActive = function() return autoSaveActive end
+	self._currentCfg = function() return currentCfg end
+
+	return tab
+end
+
 function ZenithLib:_InitBuiltinTabs()
 print("[ZenithLib] >> ZenithLib:_InitBuiltinTabs()")
-	local credTab = self:MakeTab({ Title = "Credits", Image = "info" })
+	local credTab = self:MakeTab({ Title = "Credits", Image = "info", LayoutOrder = 9998 })
 	credTab:MakeParagraph({
 		Title = "ZenithLib  v2.0",
 		Text  = "Black & Rose Theme — модульная UI библиотека для Roblox. Чистый дизайн, гибкие элементы, простое API.",
@@ -2490,7 +2696,7 @@ print("[ZenithLib] >> ZenithLib:_InitBuiltinTabs()")
 	credTab:MakeLabel({ Name = "MakeKeybind, MakeTextbox, MakeLabel" })
 	credTab:MakeLabel({ Name = "MakeParagraph, MakeSeparator, MakeSection" })
 
-	local setTab = self:MakeTab({ Title = "Settings", Image = "settings" })
+	local setTab = self:MakeTab({ Title = "Settings", Image = "settings", LayoutOrder = 9999 })
 	setTab:MakeParagraph({
 		Title = "UI Settings",
 		Text  = "Customize the library appearance.",
@@ -2637,11 +2843,273 @@ function ZenithLib:Notify(cfg)
 	return card
 end
 
+
+-- ═══════════════════════════════════════════════════════════
+-- Config System
+-- ═══════════════════════════════════════════════════════════
+
+local _configPath = nil  -- будет установлен при MakeWindow
+
+local function _cfgWrite(name, data)
+	local path = _configPath .. name .. ".json"
+	local ok, err = pcall(writefile, path, game:GetService("HttpService"):JSONEncode(data))
+	if not ok then warn("[ZenithLib] Config write failed:", err) end
+end
+
+local function _cfgRead(name)
+	local path = _configPath .. name .. ".json"
+	local ok, raw = pcall(readfile, path)
+	if not ok or not raw or raw == "" then return nil end
+	local ok2, data = pcall(function()
+		return game:GetService("HttpService"):JSONDecode(raw)
+	end)
+	return ok2 and data or nil
+end
+
+local function _cfgExists(name)
+	local path = _configPath .. name .. ".json"
+	local ok = pcall(function() return isfile and isfile(path) end)
+	-- Fallback: try readfile
+	if not ok then
+		local r = pcall(readfile, path)
+		return r
+	end
+	return ok
+end
+
+local function _cfgList()
+	local ok, files = pcall(listfiles, _configPath)
+	if not ok then return {} end
+	local configs = {}
+	for _, f in ipairs(files) do
+		local name = f:match("([^/\]+)%.json$")
+		if name then table.insert(configs, name) end
+	end
+	return configs
+end
+
+local _configRegistry = {}  -- {name → {getValue, setValue, type}}
+local _autoSaveConns   = {}
+
+local function _registerConfigItem(name, getter, setter, itemType)
+	_configRegistry[name] = { get = getter, set = setter, type = itemType }
+end
+
+local function _saveConfig(cfgName)
+	local data = {}
+	for k, v in pairs(_configRegistry) do
+		local ok, val = pcall(v.get)
+		if ok then data[k] = val end
+	end
+	_cfgWrite(cfgName, data)
+end
+
+local function _loadConfig(cfgName)
+	local data = _cfgRead(cfgName)
+	if not data then return false end
+	for k, v in pairs(_configRegistry) do
+		if data[k] ~= nil then
+			pcall(v.set, data[k])
+		end
+	end
+	return true
+end
+
 -- Make library global
 -- Сохраняем глобально если возможно
 pcall(function()
 	getgenv().ZenithLib = ZenithLib
 end)
+
+-- ═══════════════════════════════════════════════════════════
+-- Config System
+-- ═══════════════════════════════════════════════════════════
+local HttpService = game:GetService("HttpService")
+
+local function _getCfgPath(configName)
+	local folder = "ZenithLib/" .. (configName or "default")
+	pcall(function()
+		if not isfolder(folder) then makefolder(folder) end
+	end)
+	return folder .. "/"
+end
+
+local function _cfgWrite(path, name, data)
+	local ok, val = pcall(function() return HttpService:JSONEncode(data) end)
+	if not ok then return end
+	pcall(writefile, path .. name .. ".json", val)
+end
+
+local function _cfgRead(path, name)
+	local ok, raw = pcall(readfile, path .. name .. ".json")
+	if not ok or not raw or raw == "" then return nil end
+	local ok2, data = pcall(function() return HttpService:JSONDecode(raw) end)
+	return ok2 and data or nil
+end
+
+local function _cfgList(path)
+	local ok, files = pcall(listfiles, path)
+	if not ok or not files then return {} end
+	local out = {}
+	for _, f in ipairs(files) do
+		local name = tostring(f):match("([^/\\]+)%.json$")
+		if name then table.insert(out, name) end
+	end
+	return out
+end
+
+function ZenithLib:_RegisterCfgItem(key, getter, setter, itemType)
+	self._cfgRegistry = self._cfgRegistry or {}
+	self._cfgRegistry[key] = { get = getter, set = setter, type = itemType or "value" }
+end
+
+function ZenithLib:SaveConfig(name)
+	self._cfgRegistry = self._cfgRegistry or {}
+	name = name or self._cfgName or "default"
+	local path = self._cfgPath or _getCfgPath(self._configName or "default")
+	local data = {}
+	for k, entry in pairs(self._cfgRegistry) do
+		local ok, val = pcall(entry.get)
+		if ok then
+			if typeof(val) == "Color3" then val = color3ToHex(val) end
+			data[k] = val
+		end
+	end
+	_cfgWrite(path, name, data)
+end
+
+function ZenithLib:LoadConfig(name)
+	self._cfgRegistry = self._cfgRegistry or {}
+	name = name or self._cfgName or "default"
+	local path = self._cfgPath or _getCfgPath(self._configName or "default")
+	local data = _cfgRead(path, name)
+	if not data then return false end
+	for k, entry in pairs(self._cfgRegistry) do
+		if data[k] ~= nil then
+			local val = data[k]
+			if entry.type == "color" and type(val) == "string" then
+				local col = hexToColor3(val)
+				if col then val = col end
+			end
+			pcall(entry.set, val)
+		end
+	end
+	return true
+end
+
+function ZenithLib:MakeConfigTab(configName)
+	configName = configName or self._configName or "default"
+	self._cfgPath  = _getCfgPath(configName)
+	self._cfgName  = "default"
+	self._cfgRegistry = self._cfgRegistry or {}
+
+	local tab = self:MakeTab({ Title = "Config", Image = "save", LayoutOrder = 9000 })
+
+	tab:MakeSection({ Name = "Profiles" })
+
+	local cfgList = _cfgList(self._cfgPath)
+	if #cfgList == 0 then cfgList = { "default" } end
+
+	local cfgDropdown = tab:MakeDropdown({
+		Name    = "Profile",
+		Options = cfgList,
+		Default = cfgList[1],
+		Callback = function(name) self._cfgName = name end,
+	})
+
+	tab:MakeTextbox({
+		Name        = "New Profile Name",
+		Placeholder = "my_config",
+		Default     = "",
+		Callback    = function(name)
+			if name == "" then return end
+			pcall(writefile, self._cfgPath .. name .. ".json", "{}")
+			self:Notify({ Title = "Created", Content = "Profile: " .. name, Duration = 2 })
+		end,
+	})
+
+	tab:MakeSeparator()
+	tab:MakeSection({ Name = "Actions" })
+
+	tab:MakeButton({
+		Name = "Save Config",
+		Icon = "save",
+		Callback = function()
+			self:SaveConfig()
+			self:Notify({ Title = "Saved", Content = self._cfgName, Duration = 2 })
+		end,
+	})
+
+	tab:MakeButton({
+		Name = "Load Config",
+		Icon = "folder-open",
+		Callback = function()
+			if self:LoadConfig() then
+				self:Notify({ Title = "Loaded", Content = self._cfgName, Duration = 2 })
+			else
+				self:Notify({ Title = "Not Found", Content = self._cfgName, Duration = 2 })
+			end
+		end,
+	})
+
+	tab:MakeButton({
+		Name = "Delete Profile",
+		Icon = "trash-2",
+		Callback = function()
+			if self._cfgName == "default" then
+				self:Notify({ Title = "Error", Content = "Cannot delete default", Duration = 2 })
+				return
+			end
+			pcall(delfile, self._cfgPath .. self._cfgName .. ".json")
+			self:Notify({ Title = "Deleted", Content = self._cfgName, Duration = 2 })
+		end,
+	})
+
+	tab:MakeSeparator()
+	tab:MakeSection({ Name = "Auto Save" })
+
+	local autoConn = nil
+	local autoInterval = 30
+
+	tab:MakeToggle({
+		Name    = "Auto Save",
+		Icon    = "refresh-cw",
+		Default = false,
+		Callback = function(state)
+			if state then
+				local last = tick()
+				autoConn = game:GetService("RunService").Heartbeat:Connect(function()
+					if tick() - last >= autoInterval then
+						last = tick()
+						self:SaveConfig()
+					end
+				end)
+				self:Notify({ Title = "Auto Save", Content = "Every " .. autoInterval .. "s", Duration = 2 })
+			else
+				if autoConn then autoConn:Disconnect(); autoConn = nil end
+			end
+		end,
+	})
+
+	tab:MakeSlider({
+		Name    = "Save Interval (sec)",
+		Min     = 10,
+		Max     = 300,
+		Default = 30,
+		Callback = function(v) autoInterval = v end,
+	})
+
+	-- Auto-load at start
+	task.defer(function()
+		if self:LoadConfig() then
+			self:Notify({ Title = "Config", Content = "Auto-loaded: " .. self._cfgName, Duration = 3 })
+		end
+	end)
+
+	return tab
+end
+
+
 _G.ZenithLib = ZenithLib
 
 return ZenithLib
