@@ -1225,7 +1225,9 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			Size = UDim2.new(0, 16, 0, 16),
 			Position = UDim2.new(1, -26, 0.5, -8),
 			BackgroundTransparency = 1,
-			Image = "rbxassetid://7733658504",
+			Image = "rbxassetid://16898612629",
+			ImageRectSize   = Vector2.new(48, 48),
+			ImageRectOffset = Vector2.new(967, 49),
 			ImageColor3 = COLORS.SubText,
 		})
 		arrow.Parent = frame
@@ -1307,31 +1309,29 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 
 		-- Функция открытия/закрытия
 		local function openList()
-			listFrame.Parent = win.ScreenGui
+			local absPos  = frame.AbsolutePosition
+			local absSize = frame.AbsoluteSize
+			local itemH   = 31
+			local listH   = math.min(#Options, 8) * itemH + 8
+			local screenH = workspace.CurrentCamera.ViewportSize.Y
+			local yPos = absPos.Y + absSize.Y + 4
+			if yPos + listH > screenH - 10 then
+				yPos = absPos.Y - listH - 4
+			end
+			listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
+			listFrame.Position = UDim2.new(0, absPos.X, 0, yPos)
 			listFrame.BackgroundTransparency = 1
+			listFrame.Parent = win.ScreenGui
 			listFrame.Visible = true
-			Tween(arrow, { Rotation = 180 }, 0.2)
-			task.defer(function()
-				local absPos  = frame.AbsolutePosition
-				local absSize = frame.AbsoluteSize
-				local itemH   = 31
-				local listH   = math.min(#Options, 8) * itemH + 8
-				local screenH = workspace.CurrentCamera.ViewportSize.Y
-				local yPos = absPos.Y + absSize.Y + 4
-				if yPos + listH > screenH - 10 then
-					yPos = absPos.Y - listH - 4
-				end
-				listFrame.Position = UDim2.new(0, absPos.X, 0, 0)
-				listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
-				listFrame.Position = UDim2.new(0, absPos.X, 0, yPos)
-				Tween(listFrame, { BackgroundTransparency = 0, Size = UDim2.new(0, absSize.X, 0, listH) }, 0.18)
-			end)
+			Tween(arrow, { ImageRectOffset = Vector2.new(967, 355), ImageColor3 = COLORS.Accent }, 0.18)
+			Tween(listFrame, { BackgroundTransparency = 0, Size = UDim2.new(0, absSize.X, 0, listH) }, 0.2)
 		end
 
 		local function closeList()
 			isOpen = false
-			Tween(arrow, { Rotation = 0 }, 0.2)
-			Tween(listFrame, { BackgroundTransparency = 1, Size = UDim2.new(0, listFrame.Size.X.Offset, 0, 0) }, 0.15)
+			Tween(arrow, { ImageRectOffset = Vector2.new(967, 49), ImageColor3 = COLORS.SubText }, 0.18)
+			local w = listFrame.Size.X.Offset
+			Tween(listFrame, { BackgroundTransparency = 1, Size = UDim2.new(0, w, 0, 0) }, 0.15)
 			task.delay(0.16, function()
 				listFrame.Visible = false
 			end)
@@ -1435,7 +1435,9 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			Size = UDim2.new(0, 16, 0, 16),
 			Position = UDim2.new(1, -26, 0.5, -8),
 			BackgroundTransparency = 1,
-			Image = "rbxassetid://7733658504",
+			Image = "rbxassetid://16898612629",
+			ImageRectSize   = Vector2.new(48, 48),
+			ImageRectOffset = Vector2.new(967, 49),
 			ImageColor3 = COLORS.SubText,
 		})
 		arrow.Parent = frame
@@ -1509,30 +1511,29 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		end
 
 		local function openList()
-			listFrame.Parent = win.ScreenGui
+			local absPos  = frame.AbsolutePosition
+			local absSize = frame.AbsoluteSize
+			local itemH   = 31
+			local listH   = math.min(#Options, 8) * itemH + 8
+			local screenH = workspace.CurrentCamera.ViewportSize.Y
+			local yPos = absPos.Y + absSize.Y + 4
+			if yPos + listH > screenH - 10 then
+				yPos = absPos.Y - listH - 4
+			end
+			listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
+			listFrame.Position = UDim2.new(0, absPos.X, 0, yPos)
 			listFrame.BackgroundTransparency = 1
+			listFrame.Parent = win.ScreenGui
 			listFrame.Visible = true
-			Tween(arrow, { Rotation = 180 }, 0.2)
-			task.defer(function()
-				local absPos  = frame.AbsolutePosition
-				local absSize = frame.AbsoluteSize
-				local itemH   = 31
-				local listH   = math.min(#Options, 8) * itemH + 8
-				local screenH = workspace.CurrentCamera.ViewportSize.Y
-				local yPos = absPos.Y + absSize.Y + 4
-				if yPos + listH > screenH - 10 then
-					yPos = absPos.Y - listH - 4
-				end
-				listFrame.Position = UDim2.new(0, absPos.X, 0, yPos)
-				listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
-				Tween(listFrame, { BackgroundTransparency = 0, Size = UDim2.new(0, absSize.X, 0, listH) }, 0.18)
-			end)
+			Tween(arrow, { ImageRectOffset = Vector2.new(967, 355), ImageColor3 = COLORS.Accent }, 0.18)
+			Tween(listFrame, { BackgroundTransparency = 0, Size = UDim2.new(0, absSize.X, 0, listH) }, 0.2)
 		end
 
 		local function closeList()
 			isOpen = false
-			Tween(arrow, { Rotation = 0 }, 0.2)
-			Tween(listFrame, { BackgroundTransparency = 1, Size = UDim2.new(0, listFrame.Size.X.Offset, 0, 0) }, 0.15)
+			Tween(arrow, { ImageRectOffset = Vector2.new(967, 49), ImageColor3 = COLORS.SubText }, 0.18)
+			local w = listFrame.Size.X.Offset
+			Tween(listFrame, { BackgroundTransparency = 1, Size = UDim2.new(0, w, 0, 0) }, 0.15)
 			task.delay(0.16, function()
 				listFrame.Visible = false
 			end)
