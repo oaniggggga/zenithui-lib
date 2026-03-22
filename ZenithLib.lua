@@ -1983,7 +1983,7 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			BackgroundColor3 = Color3.fromRGB(18, 10, 14),
 			BackgroundTransparency = 0,
 			BorderSizePixel = 0,
-			Text = "#" .. Default,
+			Text = "#" .. color3ToHex(Default),
 			TextColor3 = COLORS.Text,
 			TextSize = 12,
 			Font = Enum.Font.GothamBold,
