@@ -2702,6 +2702,49 @@ end
 
 
 -- ═══════════════════════════════════════════════════════════
+
+-- ═══════════════════════════════════════════════════════════
+-- Config Helper Functions
+-- ═══════════════════════════════════════════════════════════
+local HttpService = game:GetService("HttpService")
+
+local function _getCfgPath(configName)
+	local root = "ZenithLib"
+	pcall(function() if not isfolder(root) then makefolder(root) end end)
+	local sub = root .. "/" .. (configName or "default")
+	pcall(function() if not isfolder(sub) then makefolder(sub) end end)
+	return sub .. "/"
+end
+
+local function _cfgWrite(path, name, data)
+	local ok, encoded = pcall(function() return HttpService:JSONEncode(data) end)
+	if not ok or not encoded then return end
+	pcall(writefile, path .. name .. ".json", encoded)
+end
+
+local function _cfgRead(path, name)
+	local ok, raw = pcall(readfile, path .. name .. ".json")
+	if not ok or not raw or raw == "" then return nil end
+	local ok2, decoded = pcall(function() return HttpService:JSONDecode(raw) end)
+	return ok2 and decoded or nil
+end
+
+local function _cfgList(path)
+	local ok, files = pcall(listfiles, path)
+	if not ok or not files then return {} end
+	local out = {}
+	for _, f in ipairs(files) do
+		f = tostring(f)
+		local name = f:match("([^/]+)$") or f
+		name = name:match("^(.+)%.json$") or name:match("^(.+)%.JSON$")
+		if name and name ~= "" then
+			table.insert(out, name)
+		end
+	end
+	return out
+end
+
+
 function ZenithLib:_RegisterCfgItem(key, getter, setter, itemType)
 	self._cfgRegistry = self._cfgRegistry or {}
 	self._cfgRegistry[key] = { get = getter, set = setter, type = itemType or "value" }
