@@ -9,6 +9,80 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local TextService = game:GetService("TextService")
 
+-- ═══════════════════════════════════════════════════════════
+-- Lucide Icons Integration
+-- Thanks to Latte Softworks / SiriusSoftwareLtd
+-- ═══════════════════════════════════════════════════════════
+local Icons = nil
+local _iconsLoaded = false
+
+local function _loadIcons()
+	if _iconsLoaded then return end
+	_iconsLoaded = true
+	local ok, result = pcall(function()
+		return loadstring(game:HttpGet(
+			"https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/refs/heads/main/icons.lua"
+		))()
+	end)
+	if ok and result then
+		Icons = result
+		print("[ZenithLib] Lucide icons loaded ✓")
+	else
+		warn("[ZenithLib] Lucide icons failed to load:", result)
+	end
+end
+
+-- Загружаем иконки асинхронно
+task.spawn(_loadIcons)
+
+-- Получить данные иконки по имени (Lucide name)
+local function getIcon(name)
+	if not Icons then return nil end
+	name = string.match(string.lower(tostring(name)), "^%s*(.-)%s*$")
+	local sizedIcons = Icons["48px"]
+	if not sizedIcons then return nil end
+	local r = sizedIcons[name]
+	if not r then return nil end
+	if type(r[1]) ~= "number" then return nil end
+	return {
+		id              = r[1],
+		imageRectSize   = Vector2.new(r[2][1], r[2][2]),
+		imageRectOffset = Vector2.new(r[3][1], r[3][2]),
+	}
+end
+
+-- Применить иконку к ImageLabel/ImageButton
+local function applyIcon(imageObj, name)
+	if type(name) == "number" then
+		-- Числовой asset id
+		imageObj.Image           = "rbxassetid://" .. name
+		imageObj.ImageRectSize   = Vector2.new(0, 0)
+		imageObj.ImageRectOffset = Vector2.new(0, 0)
+		return true
+	elseif type(name) == "string" and name ~= "" then
+		local icon = getIcon(name)
+		if icon then
+			imageObj.Image           = "rbxassetid://" .. icon.id
+			imageObj.ImageRectSize   = icon.imageRectSize
+			imageObj.ImageRectOffset = icon.imageRectOffset
+			return true
+		else
+			-- Иконки ещё грузятся — пробуем позже
+			task.delay(2, function()
+				local retried = getIcon(name)
+				if retried and imageObj.Parent then
+					imageObj.Image           = "rbxassetid://" .. retried.id
+					imageObj.ImageRectSize   = retried.imageRectSize
+					imageObj.ImageRectOffset = retried.imageRectOffset
+				end
+			end)
+			return false
+		end
+	end
+	return false
+end
+
+
 -- Utility Functions
 print("[ZenithLib] FILE LOADED - line 1 reached")
 local function CreateInstance(className, properties)
@@ -87,25 +161,47 @@ print("[ZenithLib] >> MakeDraggable()")
 end
 
 -- Color Constants (Black & Rose)
+-- ┌─────────────────────────────────────────────────────────┐
+-- │  ZenithLib — Obsidian Ember Theme                       │
+-- │  Тёмный как обсидиан фон + раскалённый янтарный акцент  │
+-- └─────────────────────────────────────────────────────────┘
 local COLORS = {
-	MainBackground   = Color3.fromRGB(10,  6,  8),   -- почти чёрный
-	Accent           = Color3.fromRGB(220, 80, 120),  -- розовый акцент
-	AccentText       = Color3.fromRGB(255, 170, 195), -- светло-розовый текст
-	AccentDim        = Color3.fromRGB(90,  22,  48),  -- тёмный акцент (hover)
-	Text             = Color3.fromRGB(238, 232, 235),
-	SubText          = Color3.fromRGB(118, 100, 108),
-	CloseRed         = Color3.fromRGB(255, 95,  87),
-	MaximizeYellow   = Color3.fromRGB(254, 188, 46),
-	MinimizeGreen    = Color3.fromRGB(40,  200, 64),
-	DarkerBackground = Color3.fromRGB(6,   3,   5),   -- темнее основного
-	InputBackground  = Color3.fromRGB(20,  12,  16),  -- фон элементов
-	ElementBorder    = Color3.fromRGB(55,  22,  35),  -- розовый бордер
-	InElementBorder  = Color3.fromRGB(55,  22,  35),
-	SliderRail       = Color3.fromRGB(32,  12,  20),
-	DropdownHolder   = Color3.fromRGB(14,   8,  11),
-	ActiveTab        = Color3.fromRGB(28,   6,  15),
-	EL_HOVER         = Color3.fromRGB(30,  16,  22),   -- hover на элементах
-	TitleBarLine     = Color3.fromRGB(70,  28,  45),
+	-- ── Base: Obsidian ───────────────────────────────────────
+	--  Почти чёрный с едва заметным тёплым угольным тоном.
+	--  Даёт ощущение глубины без резкого холодного чёрного.
+	MainBackground   = Color3.fromRGB(10,   9,   8),   -- обсидиан
+	DarkerBackground = Color3.fromRGB(6,    5,   4),   -- глубже — для TabNav / TitleBar
+	InputBackground  = Color3.fromRGB(18,  16,  14),   -- фон элементов — чуть теплее
+	DropdownHolder   = Color3.fromRGB(13,  11,   9),   -- фон списков дропдауна
+
+	-- ── Accent: Ember (раскалённый янтарь) ──────────────────
+	--  Не просто оранжевый — это цвет раскалённого металла,
+	--  горячий и насыщенный, но не кричащий.
+	Accent           = Color3.fromRGB(255, 150,  40),  -- ember / раскалённый янтарь
+	AccentText       = Color3.fromRGB(255, 205, 130),  -- мягкий золотисто-кремовый
+	AccentDim        = Color3.fromRGB(55,  32,   8),   -- тёмный ember для hover/pressed
+
+	-- ── Text ──────────────────────────────────────────────────
+	--  Тёплый белый — не чистый #FFFFFF (слишком резкий),
+	--  а слоновая кость с лёгким золотым подтоном.
+	Text             = Color3.fromRGB(242, 236, 226),  -- ivory white
+	SubText          = Color3.fromRGB(118, 110,  96),  -- тёплый серо-золотой
+
+	-- ── Borders & Rails ──────────────────────────────────────
+	--  Тонкие, чуть теплее фона — не контрастные, но заметные.
+	ElementBorder    = Color3.fromRGB(48,  38,  22),   -- тёмно-янтарный бордер
+	InElementBorder  = Color3.fromRGB(48,  38,  22),
+	SliderRail       = Color3.fromRGB(30,  24,  14),   -- трек слайдера
+	TitleBarLine     = Color3.fromRGB(70,  50,  18),   -- линия под тайтлбаром
+
+	-- ── Tab States ────────────────────────────────────────────
+	ActiveTab        = Color3.fromRGB(28,  20,   8),   -- фон активного таба
+	EL_HOVER         = Color3.fromRGB(24,  20,  14),   -- hover на элементах
+
+	-- ── Window Controls (macOS style) ────────────────────────
+	CloseRed         = Color3.fromRGB(255,  95,  87),
+	MaximizeYellow   = Color3.fromRGB(254, 188,  46),
+	MinimizeGreen    = Color3.fromRGB(40,  200,  64),
 }
 
 
@@ -584,9 +680,10 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			Size = UDim2.new(0, 16, 0, 16),
 			Position = UDim2.new(0, 0, 0.5, -8),
 			BackgroundTransparency = 1,
-			Image = Image,
-			ImageColor3 = COLORS.SubText,
+			Image = "rbxassetid://0",
+			ImageColor3 = Color3.fromRGB(150, 140, 125),
 		})
+		applyIcon(tabImage, Image)
 		tabImage.Parent = tabButton
 	end
 
@@ -717,7 +814,8 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 	
 	function Tab:MakeButton(config)
 	print("[ZenithLib] >> Tab:MakeButton() name=", config and (config.Name or config.Title) or "?")
-		local Name = config.Name or "Button"
+		local Name     = config.Name     or "Button"
+		local Icon     = config.Icon     or nil
 		local Callback = config.Callback or function() end
 		
 		local buttonFrame = CreateInstance("Frame", {
@@ -736,13 +834,31 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		})
 		_bStroke.Parent = buttonFrame
 		
+		-- Иконка кнопки (опционально)
+		if Icon then
+			local btnIcon = CreateInstance("ImageLabel", {
+				Name = "BtnIcon",
+				Size = UDim2.new(0, 16, 0, 16),
+				Position = UDim2.new(0, 12, 0.5, -8),
+				BackgroundTransparency = 1,
+				Image = "rbxassetid://0",
+				ImageColor3 = COLORS.AccentText,
+				ZIndex = 2,
+			})
+			applyIcon(btnIcon, Icon)
+			btnIcon.Parent = buttonFrame
+		end
+
+		local iconOffset = Icon and 34 or 0
 		local buttonText = CreateInstance("TextLabel", {
-			Size = UDim2.new(1, 0, 1, 0),
+			Size = UDim2.new(1, -iconOffset - 12, 1, 0),
+			Position = UDim2.new(0, iconOffset + 12, 0, 0),
 			BackgroundTransparency = 1,
 			Text = Name,
 			TextColor3 = COLORS.AccentText,
 			TextSize = 13,
 			Font = Enum.Font.GothamMedium,
+			TextXAlignment = Enum.TextXAlignment.Left,
 		})
 		buttonText.Parent = buttonFrame
 		
@@ -783,8 +899,9 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 	
 	function Tab:MakeToggle(config)
 	print("[ZenithLib] >> Tab:MakeToggle() name=", config and (config.Name or config.Title) or "?")
-		local Name = config.Name or "Toggle"
-		local Default = config.Default or false
+		local Name     = config.Name     or "Toggle"
+		local Icon     = config.Icon     or nil
+		local Default  = config.Default  or false
 		local Callback = config.Callback or function() end
 		
 		local toggleFrame = CreateInstance("Frame", {
@@ -801,13 +918,25 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			Color = COLORS.ElementBorder,
 		}).Parent = toggleFrame
 		
+		if Icon then
+			local togIcon = CreateInstance("ImageLabel", {
+				Size = UDim2.new(0, 16, 0, 16),
+				Position = UDim2.new(0, 10, 0.5, -8),
+				BackgroundTransparency = 1,
+				Image = "rbxassetid://0",
+				ImageColor3 = COLORS.SubText,
+			})
+			applyIcon(togIcon, Icon)
+			togIcon.Parent = toggleFrame
+		end
+		local iconOff = Icon and 30 or 0
 		local toggleText = CreateInstance("TextLabel", {
-			Size = UDim2.new(1, -50, 1, 0),
-			Position = UDim2.new(0, 10, 0, 0),
+			Size = UDim2.new(1, -60 - iconOff, 1, 0),
+			Position = UDim2.new(0, 10 + iconOff, 0, 0),
 			BackgroundTransparency = 1,
 			Text = Name,
 			TextColor3 = COLORS.Text,
-			TextSize = 14,
+			TextSize = 13,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
 		})
@@ -884,6 +1013,7 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 	
 	function Tab:MakeSlider(config)
 	print("[ZenithLib] >> Tab:MakeSlider() name=", config and (config.Name or config.Title) or "?")
+		local Icon = config.Icon or nil
 		local Name = config.Name or "Slider"
 		local Min = config.Min or 0
 		local Max = config.Max or 100
@@ -906,9 +1036,21 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			Color = COLORS.ElementBorder,
 		}).Parent = sliderFrame
 		
+		if Icon then
+			local sldIcon = CreateInstance("ImageLabel", {
+				Size = UDim2.new(0, 14, 0, 14),
+				Position = UDim2.new(0, 10, 0, 9),
+				BackgroundTransparency = 1,
+				Image = "rbxassetid://0",
+				ImageColor3 = COLORS.SubText,
+			})
+			applyIcon(sldIcon, Icon)
+			sldIcon.Parent = sliderFrame
+		end
+		local sldOff = Icon and 26 or 0
 		local sliderText = CreateInstance("TextLabel", {
-			Size = UDim2.new(1, -50, 0, 20),
-			Position = UDim2.new(0, 10, 0, 6),
+			Size = UDim2.new(1, -60 - sldOff, 0, 20),
+			Position = UDim2.new(0, 10 + sldOff, 0, 6),
 			BackgroundTransparency = 1,
 			Text = Name,
 			TextColor3 = COLORS.Text,
@@ -1029,6 +1171,7 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 	function Tab:MakeDropdown(config)
 	print("[ZenithLib] >> Tab:MakeDropdown() name=", config and (config.Name or config.Title) or "?")
 		local Name     = config.Name    or "Dropdown"
+		local DdIcon   = config.Image   or config.Icon or nil
 		local Options  = config.Options or {}
 		local Default  = config.Default or (Options[1] or "")
 		local Callback = config.Callback or function() end
@@ -1051,9 +1194,23 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			Color = COLORS.ElementBorder,
 		}).Parent = frame
 
+		if DdIcon then
+			local ddIco = CreateInstance("ImageLabel", {
+				Size = UDim2.new(0, 15, 0, 15),
+				Position = UDim2.new(0, 10, 0.5, -7),
+				BackgroundTransparency = 1,
+				Image = "",
+				ImageColor3 = COLORS.SubText,
+				ZIndex = 2,
+			})
+			applyIcon(ddIco, DdIcon)
+			ddIco.Parent = frame
+		end
+
+		local ddTextX = DdIcon and 30 or 12
 		local label = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, -40, 1, 0),
-			Position = UDim2.new(0, 12, 0, 0),
+			Position = UDim2.new(0, ddTextX, 0, 0),
 			BackgroundTransparency = 1,
 			Text = Name .. ":  " .. tostring(selected),
 			TextColor3 = COLORS.Text,
@@ -1423,8 +1580,9 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 
 	function Tab:MakeKeybind(config)
 	print("[ZenithLib] >> Tab:MakeKeybind() name=", config and (config.Name or config.Title) or "?")
-		local Name = config.Name or "Keybind"
-		local Default = config.Default or Enum.KeyCode.Unknown
+		local Name     = config.Name     or "Keybind"
+		local KbIcon   = config.Image    or config.Icon or nil
+		local Default  = config.Default  or Enum.KeyCode.Unknown
 		local Callback = config.Callback or function() end
 		
 		local keybindFrame = CreateInstance("Frame", {
@@ -1442,9 +1600,23 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			Color = COLORS.ElementBorder,
 		}).Parent = keybindFrame
 		
+		if KbIcon then
+			local kbIco = CreateInstance("ImageLabel", {
+				Size = UDim2.new(0, 15, 0, 15),
+				Position = UDim2.new(0, 10, 0.5, -7),
+				BackgroundTransparency = 1,
+				Image = "",
+				ImageColor3 = COLORS.SubText,
+				ZIndex = 2,
+			})
+			applyIcon(kbIco, KbIcon)
+			kbIco.Parent = keybindFrame
+		end
+
+		local kbTextX = KbIcon and 30 or 10
 		local keybindText = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, -100, 1, 0),
-			Position = UDim2.new(0, 10, 0, 0),
+			Position = UDim2.new(0, kbTextX, 0, 0),
 			BackgroundTransparency = 1,
 			Text = Name,
 			TextColor3 = COLORS.Text,
@@ -2017,7 +2189,8 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 
 	function Tab:MakeSection(config)
 	print("[ZenithLib] >> Tab:MakeSection() name=", config and (config.Name or config.Title) or "?")
-		local Name = config.Name or "Section"
+		local Name    = config.Name  or "Section"
+		local SecIcon = config.Image or config.Icon or nil
 
 		local sectionFrame = CreateInstance("Frame", {
 			Name = "Section_" .. Name,
@@ -2035,9 +2208,22 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		})
 		headerRow.Parent = sectionFrame
 
+		local secTextX = SecIcon and 20 or 4
+		if SecIcon then
+			local secIco = CreateInstance("ImageLabel", {
+				Size = UDim2.new(0, 12, 0, 12),
+				Position = UDim2.new(0, 2, 0.5, -6),
+				BackgroundTransparency = 1,
+				Image = "",
+				ImageColor3 = COLORS.Accent,
+			})
+			applyIcon(secIco, SecIcon)
+			secIco.Parent = headerRow
+		end
+
 		CreateInstance("TextLabel", {
 			Size = UDim2.new(1, -12, 1, 0),
-			Position = UDim2.new(0, 4, 0, 0),
+			Position = UDim2.new(0, secTextX, 0, 0),
 			BackgroundTransparency = 1,
 			Text = string.upper(Name),
 			TextColor3 = COLORS.Accent,
@@ -2266,7 +2452,7 @@ end
 
 function ZenithLib:_InitBuiltinTabs()
 print("[ZenithLib] >> ZenithLib:_InitBuiltinTabs()")
-	local credTab = self:MakeTab({ Title = "Credits" })
+	local credTab = self:MakeTab({ Title = "Credits", Image = "info" })
 	credTab:MakeParagraph({
 		Title = "ZenithLib  v2.0",
 		Text  = "Black & Rose Theme — модульная UI библиотека для Roblox. Чистый дизайн, гибкие элементы, простое API.",
@@ -2284,7 +2470,7 @@ print("[ZenithLib] >> ZenithLib:_InitBuiltinTabs()")
 	credTab:MakeLabel({ Name = "MakeKeybind, MakeTextbox, MakeLabel" })
 	credTab:MakeLabel({ Name = "MakeParagraph, MakeSeparator, MakeSection" })
 
-	local setTab = self:MakeTab({ Title = "Settings" })
+	local setTab = self:MakeTab({ Title = "Settings", Image = "settings" })
 	setTab:MakeParagraph({
 		Title = "UI Settings",
 		Text  = "Customize the library appearance.",
