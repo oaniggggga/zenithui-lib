@@ -1048,19 +1048,6 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			)
 		end
 		
-		-- Регистрируем в конфиге
-		_registerConfigItem("toggle_" .. Name,
-			function() return isOn end,
-			function(v)
-				if type(v) == "boolean" then
-					isOn = not isOn  -- сбрасываем в противоположное чтобы UpdateToggle правильно сработал
-					if v ~= isOn then isOn = v end
-					isOn = v
-					UpdateToggle()
-				end
-			end,
-			"boolean"
-		)
 		toggleFrame.Parent = tabContent
 		return toggleFrame
 	end
