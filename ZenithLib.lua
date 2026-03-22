@@ -646,10 +646,8 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		-- Fade out текущего таба
 		for _, frame in pairs(win.TabFrames) do
 			if frame.Visible then
-				Tween(frame, { BackgroundTransparency = 1 }, 0.1)
-				task.delay(0.1, function()
+				task.delay(0.08, function()
 					frame.Visible = false
-					frame.BackgroundTransparency = 0
 				end)
 			end
 		end
