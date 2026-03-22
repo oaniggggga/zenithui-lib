@@ -28,6 +28,21 @@ print("[ZenithLib] >> Tween()")
 	return tween
 end
 
+local function TweenBack(obj, props, t)
+	TweenService:Create(obj,
+		TweenInfo.new(t or 0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+		props
+	):Play()
+end
+
+local function TweenElastic(obj, props, t)
+	TweenService:Create(obj,
+		TweenInfo.new(t or 0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out),
+		props
+	):Play()
+end
+
+
 -- handle = откуда начинается drag (TitleBar), frame = что двигается (MainFrame)
 local function MakeDraggable(frame, handle)
 print("[ZenithLib] >> MakeDraggable()")
