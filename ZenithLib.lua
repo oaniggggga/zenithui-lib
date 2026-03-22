@@ -2628,6 +2628,8 @@ _G.ZenithLib = ZenithLib
 return ZenithLib
 
 
+print("zenithlib 2.0 loaded")
+
 
 -- ═══════════════════════════════════════════════════════════
 -- ZenithLib API Reference (inline docs)
