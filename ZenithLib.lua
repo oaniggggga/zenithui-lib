@@ -1,6 +1,6 @@
 --[[
 	ZenithLib - Modular UI Library for Roblox
-	Version 2.0.0
+	Version 2.1.0
 	Created for Roblox Luau
 ]]
 
@@ -83,8 +83,28 @@ local function applyIcon(imageObj, name)
 end
 
 
+
+-- HEX утилиты (совместимость с executor'ами без Color3:ToHex)
+local function color3ToHex(col)
+	return string.format("%02X%02X%02X",
+		math.floor(col.R * 255),
+		math.floor(col.G * 255),
+		math.floor(col.B * 255)
+	)
+end
+
+local function hexToColor3(hex)
+	hex = hex:gsub("#", "")
+	if #hex ~= 6 then return nil end
+	local r = tonumber(hex:sub(1,2), 16)
+	local g = tonumber(hex:sub(3,4), 16)
+	local b = tonumber(hex:sub(5,6), 16)
+	if not r or not g or not b then return nil end
+	return Color3.fromRGB(r, g, b)
+end
+
 -- Utility Functions
-print("[ZenithLib] FILE LOADED - line 1 reached")
+print("[ZenithLib] v2.1.0 loaded OK")
 local function CreateInstance(className, properties)
 print("[ZenithLib] >> CreateInstance()")
 	local instance = Instance.new(className)
@@ -713,7 +733,6 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		ScrollingDirection = Enum.ScrollingDirection.Y,
 		CanvasSize = UDim2.new(0, 0, 0, 0),
 		ScrollBarImageTransparency = 1,
-		ElasticBehavior = Enum.ElasticBehavior.Never,
 	})
 
 	local contentList = CreateInstance("UIListLayout", {
@@ -1964,7 +1983,7 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			BackgroundColor3 = Color3.fromRGB(18, 10, 14),
 			BackgroundTransparency = 0,
 			BorderSizePixel = 0,
-			Text = "#" .. Default:ToHex():upper(),
+			Text = "#" .. Default,
 			TextColor3 = COLORS.Text,
 			TextSize = 12,
 			Font = Enum.Font.GothamBold,
@@ -2013,7 +2032,7 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			Tween(preview, { BackgroundColor3 = currentColor }, 0.05)
 			Tween(bigPreview, { BackgroundColor3 = currentColor }, 0.05)
 			Tween(svFrame, { BackgroundColor3 = Color3.fromHSV(h, 1, 1) }, 0.05)
-			hexBox.Text = "#" .. currentColor:ToHex():upper()
+				hexBox.Text = "#" .. color3ToHex(currentColor)
 			svCursor.Position = UDim2.new(s, 0, 1 - v, 0)
 			hueCursor.Position = UDim2.new(h, 0, 0.5, 0)
 			Callback(currentColor)
@@ -2073,12 +2092,12 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		-- ── HEX ввод ──
 		hexBox.FocusLost:Connect(function()
 			local hex = hexBox.Text:gsub("#","")
-			local ok, col = pcall(Color3.fromHex, hex)
-			if ok and typeof(col) == "Color3" then
+			local col = hexToColor3(hex)
+			if col then
 				h, s, v = Color3.toHSV(col)
 				applyColor()
 			else
-				hexBox.Text = "#" .. currentColor:ToHex():upper()
+				hexBox.Text = "#" .. color3ToHex(currentColor)
 			end
 		end)
 
@@ -2627,8 +2646,6 @@ _G.ZenithLib = ZenithLib
 
 return ZenithLib
 
-
-print("zenithlib 2.0 loaded")
 
 
 -- ═══════════════════════════════════════════════════════════
