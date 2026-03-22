@@ -1652,103 +1652,316 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 	
 	function Tab:MakeColorPicker(config)
 	print("[ZenithLib] >> Tab:MakeColorPicker() name=", config and (config.Name or config.Title) or "?")
-		local Name = config.Name or "ColorPicker"
-		local Default = config.Default or Color3.new(1, 1, 1)
+		local Name     = config.Name    or "Color"
+		local Default  = config.Default or Color3.fromRGB(220, 80, 120)
 		local Callback = config.Callback or function() end
-		
-		local pickerFrame = CreateInstance("Frame", {
+
+		-- Внутренние HSV состояние
+		local h, s, v = Color3.toHSV(Default)
+		local currentColor = Default
+		local pickerOpen = false
+
+		-- ── Основная строка (как другие элементы) ──
+		local row = CreateInstance("Frame", {
 			Name = "ColorPicker_" .. Name,
-			Size = UDim2.new(1, 0, 0, 50),
+			Size = UDim2.new(1, 0, 0, 38),
 			BackgroundColor3 = COLORS.InputBackground,
+			BackgroundTransparency = 0,
 			BorderSizePixel = 0,
 		})
-		
-		local pickerCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
-		pickerCorner.Parent = pickerFrame
-		
-		local pickerText = CreateInstance("TextLabel", {
-			Size = UDim2.new(1, -50, 0, 20),
-			Position = UDim2.new(0, 10, 0, 5),
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = row
+		CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5, Transparency = 0.5,
+			Color = COLORS.ElementBorder,
+		}).Parent = row
+
+		CreateInstance("TextLabel", {
+			Size = UDim2.new(1, -60, 1, 0),
+			Position = UDim2.new(0, 12, 0, 0),
 			BackgroundTransparency = 1,
 			Text = Name,
 			TextColor3 = COLORS.Text,
-			TextSize = 14,
+			TextSize = 13,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
-		})
-		pickerText.Parent = pickerFrame
-		
-		local colorPreview = CreateInstance("Frame", {
-			Name = "ColorPreview",
-			Size = UDim2.new(0, 30, 0, 30),
-			Position = UDim2.new(1, -40, 0.5, -15),
+		}).Parent = row
+
+		-- Preview цвет
+		local preview = CreateInstance("Frame", {
+			Size = UDim2.new(0, 22, 0, 22),
+			Position = UDim2.new(1, -36, 0.5, -11),
 			BackgroundColor3 = Default,
 			BorderSizePixel = 0,
 		})
-		colorPreview.Parent = pickerFrame
-		
-		local previewCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 4) })
-		previewCorner.Parent = colorPreview
-		
-		local colors = {
-			Color3.new(1, 0, 0),
-			Color3.new(0, 1, 0),
-			Color3.new(0, 0, 1),
-			Color3.new(1, 1, 0),
-			Color3.new(1, 0, 1),
-			Color3.new(0, 1, 1),
-			Color3.new(1, 0.5, 0),
-			Color3.new(0.5, 0, 1),
-		}
-		
-		local colorButtons = {}
-		local currentColor = Default
-		
-		local colorsFrame = CreateInstance("Frame", {
-			Name = "ColorsFrame",
-			Size = UDim2.new(1, -60, 0, 25),
-			Position = UDim2.new(0, 5, 0, 25),
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 5) }).Parent = preview
+		CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 1, Transparency = 0.4,
+			Color = Color3.fromRGB(255,255,255),
+		}).Parent = preview
+		preview.Parent = row
+
+		-- ── Палитра (рендерится в ScreenGui поверх всего) ──
+		local palette = CreateInstance("Frame", {
+			Name = "Palette_" .. Name,
+			Size = UDim2.new(0, 260, 0, 260),
+			BackgroundColor3 = Color3.fromRGB(10, 6, 8),
+			BackgroundTransparency = 0,
+			BorderSizePixel = 0,
+			Visible = false,
+			ZIndex = 400,
+		})
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 10) }).Parent = palette
+		CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5, Transparency = 0.35,
+			Color = COLORS.Accent,
+		}).Parent = palette
+
+		-- SV квадрат (Saturation-Value)
+		local svFrame = CreateInstance("ImageLabel", {
+			Name = "SVSquare",
+			Size = UDim2.new(1, -20, 0, 160),
+			Position = UDim2.new(0, 10, 0, 10),
+			BackgroundColor3 = Color3.fromHSV(h, 1, 1),
+			BorderSizePixel = 0,
+			Image = "rbxassetid://4155801252", -- S-V gradient overlay
+			ZIndex = 401,
+		})
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) }).Parent = svFrame
+		svFrame.Parent = palette
+
+		-- SV курсор
+		local svCursor = CreateInstance("Frame", {
+			Size = UDim2.new(0, 12, 0, 12),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(s, 0, 1 - v, 0),
+			BackgroundColor3 = Color3.fromRGB(255,255,255),
+			BorderSizePixel = 0,
+			ZIndex = 403,
+		})
+		CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = svCursor
+		CreateInstance("UIStroke", {
+			Thickness = 2, Transparency = 0.3,
+			Color = Color3.fromRGB(0,0,0),
+		}).Parent = svCursor
+		svCursor.Parent = svFrame
+
+		-- Hue полоска
+		local hueBar = CreateInstance("ImageLabel", {
+			Name = "HueBar",
+			Size = UDim2.new(1, -20, 0, 14),
+			Position = UDim2.new(0, 10, 0, 178),
+			BackgroundColor3 = Color3.fromRGB(255,255,255),
+			BorderSizePixel = 0,
+			Image = "rbxassetid://698052001", -- hue gradient
+			ZIndex = 401,
+		})
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 4) }).Parent = hueBar
+		hueBar.Parent = palette
+
+		-- Hue курсор
+		local hueCursor = CreateInstance("Frame", {
+			Size = UDim2.new(0, 6, 1, 4),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(h, 0, 0.5, 0),
+			BackgroundColor3 = Color3.fromRGB(255,255,255),
+			BorderSizePixel = 0,
+			ZIndex = 403,
+		})
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 2) }).Parent = hueCursor
+		CreateInstance("UIStroke", {
+			Thickness = 1.5, Transparency = 0.2,
+			Color = Color3.fromRGB(0,0,0),
+		}).Parent = hueCursor
+		hueCursor.Parent = hueBar
+
+		-- HEX поле
+		local hexBox = CreateInstance("TextBox", {
+			Size = UDim2.new(0, 110, 0, 26),
+			Position = UDim2.new(0, 10, 0, 200),
+			BackgroundColor3 = Color3.fromRGB(18, 10, 14),
+			BackgroundTransparency = 0,
+			BorderSizePixel = 0,
+			Text = "#" .. Default:ToHex():upper(),
+			TextColor3 = COLORS.Text,
+			TextSize = 12,
+			Font = Enum.Font.GothamBold,
+			TextXAlignment = Enum.TextXAlignment.Center,
+			ClearTextOnFocus = false,
+			ZIndex = 402,
+		})
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 5) }).Parent = hexBox
+		CreateInstance("UIStroke", {
+			Thickness = 0.5, Transparency = 0.4,
+			Color = COLORS.ElementBorder,
+		}).Parent = hexBox
+		hexBox.Parent = palette
+
+		-- Preview большой
+		local bigPreview = CreateInstance("Frame", {
+			Size = UDim2.new(0, 52, 0, 26),
+			Position = UDim2.new(1, -72, 0, 200),
+			BackgroundColor3 = Default,
+			BorderSizePixel = 0,
+			ZIndex = 402,
+		})
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 5) }).Parent = bigPreview
+		CreateInstance("UIStroke", {
+			Thickness = 0.5, Transparency = 0.4,
+			Color = Color3.fromRGB(255,255,255),
+		}).Parent = bigPreview
+		bigPreview.Parent = palette
+
+		-- Кнопка закрытия палитры
+		local closeBtn = CreateInstance("TextButton", {
+			Size = UDim2.new(0, 20, 0, 20),
+			Position = UDim2.new(1, -28, 0, 8),
 			BackgroundTransparency = 1,
+			Text = "✕",
+			TextColor3 = COLORS.SubText,
+			TextSize = 13,
+			Font = Enum.Font.GothamBold,
+			ZIndex = 403,
 		})
-		colorsFrame.Parent = pickerFrame
-		
-		local colorsList = CreateInstance("UIListLayout", {
-			Padding = UDim.new(0, 5),
-			FillDirection = Enum.FillDirection.Horizontal,
-		})
-		colorsList.Parent = colorsFrame
-		
-		for i, color in ipairs(colors) do
-			local colorBtn = CreateInstance("Frame", {
-				Size = UDim2.new(0, 20, 0, 20),
-				BackgroundColor3 = color,
-				BorderSizePixel = 0,
-			})
-			colorBtn.Parent = colorsFrame
-			
-			local btnCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 4) })
-			btnCorner.Parent = colorBtn
-			
-			local btnHitbox = CreateInstance("TextButton", {
-				Size = UDim2.new(1, 0, 1, 0),
-				BackgroundTransparency = 1,
-				Text = "",
-			})
-			btnHitbox.Parent = colorBtn
-			
-			btnHitbox.MouseButton1Click:Connect(function()
-				currentColor = color
-				Tween(colorPreview, { BackgroundColor3 = color })
-				Callback(color)
-			end)
-			
-			colorButtons[i] = colorBtn
+		closeBtn.Parent = palette
+
+		-- ── Функция обновления ──
+		local function applyColor()
+			currentColor = Color3.fromHSV(h, s, v)
+			Tween(preview, { BackgroundColor3 = currentColor }, 0.05)
+			Tween(bigPreview, { BackgroundColor3 = currentColor }, 0.05)
+			Tween(svFrame, { BackgroundColor3 = Color3.fromHSV(h, 1, 1) }, 0.05)
+			hexBox.Text = "#" .. currentColor:ToHex():upper()
+			svCursor.Position = UDim2.new(s, 0, 1 - v, 0)
+			hueCursor.Position = UDim2.new(h, 0, 0.5, 0)
+			Callback(currentColor)
 		end
-		
-		pickerFrame.Parent = tabContent
-		return pickerFrame
+
+		-- ── Drag на SV квадрате ──
+		local svDragging = false
+		local svHit = CreateInstance("TextButton", {
+			Size = UDim2.new(1, 0, 1, 0),
+			BackgroundTransparency = 1, Text = "",
+			ZIndex = 402,
+		})
+		svHit.Parent = svFrame
+
+		svHit.MouseButton1Down:Connect(function()
+			svDragging = true
+		end)
+		UserInputService.InputEnded:Connect(function(i)
+			if i.UserInputType == Enum.UserInputType.MouseButton1 then svDragging = false end
+		end)
+		UserInputService.InputChanged:Connect(function(i)
+			if svDragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+				local ap = svFrame.AbsolutePosition
+				local as = svFrame.AbsoluteSize
+				local mp = UserInputService:GetMouseLocation()
+				s = math.clamp((mp.X - ap.X) / as.X, 0, 1)
+				v = math.clamp(1 - (mp.Y - ap.Y) / as.Y, 0, 1)
+				applyColor()
+			end
+		end)
+
+		-- ── Drag на Hue ──
+		local hueDragging = false
+		local hueHit = CreateInstance("TextButton", {
+			Size = UDim2.new(1, 0, 1, 0),
+			BackgroundTransparency = 1, Text = "",
+			ZIndex = 402,
+		})
+		hueHit.Parent = hueBar
+
+		hueHit.MouseButton1Down:Connect(function()
+			hueDragging = true
+		end)
+		UserInputService.InputEnded:Connect(function(i)
+			if i.UserInputType == Enum.UserInputType.MouseButton1 then hueDragging = false end
+		end)
+		UserInputService.InputChanged:Connect(function(i)
+			if hueDragging and i.UserInputType == Enum.UserInputType.MouseMovement then
+				local ap = hueBar.AbsolutePosition
+				local as = hueBar.AbsoluteSize
+				local mp = UserInputService:GetMouseLocation()
+				h = math.clamp((mp.X - ap.X) / as.X, 0, 1)
+				applyColor()
+			end
+		end)
+
+		-- ── HEX ввод ──
+		hexBox.FocusLost:Connect(function()
+			local hex = hexBox.Text:gsub("#","")
+			local ok, col = pcall(Color3.fromHex, hex)
+			if ok and typeof(col) == "Color3" then
+				h, s, v = Color3.toHSV(col)
+				applyColor()
+			else
+				hexBox.Text = "#" .. currentColor:ToHex():upper()
+			end
+		end)
+
+		-- ── Открыть/закрыть палитру ──
+		local function openPalette()
+			palette.Parent = win.ScreenGui
+			palette.BackgroundTransparency = 1
+			palette.Visible = true
+			task.defer(function()
+				local ap = row.AbsolutePosition
+				local as = row.AbsoluteSize
+				local screenH = workspace.CurrentCamera.ViewportSize.Y
+				local yPos = ap.Y + as.Y + 4
+				if yPos + 260 > screenH - 10 then yPos = ap.Y - 264 end
+				palette.Position = UDim2.new(0, ap.X, 0, yPos)
+				Tween(palette, { BackgroundTransparency = 0 }, 0.18)
+			end)
+		end
+
+		local function closePalette()
+			pickerOpen = false
+			Tween(palette, { BackgroundTransparency = 1 }, 0.15)
+			task.delay(0.16, function() palette.Visible = false end)
+		end
+
+		local rowHit = CreateInstance("TextButton", {
+			Size = UDim2.new(1, 0, 1, 0),
+			BackgroundTransparency = 1, Text = "", ZIndex = 2,
+		})
+		rowHit.Parent = row
+		rowHit.MouseButton1Click:Connect(function()
+			pickerOpen = not pickerOpen
+			if pickerOpen then openPalette() else closePalette() end
+		end)
+
+		closeBtn.MouseButton1Click:Connect(function()
+			closePalette()
+		end)
+
+		UserInputService.InputBegan:Connect(function(input)
+			if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+			if not pickerOpen then return end
+			local mp = UserInputService:GetMouseLocation()
+			local pp, ps = palette.AbsolutePosition, palette.AbsoluteSize
+			local rp, rs = row.AbsolutePosition, row.AbsoluteSize
+			local inPalette = mp.X >= pp.X and mp.X <= pp.X+ps.X and mp.Y >= pp.Y and mp.Y <= pp.Y+ps.Y
+			local inRow    = mp.X >= rp.X and mp.X <= rp.X+rs.X and mp.Y >= rp.Y and mp.Y <= rp.Y+rs.Y
+			if not inPalette and not inRow then
+				closePalette()
+			end
+		end)
+
+		row.Parent = tabContent
+
+		local obj = {}
+		function obj:SetValue(color)
+			h, s, v = Color3.toHSV(color)
+			applyColor()
+		end
+		function obj:GetValue() return currentColor end
+		return obj
 	end
-	
+
 	function Tab:MakeParagraph(config)
 	print("[ZenithLib] >> Tab:MakeParagraph() name=", config and (config.Name or config.Title) or "?")
 		local Title = config.Title or "Title"
