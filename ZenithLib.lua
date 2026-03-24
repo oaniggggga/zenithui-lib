@@ -641,8 +641,7 @@ print("[ZenithLib] >> ZenithLib:MakeWindow()")
 	UserInputService.InputBegan:Connect(function(input, gp)
 		if gp then return end
 		if input.KeyCode == self._toggleKey then
-			self._visible = not self._visible
-			self.MainFrame.Visible = self._visible
+			self:Toggle()
 		end
 	end)
 
@@ -1368,24 +1367,52 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 
 		-- Функция открытия/закрытия
 		local function openList()
-			local absPos  = frame.AbsolutePosition
-			local absSize = frame.AbsoluteSize
-			local itemH   = 31
-			local listH   = math.min(#Options, 8) * itemH + 8
-			local screenH = workspace.CurrentCamera.ViewportSize.Y
-			local yPos = absPos.Y + absSize.Y + 4
-			if yPos + listH > screenH - 10 then
-				yPos = absPos.Y - listH - 4
-			end
-			listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
-			listFrame.Position = UDim2.new(0, absPos.X, 0, yPos)
+			-- Сначала делаем видимым скрытым
+			listFrame.Size = UDim2.new(0, 0, 0, 0)
 			listFrame.BackgroundTransparency = 1
-			listFrame.Parent = win.ScreenGui
 			listFrame.Visible = true
-			Tween(arrow, { ImageRectOffset = Vector2.new(967, 355), ImageColor3 = COLORS.Accent }, 0.18)
-			Tween(listFrame, { BackgroundTransparency = 0, Size = UDim2.new(0, absSize.X, 0, listH) }, 0.2)
-		end
+			listFrame.Parent = win.ScreenGui
 
+			-- Ждём следующий кадр — AbsolutePosition уже верный
+			task.defer(function()
+				if not frame.Parent then
+					listFrame.Visible = false
+					return
+				end
+
+				local absPos  = frame.AbsolutePosition
+				local absSize = frame.AbsoluteSize
+				local itemH   = 31
+				local listH   = math.min(#Options, 8) * itemH + 8
+				local screenH = workspace.CurrentCamera.ViewportSize.Y
+				local screenW = workspace.CurrentCamera.ViewportSize.X
+
+				-- Y: снизу или сверху если не влезает
+				local yPos = absPos.Y + absSize.Y + 4
+				if yPos + listH > screenH - 10 then
+					yPos = absPos.Y - listH - 4
+				end
+
+				-- X: не выходим за правый край
+				local xPos = absPos.X
+				if xPos + absSize.X > screenW - 4 then
+					xPos = screenW - absSize.X - 4
+				end
+
+				listFrame.Position = UDim2.new(0, xPos, 0, yPos)
+				listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
+
+				Tween(arrow, {
+					ImageRectOffset = Vector2.new(967, 355),
+					ImageColor3 = COLORS.Accent
+				}, 0.18)
+
+				Tween(listFrame, {
+					BackgroundTransparency = 0,
+					Size = UDim2.new(0, absSize.X, 0, listH)
+				}, 0.2)
+			end)
+		end
 		local function closeList()
 			isOpen = false
 			Tween(arrow, { ImageRectOffset = Vector2.new(967, 49), ImageColor3 = COLORS.SubText }, 0.18)
@@ -1570,22 +1597,51 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		end
 
 		local function openList()
-			local absPos  = frame.AbsolutePosition
-			local absSize = frame.AbsoluteSize
-			local itemH   = 31
-			local listH   = math.min(#Options, 8) * itemH + 8
-			local screenH = workspace.CurrentCamera.ViewportSize.Y
-			local yPos = absPos.Y + absSize.Y + 4
-			if yPos + listH > screenH - 10 then
-				yPos = absPos.Y - listH - 4
-			end
-			listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
-			listFrame.Position = UDim2.new(0, absPos.X, 0, yPos)
+			-- Сначала делаем видимым скрытым
+			listFrame.Size = UDim2.new(0, 0, 0, 0)
 			listFrame.BackgroundTransparency = 1
-			listFrame.Parent = win.ScreenGui
 			listFrame.Visible = true
-			Tween(arrow, { ImageRectOffset = Vector2.new(967, 355), ImageColor3 = COLORS.Accent }, 0.18)
-			Tween(listFrame, { BackgroundTransparency = 0, Size = UDim2.new(0, absSize.X, 0, listH) }, 0.2)
+			listFrame.Parent = win.ScreenGui
+
+			-- Ждём следующий кадр — AbsolutePosition уже верный
+			task.defer(function()
+				if not frame.Parent then
+					listFrame.Visible = false
+					return
+				end
+
+				local absPos  = frame.AbsolutePosition
+				local absSize = frame.AbsoluteSize
+				local itemH   = 31
+				local listH   = math.min(#Options, 8) * itemH + 8
+				local screenH = workspace.CurrentCamera.ViewportSize.Y
+				local screenW = workspace.CurrentCamera.ViewportSize.X
+
+				-- Y: снизу или сверху если не влезает
+				local yPos = absPos.Y + absSize.Y + 4
+				if yPos + listH > screenH - 10 then
+					yPos = absPos.Y - listH - 4
+				end
+
+				-- X: не выходим за правый край
+				local xPos = absPos.X
+				if xPos + absSize.X > screenW - 4 then
+					xPos = screenW - absSize.X - 4
+				end
+
+				listFrame.Position = UDim2.new(0, xPos, 0, yPos)
+				listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
+
+				Tween(arrow, {
+					ImageRectOffset = Vector2.new(967, 355),
+					ImageColor3 = COLORS.Accent
+				}, 0.18)
+
+				Tween(listFrame, {
+					BackgroundTransparency = 0,
+					Size = UDim2.new(0, absSize.X, 0, listH)
+				}, 0.2)
+			end)
 		end
 
 		local function closeList()
@@ -2407,8 +2463,42 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 end
 
 function ZenithLib:Destroy()
-print("[ZenithLib] >> ZenithLib:Destroy()")
-	if self.ScreenGui then self.ScreenGui:Destroy() end
+	print("[ZenithLib] >> ZenithLib:Destroy()")
+	if not self.MainFrame then return end
+
+	-- Блокируем повторный вызов
+	if self._destroying then return end
+	self._destroying = true
+
+	local frame = self.MainFrame
+	local startPos = frame.Position
+
+	-- Анимация: окно уходит вниз + fade out
+	Tween(frame, {
+		Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset,
+			startPos.Y.Scale,
+			startPos.Y.Offset + 24
+		),
+		BackgroundTransparency = 1,
+	}, 0.3, Enum.EasingStyle.Quint)
+
+	-- Fade out всех детей
+	for _, child in ipairs(frame:GetDescendants()) do
+		if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("ImageLabel") then
+			pcall(function()
+				Tween(child, { TextTransparency = 1, ImageTransparency = 1, BackgroundTransparency = 1 }, 0.2)
+			end)
+		end
+	end
+
+	-- Удаляем после анимации
+	task.delay(0.32, function()
+		if self.ScreenGui then
+			self.ScreenGui:Destroy()
+		end
+	end)
 end
 
 
@@ -2463,17 +2553,61 @@ end
 
 function ZenithLib:Toggle()
 	self._visible = not self._visible
-	self.MainFrame.Visible = self._visible
+	if self._visible then
+		self:Show()
+	else
+		self:Hide()
+	end
 end
 
 function ZenithLib:Show()
+	print("[ZenithLib] >> ZenithLib:Show()")
+	if not self.MainFrame then return end
 	self._visible = true
 	self.MainFrame.Visible = true
+
+	local startPos = self.MainFrame.Position
+	-- Появляется снизу вверх
+	self.MainFrame.Position = UDim2.new(
+		startPos.X.Scale,
+		startPos.X.Offset,
+		startPos.Y.Scale,
+		startPos.Y.Offset + 16
+	)
+	self.MainFrame.BackgroundTransparency = 1
+
+	Tween(self.MainFrame, {
+		Position = startPos,
+		BackgroundTransparency = 0,
+	}, 0.3, Enum.EasingStyle.Quint)
 end
 
 function ZenithLib:Hide()
+	print("[ZenithLib] >> ZenithLib:Hide()")
+	if not self.MainFrame then return end
 	self._visible = false
-	self.MainFrame.Visible = false
+
+	local startPos = self.MainFrame.Position
+
+	-- Уходит вниз + fade
+	Tween(self.MainFrame, {
+		Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset,
+			startPos.Y.Scale,
+			startPos.Y.Offset + 16
+		),
+		BackgroundTransparency = 1,
+	}, 0.25, Enum.EasingStyle.Quint)
+
+	-- Скрываем после анимации
+	task.delay(0.27, function()
+		if not self._visible and self.MainFrame then
+			self.MainFrame.Visible = false
+			-- Возвращаем позицию для следующего Show()
+			self.MainFrame.Position = startPos
+		end
+	end)
 end
 
 function ZenithLib:SetToggleKey(key)
@@ -2618,13 +2752,15 @@ function ZenithLib:Notify(cfg)
 
 	-- Акцентный левый border
 	local accent = CreateInstance("Frame", {
-		Size = UDim2.new(0, 3, 0, 36),
-		Position = UDim2.new(0, 0, 0.5, -18),
+		-- Полная высота карточки, прибита к левому краю
+		Size = UDim2.new(0, 3, 1, 0),
+		Position = UDim2.new(0, 0, 0, 0),
 		BackgroundColor3 = COLORS.Accent,
 		BorderSizePixel = 0,
 		ZIndex = 201,
 	})
-	CreateInstance("UICorner", { CornerRadius = UDim.new(0, 2) }).Parent = accent
+	-- Только верх и низ скруглены — левая сторона прямая у края карточки
+	CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = accent
 	accent.Parent = card
 
 	-- Заголовок
@@ -2738,149 +2874,309 @@ function ZenithLib:_RegisterCfgItem(key, getter, setter, itemType)
 end
 
 function ZenithLib:SaveConfig(name)
-	self._cfgRegistry = self._cfgRegistry or {}
-	name = name or self._cfgName or "default"
-	local path = self._cfgPath or _getCfgPath(self._configName or "default")
-	local data = {}
-	for k, entry in pairs(self._cfgRegistry) do
-		local ok, val = pcall(entry.get)
-		if ok then
-			if typeof(val) == "Color3" then val = color3ToHex(val) end
-			data[k] = val
-		end
-	end
-	_cfgWrite(path, name, data)
+    print("[ZenithLib] >> ZenithLib:SaveConfig()", name)
+    self._cfgRegistry = self._cfgRegistry or {}
+    name = name or self._cfgName or "default"
+
+    -- Путь всегда актуален
+    local path = self._cfgPath
+    if not path then
+        path = _getCfgPath(self._configName or "default")
+        self._cfgPath = path
+    end
+
+    local data = {}
+    for k, entry in pairs(self._cfgRegistry) do
+        local ok, val = pcall(entry.get)
+        if ok then
+            -- Конвертируем Color3 в hex строку
+            if typeof(val) == "Color3" then
+                val = color3ToHex(val)
+            -- Конвертируем KeyCode в строку
+            elseif typeof(val) == "EnumItem" then
+                val = tostring(val):gsub("Enum.KeyCode.", "")
+            end
+            data[k] = val
+        else
+            warn("[ZenithLib] SaveConfig: failed to get value for key:", k)
+        end
+    end
+
+    local ok, err = pcall(_cfgWrite, path, name, data)
+    if not ok then
+        warn("[ZenithLib] SaveConfig write failed:", err)
+        return false
+    end
+
+    print("[ZenithLib] Config saved:", path .. name .. ".json")
+    return true
 end
 
 function ZenithLib:LoadConfig(name)
-	self._cfgRegistry = self._cfgRegistry or {}
-	name = name or self._cfgName or "default"
-	local path = self._cfgPath or _getCfgPath(self._configName or "default")
-	local data = _cfgRead(path, name)
-	if not data then return false end
-	for k, entry in pairs(self._cfgRegistry) do
-		if data[k] ~= nil then
-			local val = data[k]
-			if entry.type == "color" and type(val) == "string" then
-				local col = hexToColor3(val)
-				if col then val = col end
-			end
-			pcall(entry.set, val)
-		end
-	end
-	return true
+    print("[ZenithLib] >> ZenithLib:LoadConfig()", name)
+    self._cfgRegistry = self._cfgRegistry or {}
+    name = name or self._cfgName or "default"
+
+    local path = self._cfgPath
+    if not path then
+        path = _getCfgPath(self._configName or "default")
+        self._cfgPath = path
+    end
+
+    local data = _cfgRead(path, name)
+    if not data then
+        warn("[ZenithLib] LoadConfig: file not found or empty:", path .. name .. ".json")
+        return false
+    end
+
+    for k, entry in pairs(self._cfgRegistry) do
+        if data[k] ~= nil then
+            local val = data[k]
+
+            -- Восстанавливаем Color3 из hex
+            if entry.type == "color" and type(val) == "string" then
+                local col = hexToColor3(val)
+                if col then val = col end
+
+            -- Восстанавливаем KeyCode из строки
+            elseif entry.type == "keybind" and type(val) == "string" then
+                local ok2, key = pcall(function()
+                    return Enum.KeyCode[val]
+                end)
+                if ok2 and key then val = key end
+            end
+
+            local ok, err = pcall(entry.set, val)
+            if not ok then
+                warn("[ZenithLib] LoadConfig: failed to set value for key:", k, err)
+            end
+        end
+    end
+
+    print("[ZenithLib] Config loaded:", path .. name .. ".json")
+    return true
 end
 
 function ZenithLib:MakeConfigTab(configName)
-	configName = configName or self._configName or "default"
-	self._cfgPath  = _getCfgPath(configName)
-	self._cfgName  = "default"
-	self._cfgRegistry = self._cfgRegistry or {}
+    print("[ZenithLib] >> ZenithLib:MakeConfigTab()")
+    configName = configName or self._configName or "default"
 
-	local tab = self:MakeTab({ Title = "Config", Image = "save", LayoutOrder = 9000 })
+    -- Инициализация пути (всегда)
+    self._cfgPath = _getCfgPath(configName)
+    self._cfgName = "default"
+    self._cfgRegistry = self._cfgRegistry or {}
 
-	tab:MakeSection({ Name = "Profiles" })
+    local tab = self:MakeTab({ Title = "Config", Image = "save", LayoutOrder = 9000 })
 
-	local cfgList = _cfgList(self._cfgPath)
-	if #cfgList == 0 then cfgList = { "default" } end
+    tab:MakeSection({ Name = "Profiles" })
 
-	local cfgDropdown = tab:MakeDropdown({
-		Name    = "Profile",
-		Options = cfgList,
-		Default = cfgList[1],
-		Callback = function(name) self._cfgName = name end,
-	})
+    -- Получаем список конфигов, если пусто — добавляем default
+    local function getConfigList()
+        local list = _cfgList(self._cfgPath)
+        if #list == 0 then
+            -- Создаём default если его нет
+            pcall(writefile, self._cfgPath .. "default.json", "{}")
+            list = { "default" }
+        end
+        return list
+    end
 
-	tab:MakeTextbox({
-		Name        = "New Profile Name",
-		Placeholder = "my_config",
-		Default     = "",
-		Callback    = function(name)
-			if name == "" then return end
-			pcall(writefile, self._cfgPath .. name .. ".json", "{}")
-			self:Notify({ Title = "Created", Content = "Profile: " .. name, Duration = 2 })
-		end,
-	})
+    local cfgList = getConfigList()
 
-	tab:MakeSeparator()
-	tab:MakeSection({ Name = "Actions" })
+    -- Дропдаун профилей
+    local cfgDropdown = tab:MakeDropdown({
+        Name    = "Profile",
+        Options = cfgList,
+        Default = cfgList[1],
+        Callback = function(name)
+            self._cfgName = name
+            print("[ZenithLib] Config profile selected:", name)
+        end,
+    })
 
-	tab:MakeButton({
-		Name = "Save Config",
-		Icon = "save",
-		Callback = function()
-			self:SaveConfig()
-			self:Notify({ Title = "Saved", Content = self._cfgName, Duration = 2 })
-		end,
-	})
+    -- Поле для нового профиля
+    local newNameBox = tab:MakeTextbox({
+        Name        = "New Profile Name",
+        Placeholder = "my_config",
+        Default     = "",
+        Callback    = function(name)
+            -- Очищаем имя от пробелов
+            name = name:match("^%s*(.-)%s*$")
 
-	tab:MakeButton({
-		Name = "Load Config",
-		Icon = "folder-open",
-		Callback = function()
-			if self:LoadConfig() then
-				self:Notify({ Title = "Loaded", Content = self._cfgName, Duration = 2 })
-			else
-				self:Notify({ Title = "Not Found", Content = self._cfgName, Duration = 2 })
-			end
-		end,
-	})
+            if name == "" then
+                self:Notify({ Title = "Error", Content = "Name cannot be empty", Duration = 2 })
+                return
+            end
 
-	tab:MakeButton({
-		Name = "Delete Profile",
-		Icon = "trash-2",
-		Callback = function()
-			if self._cfgName == "default" then
-				self:Notify({ Title = "Error", Content = "Cannot delete default", Duration = 2 })
-				return
-			end
-			pcall(function() if delfile then delfile(self._cfgPath .. self._cfgName .. ".json") else warn("delfile not supported") end end)
-			self:Notify({ Title = "Deleted", Content = self._cfgName, Duration = 2 })
-		end,
-	})
+            -- Проверяем что такого профиля ещё нет
+            local exists = false
+            for _, v in ipairs(getConfigList()) do
+                if v == name then exists = true; break end
+            end
 
-	tab:MakeSeparator()
-	tab:MakeSection({ Name = "Auto Save" })
+            if exists then
+                self:Notify({ Title = "Error", Content = "Profile already exists: " .. name, Duration = 2 })
+                return
+            end
 
-	local autoConn = nil
-	local autoInterval = 30
+            -- Создаём файл
+            local ok, err = pcall(writefile, self._cfgPath .. name .. ".json", "{}")
+            if ok then
+                self:Notify({ Title = "Created", Content = "Profile: " .. name, Duration = 2 })
+                -- Обновляем дропдаун
+                local newList = getConfigList()
+                cfgDropdown:SetValue(name)
+                self._cfgName = name
+            else
+                self:Notify({ Title = "Error", Content = "Failed to create: " .. tostring(err), Duration = 3 })
+            end
+        end,
+    })
 
-	tab:MakeToggle({
-		Name    = "Auto Save",
-		Icon    = "refresh-cw",
-		Default = false,
-		Callback = function(state)
-			if state then
-				local last = tick()
-				autoConn = game:GetService("RunService").Heartbeat:Connect(function()
-					if tick() - last >= autoInterval then
-						last = tick()
-						self:SaveConfig()
-					end
-				end)
-				self:Notify({ Title = "Auto Save", Content = "Every " .. autoInterval .. "s", Duration = 2 })
-			else
-				if autoConn then autoConn:Disconnect(); autoConn = nil end
-			end
-		end,
-	})
+    tab:MakeSeparator()
+    tab:MakeSection({ Name = "Actions" })
 
-	tab:MakeSlider({
-		Name    = "Save Interval (sec)",
-		Min     = 10,
-		Max     = 300,
-		Default = 30,
-		Callback = function(v) autoInterval = v end,
-	})
+    -- Сохранить
+    tab:MakeButton({
+        Name = "Save Config",
+        Icon = "save",
+        Callback = function()
+            if not self._cfgPath then
+                self:Notify({ Title = "Error", Content = "Config path not set", Duration = 2 })
+                return
+            end
+            local ok, err = pcall(function() self:SaveConfig(self._cfgName) end)
+            if ok then
+                self:Notify({ Title = "Saved ✓", Content = "Profile: " .. self._cfgName, Duration = 2 })
+            else
+                self:Notify({ Title = "Save Failed", Content = tostring(err), Duration = 3 })
+            end
+        end,
+    })
 
-	-- Auto-load at start
-	task.defer(function()
-		if self:LoadConfig() then
-			self:Notify({ Title = "Config", Content = "Auto-loaded: " .. self._cfgName, Duration = 3 })
-		end
-	end)
+    -- Загрузить
+    tab:MakeButton({
+        Name = "Load Config",
+        Icon = "folder-open",
+        Callback = function()
+            if not self._cfgPath then
+                self:Notify({ Title = "Error", Content = "Config path not set", Duration = 2 })
+                return
+            end
+            local ok, result = pcall(function() return self:LoadConfig(self._cfgName) end)
+            if ok and result then
+                self:Notify({ Title = "Loaded ✓", Content = "Profile: " .. self._cfgName, Duration = 2 })
+            elseif ok and not result then
+                self:Notify({ Title = "Not Found", Content = "Profile: " .. self._cfgName, Duration = 2 })
+            else
+                self:Notify({ Title = "Load Failed", Content = tostring(result), Duration = 3 })
+            end
+        end,
+    })
 
-	return tab
+    -- Удалить профиль
+    tab:MakeButton({
+        Name = "Delete Profile",
+        Icon = "trash-2",
+        Callback = function()
+            if self._cfgName == "default" then
+                self:Notify({ Title = "Error", Content = "Cannot delete default profile", Duration = 2 })
+                return
+            end
+
+            local filePath = self._cfgPath .. self._cfgName .. ".json"
+
+            -- Проверяем существование файла
+            local fileExists = pcall(readfile, filePath)
+            if not fileExists then
+                self:Notify({ Title = "Error", Content = "Profile not found: " .. self._cfgName, Duration = 2 })
+                return
+            end
+
+            -- Удаляем
+            local ok, err = pcall(function()
+                if delfile then
+                    delfile(filePath)
+                else
+                    -- Fallback: перезаписываем пустым если delfile нет
+                    writefile(filePath, "__DELETED__")
+                    warn("[ZenithLib] delfile not supported, file marked as deleted")
+                end
+            end)
+
+            if ok then
+                local deleted = self._cfgName
+                self._cfgName = "default"
+                cfgDropdown:SetValue("default")
+                self:Notify({ Title = "Deleted ✓", Content = "Profile: " .. deleted, Duration = 2 })
+            else
+                self:Notify({ Title = "Delete Failed", Content = tostring(err), Duration = 3 })
+            end
+        end,
+    })
+
+    tab:MakeSeparator()
+    tab:MakeSection({ Name = "Auto Save" })
+
+    local autoConn = nil
+    local autoInterval = 30
+
+    tab:MakeToggle({
+        Name    = "Auto Save",
+        Icon    = "refresh-cw",
+        Default = false,
+        Callback = function(state)
+            -- Отключаем старый коннект если был
+            if autoConn then
+                autoConn:Disconnect()
+                autoConn = nil
+            end
+
+            if state then
+                local last = tick()
+                autoConn = game:GetService("RunService").Heartbeat:Connect(function()
+                    if tick() - last >= autoInterval then
+                        last = tick()
+                        pcall(function() self:SaveConfig(self._cfgName) end)
+                    end
+                end)
+                self:Notify({
+                    Title   = "Auto Save ON",
+                    Content = "Every " .. autoInterval .. "s",
+                    Duration = 2
+                })
+            else
+                self:Notify({ Title = "Auto Save OFF", Content = "", Duration = 2 })
+            end
+        end,
+    })
+
+    tab:MakeSlider({
+        Name    = "Save Interval (sec)",
+        Min     = 10,
+        Max     = 300,
+        Default = 30,
+        Callback = function(v)
+            autoInterval = v
+        end,
+    })
+
+    tab:MakeSeparator()
+
+    -- Auto-load при старте
+    task.defer(function()
+        if not self._cfgPath then return end
+        local ok, result = pcall(function() return self:LoadConfig(self._cfgName) end)
+        if ok and result then
+            self:Notify({
+                Title   = "Config",
+                Content = "Auto-loaded: " .. self._cfgName,
+                Duration = 3
+            })
+        end
+    end)
+
+    return tab
 end
 
 
