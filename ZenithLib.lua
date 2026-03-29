@@ -1127,9 +1127,18 @@ function ZenithLib:MakeTab(config)
 		})
 		overlay.Parent = win.ScreenGui
 
+		local connectorLine = CreateInstance("Frame", {
+			Name = "DD_Connector",
+			Size = UDim2.new(0, 0, 0, 2),
+			BackgroundColor3 = COLORS.Accent,
+			BorderSizePixel = 0,
+			ZIndex = 199,
+		})
+		connectorLine.Parent = overlay
+
 		local listFrame = CreateInstance("ScrollingFrame", {
 			Name = "DD_List",
-			Size = UDim2.new(0, 100, 0, 0),
+			Size = UDim2.new(0, 180, 0, 0),
 			BackgroundColor3 = Color3.fromRGB(10, 6, 8),
 			BackgroundTransparency = 0,
 			BorderSizePixel = 0,
@@ -1146,6 +1155,20 @@ function ZenithLib:MakeTab(config)
 			Thickness = 0.5, Transparency = 0.4,
 			Color = COLORS.Accent,
 		}).Parent = listFrame
+		
+		local arrowIndicator = CreateInstance("TextLabel", {
+			Size = UDim2.new(1, 0, 0, 20),
+			Position = UDim2.new(0, 0, 0, -25),
+			BackgroundTransparency = 1,
+			Text = "↔",
+			TextColor3 = COLORS.Accent,
+			TextSize = 16,
+			Font = Enum.Font.GothamBold,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			ZIndex = 202,
+		})
+		arrowIndicator.Parent = listFrame
+		
 		listFrame.Parent = overlay
 
 		local listLayout = CreateInstance("UIListLayout", {
@@ -1173,7 +1196,8 @@ function ZenithLib:MakeTab(config)
 		win._ddOverlay    = overlay
 		win._ddListFrame  = listFrame
 		win._ddListLayout = listLayout
-		win._ddCurrent    = nil  -- текущий открытый dropdown (таблица с closeList)
+		win._ddConnector  = connectorLine
+		win._ddCurrent    = nil
 
 		overlayHit.MouseButton1Click:Connect(function()
 			if win._ddCurrent then
@@ -1190,6 +1214,7 @@ function ZenithLib:MakeTab(config)
 		local overlay   = win._ddOverlay
 		local listFrame = win._ddListFrame
 		local listLayout = win._ddListLayout
+		local connector = win._ddConnector
 
 		for _, ch in ipairs(listFrame:GetChildren()) do
 			if ch:IsA("TextButton") then ch:Destroy() end
@@ -1233,16 +1258,35 @@ function ZenithLib:MakeTab(config)
 
 		local absPos  = anchorFrame.AbsolutePosition
 		local absSize = anchorFrame.AbsoluteSize
+		local mainFrame = win.MainFrame
+		local mainAbsPos = mainFrame.AbsolutePosition
+		local mainAbsSize = mainFrame.AbsoluteSize
 
-		listFrame.Size = UDim2.new(0, absSize.X, 0, 0)
+		local listX = mainAbsPos.X + mainAbsSize.X + 15
+		local listY = absPos.Y
+
+		listFrame.Size = UDim2.new(0, 180, 0, 0)
 		listFrame.AnchorPoint = Vector2.new(0, 0)
-		listFrame.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 10)
+		listFrame.Position = UDim2.new(0, listX, 0, listY)
 		listFrame.CanvasPosition = Vector2.new(0, 0)
+
+		local lineStartX = absPos.X + absSize.X
+		local lineStartY = absPos.Y + (absSize.Y / 2)
+		local lineEndX = listX - 5
+		local lineEndY = listY - 10
+		local lineWidth = lineEndX - lineStartX
+
+		connector.Size = UDim2.new(0, 0, 0, 2)
+		connector.Position = UDim2.new(0, lineStartX, 0, lineStartY)
+		connector.Rotation = math.deg(math.atan2(lineEndY - lineStartY, lineWidth))
 
 		Tween(arrow, { ImageRectOffset = Vector2.new(967, 355), ImageColor3 = COLORS.Accent }, 0.18)
 
 		overlay.Visible = true
-		Tween(listFrame, { Size = UDim2.new(0, absSize.X, 0, listH) }, 0.18)
+		
+		Tween(connector, { Size = UDim2.new(0, lineWidth, 0, 2) }, 0.25)
+		task.wait(0.1)
+		Tween(listFrame, { Size = UDim2.new(0, 180, 0, listH) }, 0.18)
 
 		local closed = false
 		local function closeList()
@@ -1250,8 +1294,9 @@ function ZenithLib:MakeTab(config)
 			closed = true
 			win._ddCurrent = nil
 			Tween(arrow, { ImageRectOffset = Vector2.new(967, 49), ImageColor3 = COLORS.SubText }, 0.18)
-			Tween(listFrame, { Size = UDim2.new(0, absSize.X, 0, 0) }, 0.15)
-			task.delay(0.16, function()
+			Tween(listFrame, { Size = UDim2.new(0, 180, 0, 0) }, 0.15)
+			Tween(connector, { Size = UDim2.new(0, 0, 0, 2) }, 0.2)
+			task.delay(0.2, function()
 				overlay.Visible = false
 			end)
 		end
