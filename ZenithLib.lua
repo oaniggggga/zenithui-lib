@@ -1,18 +1,9 @@
---[[
-	ZenithLib - Modular UI Library for Roblox
-	Version 2.1.0
-	Created for Roblox Luau
-]]
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local TextService = game:GetService("TextService")
 
--- ═══════════════════════════════════════════════════════════
--- Lucide Icons Integration
--- Thanks to Latte Softworks / SiriusSoftwareLtd
--- ═══════════════════════════════════════════════════════════
 local Icons = nil
 local _iconsLoaded = false
 
@@ -31,10 +22,8 @@ local function _loadIcons()
 	end
 end
 
--- Загружаем иконки асинхронно
 task.spawn(_loadIcons)
 
--- Получить данные иконки по имени (Lucide name)
 local function getIcon(name)
 	if not Icons then return nil end
 	name = string.match(string.lower(tostring(name)), "^%s*(.-)%s*$")
@@ -50,10 +39,8 @@ local function getIcon(name)
 	}
 end
 
--- Применить иконку к ImageLabel/ImageButton
 local function applyIcon(imageObj, name)
 	if type(name) == "number" then
-		-- Числовой asset id
 		imageObj.Image           = "rbxassetid://" .. name
 		imageObj.ImageRectSize   = Vector2.new(0, 0)
 		imageObj.ImageRectOffset = Vector2.new(0, 0)
@@ -66,7 +53,6 @@ local function applyIcon(imageObj, name)
 			imageObj.ImageRectOffset = icon.imageRectOffset
 			return true
 		else
-			-- Иконки ещё грузятся — пробуем позже
 			task.delay(2, function()
 				local retried = getIcon(name)
 				if retried and imageObj.Parent then
@@ -83,7 +69,6 @@ end
 
 
 
--- HEX утилиты (совместимость с executor'ами без Color3:ToHex)
 local function color3ToHex(col)
 	return string.format("%02X%02X%02X",
 		math.floor(col.R * 255),
@@ -102,7 +87,6 @@ local function hexToColor3(hex)
 	return Color3.fromRGB(r, g, b)
 end
 
--- Utility Functions
 local function CreateInstance(className, properties)
 	local instance = Instance.new(className)
 	for prop, value in pairs(properties) do
@@ -133,7 +117,6 @@ local function TweenElastic(obj, props, t)
 end
 
 
--- handle = откуда начинается drag (TitleBar), frame = что двигается (MainFrame)
 local function MakeDraggable(frame, handle)
 	local dragging = false
 	local dragInput
@@ -174,61 +157,40 @@ local function MakeDraggable(frame, handle)
 	end)
 end
 
--- Color Constants (Black & Rose)
--- ┌─────────────────────────────────────────────────────────┐
--- │  ZenithLib — Obsidian Ember Theme                       │
--- │  Тёмный как обсидиан фон + раскалённый янтарный акцент  │
--- └─────────────────────────────────────────────────────────┘
 local COLORS = {
-	-- ── Base: Obsidian ───────────────────────────────────────
-	--  Почти чёрный с едва заметным тёплым угольным тоном.
-	--  Даёт ощущение глубины без резкого холодного чёрного.
 	MainBackground   = Color3.fromRGB(10,   9,   8),   -- обсидиан
 	DarkerBackground = Color3.fromRGB(6,    5,   4),   -- глубже — для TabNav / TitleBar
 	InputBackground  = Color3.fromRGB(18,  16,  14),   -- фон элементов — чуть теплее
 	DropdownHolder   = Color3.fromRGB(13,  11,   9),   -- фон списков дропдауна
 
-	-- ── Accent: Ember (раскалённый янтарь) ──────────────────
-	--  Не просто оранжевый — это цвет раскалённого металла,
-	--  горячий и насыщенный, но не кричащий.
 	Accent           = Color3.fromRGB(255, 150,  40),  -- ember / раскалённый янтарь
 	AccentText       = Color3.fromRGB(255, 205, 130),  -- мягкий золотисто-кремовый
 	AccentDim        = Color3.fromRGB(55,  32,   8),   -- тёмный ember для hover/pressed
 
-	-- ── Text ──────────────────────────────────────────────────
-	--  Тёплый белый — не чистый #FFFFFF (слишком резкий),
-	--  а слоновая кость с лёгким золотым подтоном.
 	Text             = Color3.fromRGB(242, 236, 226),  -- ivory white
 	SubText          = Color3.fromRGB(118, 110,  96),  -- тёплый серо-золотой
 
-	-- ── Borders & Rails ──────────────────────────────────────
-	--  Тонкие, чуть теплее фона — не контрастные, но заметные.
 	ElementBorder    = Color3.fromRGB(48,  38,  22),   -- тёмно-янтарный бордер
 	InElementBorder  = Color3.fromRGB(48,  38,  22),
 	SliderRail       = Color3.fromRGB(30,  24,  14),   -- трек слайдера
 	TitleBarLine     = Color3.fromRGB(70,  50,  18),   -- линия под тайтлбаром
 
-	-- ── Tab States ────────────────────────────────────────────
 	ActiveTab        = Color3.fromRGB(28,  20,   8),   -- фон активного таба
 	EL_HOVER         = Color3.fromRGB(24,  20,  14),   -- hover на элементах
 
-	-- ── Window Controls (macOS style) ────────────────────────
 	CloseRed         = Color3.fromRGB(255,  95,  87),
 	MaximizeYellow   = Color3.fromRGB(254, 188,  46),
 	MinimizeGreen    = Color3.fromRGB(40,  200,  64),
 }
 
 
--- Function to update accent color globally
 local function SetAccentColor(color)
 	COLORS.Accent = color
 end
 
--- Main Library
 local ZenithLib = {}
 ZenithLib.__index = ZenithLib
 
--- Theme customization (after ZenithLib is defined)
 function ZenithLib:SetTheme(theme)
 	if theme.Accent then
 		COLORS.Accent = theme.Accent
@@ -250,7 +212,6 @@ function ZenithLib:SetTheme(theme)
 	end
 end
 
--- Get current theme
 function ZenithLib:GetTheme()
 	return {
 		Accent = COLORS.Accent,
@@ -271,12 +232,10 @@ function ZenithLib:MakeWindow(config)
 	self._configName = ConfigName
 	self._cfgPath    = nil
 	self._cfgRegistry = {}
-	-- Устанавливаем путь для конфигов
 	_configPath = "ZenithLib/" .. ConfigName .. "/"
 	pcall(makefolder, "ZenithLib")
 	pcall(makefolder, _configPath)
 	
-	-- Create ScreenGui
 	self.ScreenGui = CreateInstance("ScreenGui", {
 		Name = "ZenithLib_" .. ConfigName,
 		IgnoreGuiInset = true,
@@ -285,7 +244,6 @@ function ZenithLib:MakeWindow(config)
 	})
 	self.ScreenGui.Parent = game:GetService("CoreGui")
 
-	-- ── INTRO SCREEN ─────────────────────────────────────────────
 	if config.Intro ~= false then
 		local introGui = CreateInstance("ScreenGui", {
 			Name = "ZenithIntro",
@@ -303,7 +261,6 @@ function ZenithLib:MakeWindow(config)
 			Parent = introGui,
 		})
 
-		-- Центральный контейнер
 		local center = CreateInstance("Frame", {
 			Size = UDim2.new(0, 320, 0, 100),
 			Position = UDim2.fromScale(0.5, 0.5),
@@ -313,7 +270,6 @@ function ZenithLib:MakeWindow(config)
 			Parent = bg,
 		})
 
-		-- Акцентная линия сверху
 		local topLine = CreateInstance("Frame", {
 			Size = UDim2.new(0, 0, 0, 2),
 			Position = UDim2.fromScale(0.5, 0),
@@ -324,7 +280,6 @@ function ZenithLib:MakeWindow(config)
 		})
 		CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = topLine
 
-		-- Название скрипта
 		local titleLbl = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, 0, 0, 52),
 			Position = UDim2.new(0, 0, 0, 14),
@@ -338,7 +293,6 @@ function ZenithLib:MakeWindow(config)
 			Parent = center,
 		})
 
-		-- "by AuthorName"
 		local byLbl = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, 0, 0, 24),
 			Position = UDim2.new(0, 0, 0, 66),
@@ -352,21 +306,17 @@ function ZenithLib:MakeWindow(config)
 			Parent = center,
 		})
 
-		-- Анимация появления
 		task.spawn(function()
 			task.wait(0.1)
 
-			-- Линия раскрывается
 			Tween(topLine, { Size = UDim2.new(0, 280, 0, 2) }, 0.5, Enum.EasingStyle.Quint)
 			task.wait(0.3)
 
-			-- Текст появляется
 			Tween(titleLbl, { TextTransparency = 0 }, 0.4, Enum.EasingStyle.Quint)
 			task.wait(0.15)
 			Tween(byLbl, { TextTransparency = 0 }, 0.35, Enum.EasingStyle.Quint)
 			task.wait(0.9)
 
-			-- Fade out всего
 			Tween(titleLbl, { TextTransparency = 1 }, 0.3)
 			Tween(byLbl,    { TextTransparency = 1 }, 0.3)
 			task.wait(0.15)
@@ -378,13 +328,10 @@ function ZenithLib:MakeWindow(config)
 			introGui:Destroy()
 		end)
 	end
-	-- ─────────────────────────────────────────────────────────────
 
-	-- Main Frame
 	local windowPos = config.Position or UDim2.new(0.5, -350, 0.5, -225)
 	local windowSize = config.Size or UDim2.new(0, 700, 0, 450)
 	
-	-- Shadow Effect
 	local shadow = CreateInstance("ImageLabel", {
 		Name = "Shadow",
 		Size = UDim2.new(1, 20, 1, 20),
@@ -410,21 +357,17 @@ function ZenithLib:MakeWindow(config)
 	})
 	self.MainFrame.Parent = self.ScreenGui
 	
-	-- Включаем курсор и разрешаем им двигать
 	UserInputService.MouseIconEnabled = true
 	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 
-	-- Появление окна снизу вверх
 	self.MainFrame.Position = UDim2.new(windowPos.X.Scale, windowPos.X.Offset, windowPos.Y.Scale, windowPos.Y.Offset + 24)
 	task.defer(function()
 		Tween(self.MainFrame, { Position = windowPos }, 0.38, Enum.EasingStyle.Back)
 	end)
 	
-	-- Corner Radius
 	local mainCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	mainCorner.Parent = self.MainFrame
 	
-	-- Border Stroke
 	local mainStroke = CreateInstance("UIStroke", {
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 		Thickness = 1,
@@ -433,7 +376,6 @@ function ZenithLib:MakeWindow(config)
 	})
 	mainStroke.Parent = self.MainFrame
 	
-	-- Title Bar
 	self.TitleBar = CreateInstance("Frame", {
 		Name = "TitleBar",
 		Size = UDim2.new(1, 0, 0, 44),
@@ -446,7 +388,6 @@ function ZenithLib:MakeWindow(config)
 	local titleBarCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	titleBarCorner.Parent = self.TitleBar
 	
-	-- Название по центру тайтлбара
 	self.TitleText = CreateInstance("TextLabel", {
 		Name = "TitleText",
 		Size = UDim2.new(1, -100, 1, 0),
@@ -475,8 +416,6 @@ function ZenithLib:MakeWindow(config)
 			Parent = self.TitleBar,
 		})
 	end
-	-- Window Controls Container
-	-- Window controls — правый верхний угол, UIListLayout для равного spacing
 	self.ControlsContainer = CreateInstance("Frame", {
 		Name = "ControlsContainer",
 		Size = UDim2.new(0, 76, 1, 0),
@@ -493,7 +432,6 @@ function ZenithLib:MakeWindow(config)
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	}).Parent = self.ControlsContainer
 
-	-- Minimize (Green) — LayoutOrder 1 = левая
 	self.MinimizeButton = CreateInstance("Frame", {
 		Name = "MinimizeButton",
 		Size = UDim2.new(0, 12, 0, 12),
@@ -508,7 +446,6 @@ function ZenithLib:MakeWindow(config)
 	})
 	minHitbox.Parent = self.MinimizeButton
 
-	-- Maximize (Yellow) — LayoutOrder 2 = средняя
 	self.MaximizeButton = CreateInstance("Frame", {
 		Name = "MaximizeButton",
 		Size = UDim2.new(0, 12, 0, 12),
@@ -531,7 +468,6 @@ function ZenithLib:MakeWindow(config)
 		Tween(self.MainFrame, { Size = self.isMaximized and self.expandedSize or self.normalSize })
 	end)
 
-	-- Close (Red) — LayoutOrder 3 = правая
 	self.CloseButton = CreateInstance("Frame", {
 		Name = "CloseButton",
 		Size = UDim2.new(0, 12, 0, 12),
@@ -555,7 +491,6 @@ function ZenithLib:MakeWindow(config)
 		self:Minimize()
 	end)
 	
-	-- Content Container
 	self.ContentContainer = CreateInstance("Frame", {
 		Name = "ContentContainer",
 		Size = UDim2.new(1, 0, 1, -44),
@@ -564,7 +499,6 @@ function ZenithLib:MakeWindow(config)
 	})
 	self.ContentContainer.Parent = self.MainFrame
 	
-	-- Tab Navigation
 	self.TabNav = CreateInstance("Frame", {
 		Name = "TabNav",
 		Size = UDim2.new(0, 150, 1, 0),
@@ -577,7 +511,6 @@ function ZenithLib:MakeWindow(config)
 	local tabNavCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	tabNavCorner.Parent = self.TabNav
 
-	-- Обычный Frame для табов — никакого скроллбара
 	local tabScroll = CreateInstance("Frame", {
 		Name = "TabScroll",
 		Size = UDim2.new(1, 0, 1, 0),
@@ -607,7 +540,6 @@ function ZenithLib:MakeWindow(config)
 
 
 
-	-- Tab Content Area
 	self.TabContent = CreateInstance("Frame", {
 		Name = "TabContent",
 		Size = UDim2.new(1, -150, 1, 0),
@@ -621,10 +553,8 @@ function ZenithLib:MakeWindow(config)
 	self.CurrentTab = nil
 	self._tabIndex  = 0   -- счётчик для LayoutOrder
 	
-	-- Make Draggable
 	MakeDraggable(self.MainFrame, self.TitleBar)
 	
-	-- ── Toggle visibility on RightShift ──────────────────────────
 	self._visible = true
 	self._toggleKey = Enum.KeyCode.RightShift
 	UserInputService.InputBegan:Connect(function(input, gp)
@@ -634,10 +564,8 @@ function ZenithLib:MakeWindow(config)
 		end
 	end)
 
-	-- сохраняем stroke для Settings
 	self._mainStroke = mainStroke
 
-	-- SetTheme function for Window
 	function self:SetTheme(theme)
 		if theme.Accent then
 			COLORS.Accent = theme.Accent
@@ -671,11 +599,9 @@ function ZenithLib:MakeTab(config)
 	local Title = config.Title or "Tab"
 	local Image = config.Image
 	
-	-- Индекс таба для LayoutOrder
 	win._tabIndex = (win._tabIndex or 0) + 1
 	local _tabOrder = config.LayoutOrder or win._tabIndex
 
-	-- Create Tab Button
 	local tabButton = CreateInstance("TextButton", {
 		Name = "Tab_" .. Title,
 		Size = UDim2.new(1, -10, 0, 34),
@@ -721,7 +647,6 @@ function ZenithLib:MakeTab(config)
 	
 	tabButton.Parent = win._tabScroll
 	
-	-- Create Tab Content Frame
 	local tabContent = CreateInstance("ScrollingFrame", {
 		Name = "Content_" .. Title,
 		Size = UDim2.new(1, 0, 1, 0),
@@ -756,9 +681,7 @@ function ZenithLib:MakeTab(config)
 	
 	win.TabFrames[Title] = tabContent
 	
-	-- Tab Click Handler
 	local function SelectTab()
-		-- Fade out текущего таба
 		for _, frame in pairs(win.TabFrames) do
 			if frame.Visible then
 				task.delay(0.08, function()
@@ -773,7 +696,6 @@ function ZenithLib:MakeTab(config)
 		end)
 		win.CurrentTab = Title
 		
-		-- Update button appearance — только Frame с именем Tab_*
 		local tabContainer = win._tabScroll or win.TabNav
 		for _, button in ipairs(tabContainer:GetChildren()) do
 			if (button:IsA("Frame") or button:IsA("TextButton")) and button.Name:sub(1,4) == "Tab_" then
@@ -815,12 +737,10 @@ function ZenithLib:MakeTab(config)
 		end
 	end)
 	
-	-- Auto-select first tab
 	if not win.CurrentTab then
 		SelectTab()
 	end
 	
-	-- Tab Methods
 	local Tab = {}
 	
 	function Tab:MakeButton(config)
@@ -844,7 +764,6 @@ function ZenithLib:MakeTab(config)
 		})
 		_bStroke.Parent = buttonFrame
 		
-		-- Иконка кнопки (опционально)
 		if Icon then
 			local btnIcon = CreateInstance("ImageLabel", {
 				Name = "BtnIcon",
@@ -980,7 +899,6 @@ function ZenithLib:MakeTab(config)
 		local function UpdateToggle()
 			if isOn then
 				Tween(toggleSwitch, { BackgroundColor3 = COLORS.Accent }, 0.2)
-				-- Knob squeeze then spring to right
 				TweenService:Create(toggleKnob, TweenInfo.new(0.08, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 10, 0, 10) }):Play()
 				task.delay(0.08, function()
 					TweenService:Create(toggleKnob, TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
@@ -1015,7 +933,6 @@ function ZenithLib:MakeTab(config)
 			UpdateToggle()
 		end)
 
-		-- Config registration
 		if config.ConfigKey then
 			win:_RegisterCfgItem(config.ConfigKey,
 				function() return isOn end,
@@ -1160,7 +1077,6 @@ function ZenithLib:MakeTab(config)
 			end
 		end)
 		
-		-- Click to set value directly
 		sliderTrack.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 then
 				local relativeX = sliderTrack.AbsolutePosition.X
@@ -1178,7 +1094,6 @@ function ZenithLib:MakeTab(config)
 			end
 		end)
 		
-		-- Config registration
 		local _sliderVal = Default
 		local _origUpdate = UpdateSlider
 		UpdateSlider = function(value)
@@ -1201,10 +1116,6 @@ function ZenithLib:MakeTab(config)
 	end
 	
 
-	-- ═══════════════════════════════════════════════════════════
-	-- Shared dropdown list manager (singleton overlay)
-	-- Один listFrame на весь ScreenGui, переиспользуется всеми дропдаунами
-	-- ═══════════════════════════════════════════════════════════
 	if not win._ddOverlay then
 		local overlay = CreateInstance("Frame", {
 			Name = "DD_Overlay",
@@ -1243,7 +1154,6 @@ function ZenithLib:MakeTab(config)
 		})
 		listLayout.Parent = listFrame
 		
-		-- Автоматически обновляем CanvasSize
 		listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 			listFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 8)
 		end)
@@ -1253,7 +1163,6 @@ function ZenithLib:MakeTab(config)
 			PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4),
 		}).Parent = listFrame
 
-		-- Клик по оверлею (вне списка) — закрывает
 		local overlayHit = CreateInstance("TextButton", {
 			Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 1,
@@ -1274,7 +1183,6 @@ function ZenithLib:MakeTab(config)
 	end
 
 	local function _ddOpen(anchorFrame, arrow, itemH, items, onSelect, currentSelected)
-		-- Закрыть предыдущий если был
 		if win._ddCurrent then
 			win._ddCurrent.close()
 		end
@@ -1283,12 +1191,10 @@ function ZenithLib:MakeTab(config)
 		local listFrame = win._ddListFrame
 		local listLayout = win._ddListLayout
 
-		-- Очищаем старые кнопки
 		for _, ch in ipairs(listFrame:GetChildren()) do
 			if ch:IsA("TextButton") then ch:Destroy() end
 		end
 
-		-- Строим кнопки
 		for i, item in ipairs(items) do
 			local isSelected = (item.key == currentSelected())
 			local btn = CreateInstance("TextButton", {
@@ -1323,39 +1229,26 @@ function ZenithLib:MakeTab(config)
 			btn.Parent = listFrame
 		end
 
-		-- Считаем размер
 		local listH = math.min(#items, 8) * (itemH + 1) + 8
 
-		-- Позиция относительно ScreenGui через AbsolutePosition
 		local absPos  = anchorFrame.AbsolutePosition
 		local absSize = anchorFrame.AbsoluteSize
 		local guiInset = game:GetService("GuiService"):GetGuiInset()
 		local screenH = workspace.CurrentCamera.ViewportSize.Y - guiInset.Y
 		local screenW = workspace.CurrentCamera.ViewportSize.X
 
-		local xPos = math.clamp(absPos.X, 4, screenW - absSize.X - 4)
+		local xPos = absPos.X
+		local yPos = absPos.Y + absSize.Y + 4
 		
-		-- Проверяем, влезает ли список вниз
-		local spaceBelow = screenH - (absPos.Y + absSize.Y + 4)
-		local spaceAbove = absPos.Y - 4
-		
-		local goesUp = spaceBelow < listH and spaceAbove > spaceBelow
-		
-		-- Корректируем высоту если не влезает
-		if goesUp and spaceAbove < listH then
-			listH = math.max(spaceAbove - 10, 50)
-		elseif not goesUp and spaceBelow < listH then
-			listH = math.max(spaceBelow - 10, 50)
+		local addOffset = 0
+		if screenH - absPos.Y < listH - 5 then
+			addOffset = listH - 5 - (screenH - absPos.Y) + 40
 		end
-		
-		local yPos = goesUp
-			and (absPos.Y - listH - 4)
-			or  (absPos.Y + absSize.Y + 4)
+		yPos = yPos - addOffset
 
 		listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
 		listFrame.Position = UDim2.new(0, xPos, 0, yPos)
 
-		-- Стрелка
 		Tween(arrow, { ImageRectOffset = Vector2.new(967, 355), ImageColor3 = COLORS.Accent }, 0.18)
 
 		overlay.Visible = true
@@ -1468,7 +1361,6 @@ function ZenithLib:MakeTab(config)
 					end,
 					function() return selected end
 				)
-				-- Подписываемся на закрытие снаружи
 				local origClose = closeList
 				closeList = function()
 					isOpen = false
@@ -1477,7 +1369,6 @@ function ZenithLib:MakeTab(config)
 			end
 		end)
 
-		-- Закрываем если таб переключился
 		frame.AncestryChanged:Connect(function()
 			if isOpen and closeList then
 				isOpen = false
@@ -1580,19 +1471,16 @@ function ZenithLib:MakeTab(config)
 			isOpen = true
 			closeList = _ddOpen(frame, arrow, 30, items,
 				function(opt, btn)
-					-- toggle
 					if selected[opt] then
 						selected[opt] = nil
 					else
 						selected[opt] = true
 					end
-					-- обновляем цвет кнопки
 					local on = selected[opt] == true
 					btn.BackgroundTransparency = on and 0 or 1
 					btn.BackgroundColor3 = on and COLORS.ActiveTab or Color3.fromRGB(0, 0, 0)
 					btn.TextColor3 = on and COLORS.AccentText or COLORS.Text
 					label.Text = getDisplayText()
-					-- НЕ закрываем список — мультиселект
 					local res = {}
 					for k in pairs(selected) do table.insert(res, k) end
 					Callback(res)
@@ -1767,7 +1655,6 @@ function ZenithLib:MakeTab(config)
 		local TextDisappear = config.TextDisappear or false
 		local Callback = config.Callback or function() end
 
-		-- Высота: 8 отступ + 16 лейбл + 4 gap + 28 инпут + 8 отступ = 64
 		local textboxFrame = CreateInstance("Frame", {
 			Name = "Textbox_" .. Name,
 			Size = UDim2.new(1, 0, 0, 64),
@@ -1786,7 +1673,6 @@ function ZenithLib:MakeTab(config)
 		})
 		textboxStroke.Parent = textboxFrame
 
-		-- Лейбл сверху
 		local textboxLabel = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, -20, 0, 16),
 			Position = UDim2.new(0, 10, 0, 8),
@@ -1799,7 +1685,6 @@ function ZenithLib:MakeTab(config)
 		})
 		textboxLabel.Parent = textboxFrame
 
-		-- TextBox под лейблом
 		local textboxInput = CreateInstance("TextBox", {
 			Size = UDim2.new(1, -20, 0, 28),
 			Position = UDim2.new(0, 10, 0, 28),
@@ -1825,7 +1710,6 @@ function ZenithLib:MakeTab(config)
 		})
 		inputPadding.Parent = textboxInput
 
-		-- Подсветка при фокусе
 		local inputStroke = CreateInstance("UIStroke", {
 			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 			Thickness = 0.5,
@@ -1901,12 +1785,10 @@ function ZenithLib:MakeTab(config)
 		local Default  = config.Default or Color3.fromRGB(220, 80, 120)
 		local Callback = config.Callback or function() end
 
-		-- Внутренние HSV состояние
 		local h, s, v = Color3.toHSV(Default)
 		local currentColor = Default
 		local pickerOpen = false
 
-		-- ── Основная строка (как другие элементы) ──
 		local row = CreateInstance("Frame", {
 			Name = "ColorPicker_" .. Name,
 			Size = UDim2.new(1, 0, 0, 38),
@@ -1932,7 +1814,6 @@ function ZenithLib:MakeTab(config)
 			TextXAlignment = Enum.TextXAlignment.Left,
 		}).Parent = row
 
-		-- Preview цвет
 		local preview = CreateInstance("Frame", {
 			Size = UDim2.new(0, 22, 0, 22),
 			Position = UDim2.new(1, -36, 0.5, -11),
@@ -1947,7 +1828,6 @@ function ZenithLib:MakeTab(config)
 		}).Parent = preview
 		preview.Parent = row
 
-		-- ── Палитра (рендерится в ScreenGui поверх всего) ──
 		local palette = CreateInstance("Frame", {
 			Name = "Palette_" .. Name,
 			Size = UDim2.new(0, 260, 0, 260),
@@ -1964,7 +1844,6 @@ function ZenithLib:MakeTab(config)
 			Color = COLORS.Accent,
 		}).Parent = palette
 
-		-- SV квадрат (Saturation-Value)
 		local svFrame = CreateInstance("ImageLabel", {
 			Name = "SVSquare",
 			Size = UDim2.new(1, -20, 0, 160),
@@ -1977,7 +1856,6 @@ function ZenithLib:MakeTab(config)
 		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) }).Parent = svFrame
 		svFrame.Parent = palette
 
-		-- SV курсор
 		local svCursor = CreateInstance("Frame", {
 			Size = UDim2.new(0, 12, 0, 12),
 			AnchorPoint = Vector2.new(0.5, 0.5),
@@ -1993,7 +1871,6 @@ function ZenithLib:MakeTab(config)
 		}).Parent = svCursor
 		svCursor.Parent = svFrame
 
-		-- Hue полоска
 		local hueBar = CreateInstance("ImageLabel", {
 			Name = "HueBar",
 			Size = UDim2.new(1, -20, 0, 14),
@@ -2006,7 +1883,6 @@ function ZenithLib:MakeTab(config)
 		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 4) }).Parent = hueBar
 		hueBar.Parent = palette
 
-		-- Hue курсор
 		local hueCursor = CreateInstance("Frame", {
 			Size = UDim2.new(0, 6, 1, 4),
 			AnchorPoint = Vector2.new(0.5, 0.5),
@@ -2022,7 +1898,6 @@ function ZenithLib:MakeTab(config)
 		}).Parent = hueCursor
 		hueCursor.Parent = hueBar
 
-		-- HEX поле
 		local hexBox = CreateInstance("TextBox", {
 			Size = UDim2.new(0, 110, 0, 26),
 			Position = UDim2.new(0, 10, 0, 200),
@@ -2044,7 +1919,6 @@ function ZenithLib:MakeTab(config)
 		}).Parent = hexBox
 		hexBox.Parent = palette
 
-		-- Preview большой
 		local bigPreview = CreateInstance("Frame", {
 			Size = UDim2.new(0, 52, 0, 26),
 			Position = UDim2.new(1, -72, 0, 200),
@@ -2059,7 +1933,6 @@ function ZenithLib:MakeTab(config)
 		}).Parent = bigPreview
 		bigPreview.Parent = palette
 
-		-- Кнопка закрытия палитры
 		local closeBtn = CreateInstance("TextButton", {
 			Size = UDim2.new(0, 20, 0, 20),
 			Position = UDim2.new(1, -28, 0, 8),
@@ -2072,7 +1945,6 @@ function ZenithLib:MakeTab(config)
 		})
 		closeBtn.Parent = palette
 
-		-- ── Функция обновления ──
 		local function applyColor()
 			currentColor = Color3.fromHSV(h, s, v)
 			Tween(preview, { BackgroundColor3 = currentColor }, 0.05)
@@ -2084,7 +1956,6 @@ function ZenithLib:MakeTab(config)
 			Callback(currentColor)
 		end
 
-		-- ── Drag на SV квадрате ──
 		local svDragging = false
 		local svHit = CreateInstance("TextButton", {
 			Size = UDim2.new(1, 0, 1, 0),
@@ -2110,7 +1981,6 @@ function ZenithLib:MakeTab(config)
 			end
 		end)
 
-		-- ── Drag на Hue ──
 		local hueDragging = false
 		local hueHit = CreateInstance("TextButton", {
 			Size = UDim2.new(1, 0, 1, 0),
@@ -2135,7 +2005,6 @@ function ZenithLib:MakeTab(config)
 			end
 		end)
 
-		-- ── HEX ввод ──
 		hexBox.FocusLost:Connect(function()
 			local hex = hexBox.Text:gsub("#","")
 			local col = hexToColor3(hex)
@@ -2147,7 +2016,6 @@ function ZenithLib:MakeTab(config)
 			end
 		end)
 
-		-- ── Открыть/закрыть палитру ──
 		local function openPalette()
 			palette.Parent = win.ScreenGui
 			palette.BackgroundTransparency = 1
@@ -2264,7 +2132,6 @@ function ZenithLib:MakeTab(config)
 			AutomaticSize = Enum.AutomaticSize.Y,
 		})
 
-		-- Header строка
 		local headerRow = CreateInstance("Frame", {
 			Size = UDim2.new(1, 0, 0, 20),
 			BackgroundTransparency = 1,
@@ -2297,7 +2164,6 @@ function ZenithLib:MakeTab(config)
 			TextYAlignment = Enum.TextYAlignment.Center,
 		}).Parent = headerRow
 
-		-- Линия
 		local line = CreateInstance("Frame", {
 			Size = UDim2.new(1, 0, 0, 1),
 			Position = UDim2.new(0, 0, 1, -1),
@@ -2337,7 +2203,6 @@ function ZenithLib:MakeTab(config)
 			Color = COLORS.ElementBorder,
 		}).Parent = frame
 
-		-- Label + процент
 		CreateInstance("TextLabel", {
 			Size = UDim2.new(1, -50, 0, 18),
 			Position = UDim2.new(0, 10, 0, 4),
@@ -2361,7 +2226,6 @@ function ZenithLib:MakeTab(config)
 		})
 		pctLabel.Parent = frame
 
-		-- Track
 		local track = CreateInstance("Frame", {
 			Size = UDim2.new(1, -20, 0, 4),
 			Position = UDim2.new(0, 10, 0, 30),
@@ -2400,14 +2264,12 @@ end
 function ZenithLib:Destroy()
 	if not self.MainFrame then return end
 
-	-- Блокируем повторный вызов
 	if self._destroying then return end
 	self._destroying = true
 
 	local frame = self.MainFrame
 	local startPos = frame.Position
 
-	-- Анимация: окно уходит вниз + fade out
 	Tween(frame, {
 		Position = UDim2.new(
 			startPos.X.Scale,
@@ -2418,7 +2280,6 @@ function ZenithLib:Destroy()
 		BackgroundTransparency = 1,
 	}, 0.3, Enum.EasingStyle.Quint)
 
-	-- Fade out всех детей
 	for _, child in ipairs(frame:GetDescendants()) do
 		if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("ImageLabel") then
 			pcall(function()
@@ -2427,7 +2288,6 @@ function ZenithLib:Destroy()
 		end
 	end
 
-	-- Удаляем после анимации
 	task.delay(0.32, function()
 		if self.ScreenGui then
 			self.ScreenGui:Destroy()
@@ -2436,7 +2296,6 @@ function ZenithLib:Destroy()
 end
 
 
--- Additional Window Methods
 function ZenithLib:SetTitle(newTitle)
 	if self.TitleText then
 		self.TitleText.Text = newTitle
@@ -2493,12 +2352,10 @@ function ZenithLib:Show()
 	self._visible = true
 	self.MainFrame.Visible = true
 	
-	-- Включаем курсор и разрешаем им двигать
 	UserInputService.MouseIconEnabled = true
 	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 
 	local startPos = self.MainFrame.Position
-	-- Появляется снизу вверх
 	self.MainFrame.Position = UDim2.new(
 		startPos.X.Scale,
 		startPos.X.Offset,
@@ -2517,7 +2374,6 @@ function ZenithLib:Hide()
 
 	local startPos = self.MainFrame.Position
 
-	-- Уходит вниз (без fade фона, только позиция)
 	Tween(self.MainFrame, {
 		Position = UDim2.new(
 			startPos.X.Scale,
@@ -2527,11 +2383,9 @@ function ZenithLib:Hide()
 		),
 	}, 0.25, Enum.EasingStyle.Quint)
 
-	-- Скрываем после анимации
 	task.delay(0.27, function()
 		if not self._visible and self.MainFrame then
 			self.MainFrame.Visible = false
-			-- Возвращаем позицию для следующего Show()
 			self.MainFrame.Position = startPos
 		end
 	end)
@@ -2564,14 +2418,12 @@ function ZenithLib:SetAccent(color)
 	if self._mainStroke then self._mainStroke.Color = color end
 end
 
--- Обновляет ContentContainer.Size если меняется TabNav ширина
 function ZenithLib:SetTabWidth(w)
 	self.TabNav.Size = UDim2.new(0, w, 1, 0)
 	self.TabContent.Size = UDim2.new(1, -w, 1, 0)
 	self.TabContent.Position = UDim2.new(0, w, 0, 0)
 end
 
--- Возвращает список названий всех табов
 function ZenithLib:GetTabs()
 	local names = {}
 	for k in pairs(self.TabFrames) do
@@ -2624,9 +2476,6 @@ function ZenithLib:_InitBuiltinTabs()
 end
 
 
--- ═══════════════════════════════════════════
--- Notification System
--- ═══════════════════════════════════════════
 local NotifHolder = nil
 
 local function GetNotifHolder(gui)
@@ -2656,7 +2505,6 @@ function ZenithLib:Notify(cfg)
 	local duration = cfg.Duration or 4
 	local holder   = GetNotifHolder(self.ScreenGui)
 
-	-- Карточка
 	local card = CreateInstance("Frame", {
 		Name = "Notif",
 		Size = UDim2.new(1, 0, 0, 62),
@@ -2676,20 +2524,16 @@ function ZenithLib:Notify(cfg)
 		Color = COLORS.Accent,
 	}).Parent = card
 
-	-- Акцентный левый border
 	local accent = CreateInstance("Frame", {
-		-- Полная высота карточки, прибита к левому краю
 		Size = UDim2.new(0, 3, 1, 0),
 		Position = UDim2.new(0, 0, 0, 0),
 		BackgroundColor3 = COLORS.Accent,
 		BorderSizePixel = 0,
 		ZIndex = 201,
 	})
-	-- Только верх и низ скруглены — левая сторона прямая у края карточки
 	CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = accent
 	accent.Parent = card
 
-	-- Заголовок
 	CreateInstance("TextLabel", {
 		Size = UDim2.new(1, -16, 0, 20),
 		Position = UDim2.new(0, 12, 0, 9),
@@ -2702,7 +2546,6 @@ function ZenithLib:Notify(cfg)
 		ZIndex = 201,
 	}).Parent = card
 
-	-- Контент
 	CreateInstance("TextLabel", {
 		Size = UDim2.new(1, -16, 0, 20),
 		Position = UDim2.new(0, 12, 0, 31),
@@ -2717,7 +2560,6 @@ function ZenithLib:Notify(cfg)
 		ZIndex = 201,
 	}).Parent = card
 
-	-- Таймер-линия снизу
 	local timerBar = CreateInstance("Frame", {
 		Size = UDim2.new(1, 0, 0, 2),
 		Position = UDim2.new(0, 0, 1, -2),
@@ -2728,16 +2570,13 @@ function ZenithLib:Notify(cfg)
 	})
 	timerBar.Parent = card
 
-	-- Slide in
 	Tween(card, { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Quint)
 
-	-- Таймер
 	TweenService:Create(timerBar,
 		TweenInfo.new(duration, Enum.EasingStyle.Linear, Enum.EasingDirection.Out),
 		{ Size = UDim2.new(0, 0, 0, 2) }
 	):Play()
 
-	-- Dismiss
 	task.delay(duration, function()
 		if not card.Parent then return end
 		Tween(card, { Position = UDim2.new(1, 10, 0, 0) }, 0.2, Enum.EasingStyle.Quint)
@@ -2750,11 +2589,7 @@ function ZenithLib:Notify(cfg)
 end
 
 
--- ═══════════════════════════════════════════════════════════
 
--- ═══════════════════════════════════════════════════════════
--- Config Helper Functions
--- ═══════════════════════════════════════════════════════════
 local HttpService = game:GetService("HttpService")
 
 local function _getCfgPath(configName)
@@ -2803,7 +2638,6 @@ function ZenithLib:SaveConfig(name)
     self._cfgRegistry = self._cfgRegistry or {}
     name = name or self._cfgName or "default"
 
-    -- Путь всегда актуален
     local path = self._cfgPath
     if not path then
         path = _getCfgPath(self._configName or "default")
@@ -2814,10 +2648,8 @@ function ZenithLib:SaveConfig(name)
     for k, entry in pairs(self._cfgRegistry) do
         local ok, val = pcall(entry.get)
         if ok then
-            -- Конвертируем Color3 в hex строку
             if typeof(val) == "Color3" then
                 val = color3ToHex(val)
-            -- Конвертируем KeyCode в строку
             elseif typeof(val) == "EnumItem" then
                 val = tostring(val):gsub("Enum.KeyCode.", "")
             end
@@ -2856,12 +2688,10 @@ function ZenithLib:LoadConfig(name)
         if data[k] ~= nil then
             local val = data[k]
 
-            -- Восстанавливаем Color3 из hex
             if entry.type == "color" and type(val) == "string" then
                 local col = hexToColor3(val)
                 if col then val = col end
 
-            -- Восстанавливаем KeyCode из строки
             elseif entry.type == "keybind" and type(val) == "string" then
                 local ok2, key = pcall(function()
                     return Enum.KeyCode[val]
@@ -2882,7 +2712,6 @@ end
 function ZenithLib:MakeConfigTab(configName)
     configName = configName or self._configName or "default"
 
-    -- Инициализация пути (всегда)
     self._cfgPath = _getCfgPath(configName)
     self._cfgName = "default"
     self._cfgRegistry = self._cfgRegistry or {}
@@ -2891,11 +2720,9 @@ function ZenithLib:MakeConfigTab(configName)
 
     tab:MakeSection({ Name = "Profiles" })
 
-    -- Получаем список конфигов, если пусто — добавляем default
     local function getConfigList()
         local list = _cfgList(self._cfgPath)
         if #list == 0 then
-            -- Создаём default если его нет
             pcall(writefile, self._cfgPath .. "default.json", "{}")
             list = { "default" }
         end
@@ -2904,7 +2731,6 @@ function ZenithLib:MakeConfigTab(configName)
 
     local cfgList = getConfigList()
 
-    -- Дропдаун профилей
     local cfgDropdown = tab:MakeDropdown({
         Name    = "Profile",
         Options = cfgList,
@@ -2914,13 +2740,11 @@ function ZenithLib:MakeConfigTab(configName)
         end,
     })
 
-    -- Поле для нового профиля
     local newNameBox = tab:MakeTextbox({
         Name        = "New Profile Name",
         Placeholder = "my_config",
         Default     = "",
         Callback    = function(name)
-            -- Очищаем имя от пробелов
             name = name:match("^%s*(.-)%s*$")
 
             if name == "" then
@@ -2928,7 +2752,6 @@ function ZenithLib:MakeConfigTab(configName)
                 return
             end
 
-            -- Проверяем что такого профиля ещё нет
             local exists = false
             for _, v in ipairs(getConfigList()) do
                 if v == name then exists = true; break end
@@ -2939,11 +2762,9 @@ function ZenithLib:MakeConfigTab(configName)
                 return
             end
 
-            -- Создаём файл
             local ok, err = pcall(writefile, self._cfgPath .. name .. ".json", "{}")
             if ok then
                 self:Notify({ Title = "Created", Content = "Profile: " .. name, Duration = 2 })
-                -- Обновляем дропдаун
                 local newList = getConfigList()
                 cfgDropdown:SetValue(name)
                 self._cfgName = name
@@ -2956,7 +2777,6 @@ function ZenithLib:MakeConfigTab(configName)
     tab:MakeSeparator()
     tab:MakeSection({ Name = "Actions" })
 
-    -- Сохранить
     tab:MakeButton({
         Name = "Save Config",
         Icon = "save",
@@ -2974,7 +2794,6 @@ function ZenithLib:MakeConfigTab(configName)
         end,
     })
 
-    -- Загрузить
     tab:MakeButton({
         Name = "Load Config",
         Icon = "folder-open",
@@ -2994,7 +2813,6 @@ function ZenithLib:MakeConfigTab(configName)
         end,
     })
 
-    -- Удалить профиль
     tab:MakeButton({
         Name = "Delete Profile",
         Icon = "trash-2",
@@ -3006,19 +2824,16 @@ function ZenithLib:MakeConfigTab(configName)
 
             local filePath = self._cfgPath .. self._cfgName .. ".json"
 
-            -- Проверяем существование файла
             local fileExists = pcall(readfile, filePath)
             if not fileExists then
                 self:Notify({ Title = "Error", Content = "Profile not found: " .. self._cfgName, Duration = 2 })
                 return
             end
 
-            -- Удаляем
             local ok, err = pcall(function()
                 if delfile then
                     delfile(filePath)
                 else
-                    -- Fallback: перезаписываем пустым если delfile нет
                     writefile(filePath, "__DELETED__")
                     warn("[ZenithLib] delfile not supported, file marked as deleted")
                 end
@@ -3046,7 +2861,6 @@ function ZenithLib:MakeConfigTab(configName)
         Icon    = "refresh-cw",
         Default = false,
         Callback = function(state)
-            -- Отключаем старый коннект если был
             if autoConn then
                 autoConn:Disconnect()
                 autoConn = nil
@@ -3083,7 +2897,6 @@ function ZenithLib:MakeConfigTab(configName)
 
     tab:MakeSeparator()
 
-    -- Auto-load при старте
     task.defer(function()
         if not self._cfgPath then return end
         local ok, result = pcall(function() return self:LoadConfig(self._cfgName) end)
@@ -3106,76 +2919,4 @@ return ZenithLib
 
 
 
--- ═══════════════════════════════════════════════════════════
--- ZenithLib API Reference (inline docs)
--- ═══════════════════════════════════════════════════════════
---[[
 
-WINDOW CREATION:
-  local win = ZenithLib:MakeWindow({
-    Title      = "MyScript",    -- название окна
-    SubTitle   = "v1.0",        -- подназвание под title (опционально)
-    ConfigName = "main",        -- уникальный ключ
-    Size       = UDim2.new(0, 680, 0, 440),
-    Position   = UDim2.new(0.5, -340, 0.5, -220),
-  })
-
-TAB CREATION:
-  local tab = win:MakeTab({
-    Title = "Main",
-    Image = "rbxassetid://...",  -- опционально
-  })
-
-ELEMENTS:
-  tab:MakeButton({ Name="", Callback=fn })
-  tab:MakeToggle({ Name="", Default=false, Callback=fn })
-  tab:MakeSlider({ Name="", Min=0, Max=100, Default=50, Callback=fn })
-  tab:MakeDropdown({ Name="", Options={}, Default="", Callback=fn })
-  tab:MakeMultiDropdown({ Name="", Options={}, Default={}, Callback=fn })
-  tab:MakeKeybind({ Name="", Default=Enum.KeyCode.E, Callback=fn })
-  tab:MakeTextbox({ Name="", Default="", Placeholder="", Callback=fn })
-  tab:MakeColorPicker({ Name="", Default=Color3.new(1,0,0), Callback=fn })
-  tab:MakeLabel({ Name="", Color=COLORS.SubText, TextSize=12 })
-  tab:MakeParagraph({ Title="", Text="" })
-  tab:MakeSeparator()
-  tab:MakeSection({ Name="" })
-  tab:MakeInput(config)  -- алиас MakeTextbox
-
-WINDOW METHODS:
-  win:Notify({ Title="", Content="", Duration=4 })
-  win:Minimize()            -- свернуть/развернуть
-  win:Toggle()              -- показать/скрыть
-  win:Show() / win:Hide()
-  win:SetAccent(Color3)     -- поменять акцентный цвет
-  win:SetToggleKey(KeyCode) -- поменять кнопку показа/скрытия
-  win:SetWindowSize(w, h)   -- изменить размер окна
-  win:SetWindowPosition(x, y)
-  win:SetTabWidth(w)        -- ширина панели табов
-  win:GetTabs()             -- список всех табов
-  win:GetVersion()          -- "2.0.0"
-  win:_InitBuiltinTabs()    -- добавить Credits + Settings вкладки
-  win:Destroy()             -- удалить UI
-
-BUILT-IN TABS:
-  win:_InitBuiltinTabs()
-  -- Добавляет Credits и Settings вкладки автоматически.
-  -- Settings содержит: Toggle Key, Accent Color.
-  -- Credits содержит: описание, список элементов, управление.
-
-THEMING:
-  win:SetAccent(Color3.fromRGB(220, 80, 120))  -- розовый (default)
-  win:SetAccent(Color3.fromRGB(96, 205, 255))  -- голубой (Fluent)
-  win:SetAccent(Color3.fromRGB(97, 62, 167))   -- фиолетовый
-
-TOGGLE KEY:
-  По умолчанию RightShift. Можно сменить:
-  win:SetToggleKey(Enum.KeyCode.Insert)
-  -- или через Settings вкладку
-
-]]
--- ═══════════════════════════════════════════════════════════
--- MakeProgressBar usage:
---   local bar = tab:MakeProgressBar({ Name="Loading", Default=0 })
---   bar:SetValue(75)   -- устанавливает 75%
---   bar:GetValue()     -- возвращает текущее значение
--- ═══════════════════════════════════════════════════════════
