@@ -1376,9 +1376,15 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			listFrame.Visible = true
 			listFrame.Parent = win.ScreenGui
 
-			-- Ждём следующий кадр — AbsolutePosition уже верный
-			task.defer(function()
-				if not frame.Parent then
+			-- Ждём пока frame получит корректный AbsoluteSize (не 0)
+			task.spawn(function()
+				local timeout = 0
+				while frame.AbsoluteSize.X == 0 and timeout < 10 do
+					task.wait()
+					timeout = timeout + 1
+				end
+
+				if not frame.Parent or not isOpen then
 					listFrame.Visible = false
 					return
 				end
@@ -1626,9 +1632,15 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			listFrame.Visible = true
 			listFrame.Parent = win.ScreenGui
 
-			-- Ждём следующий кадр — AbsolutePosition уже верный
-			task.defer(function()
-				if not frame.Parent then
+			-- Ждём пока frame получит корректный AbsoluteSize (не 0)
+			task.spawn(function()
+				local timeout = 0
+				while frame.AbsoluteSize.X == 0 and timeout < 10 do
+					task.wait()
+					timeout = timeout + 1
+				end
+
+				if not frame.Parent or not isOpen then
 					listFrame.Visible = false
 					return
 				end
