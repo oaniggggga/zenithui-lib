@@ -1201,6 +1201,158 @@ function ZenithLib:MakeTab(config)
 	end
 	
 
+	-- ═══════════════════════════════════════════════════════════
+	-- Shared dropdown list manager (singleton overlay)
+	-- Один listFrame на весь ScreenGui, переиспользуется всеми дропдаунами
+	-- ═══════════════════════════════════════════════════════════
+	if not win._ddOverlay then
+		local overlay = CreateInstance("Frame", {
+			Name = "DD_Overlay",
+			Size = UDim2.fromScale(1, 1),
+			BackgroundTransparency = 1,
+			BorderSizePixel = 0,
+			ZIndex = 200,
+			Visible = false,
+		})
+		overlay.Parent = win.ScreenGui
+
+		local listFrame = CreateInstance("Frame", {
+			Name = "DD_List",
+			Size = UDim2.new(0, 100, 0, 0),
+			BackgroundColor3 = Color3.fromRGB(10, 6, 8),
+			BackgroundTransparency = 0,
+			BorderSizePixel = 0,
+			ZIndex = 201,
+			ClipsDescendants = true,
+		})
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = listFrame
+		CreateInstance("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Thickness = 0.5, Transparency = 0.4,
+			Color = COLORS.Accent,
+		}).Parent = listFrame
+		listFrame.Parent = overlay
+
+		local listLayout = CreateInstance("UIListLayout", {
+			Padding = UDim.new(0, 1),
+			SortOrder = Enum.SortOrder.LayoutOrder,
+		})
+		listLayout.Parent = listFrame
+		CreateInstance("UIPadding", {
+			PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4),
+			PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4),
+		}).Parent = listFrame
+
+		-- Клик по оверлею (вне списка) — закрывает
+		local overlayHit = CreateInstance("TextButton", {
+			Size = UDim2.fromScale(1, 1),
+			BackgroundTransparency = 1,
+			Text = "", ZIndex = 200,
+		})
+		overlayHit.Parent = overlay
+
+		win._ddOverlay    = overlay
+		win._ddListFrame  = listFrame
+		win._ddListLayout = listLayout
+		win._ddCurrent    = nil  -- текущий открытый dropdown (таблица с closeList)
+
+		overlayHit.MouseButton1Click:Connect(function()
+			if win._ddCurrent then
+				win._ddCurrent.close()
+			end
+		end)
+	end
+
+	local function _ddOpen(anchorFrame, arrow, itemH, items, onSelect, currentSelected)
+		-- Закрыть предыдущий если был
+		if win._ddCurrent then
+			win._ddCurrent.close()
+		end
+
+		local overlay   = win._ddOverlay
+		local listFrame = win._ddListFrame
+		local listLayout = win._ddListLayout
+
+		-- Очищаем старые кнопки
+		for _, ch in ipairs(listFrame:GetChildren()) do
+			if ch:IsA("TextButton") then ch:Destroy() end
+		end
+
+		-- Строим кнопки
+		for i, item in ipairs(items) do
+			local isSelected = (item.key == currentSelected())
+			local btn = CreateInstance("TextButton", {
+				Size = UDim2.new(1, 0, 0, 30),
+				BackgroundColor3 = isSelected and COLORS.ActiveTab or Color3.fromRGB(0, 0, 0),
+				BackgroundTransparency = isSelected and 0 or 1,
+				BorderSizePixel = 0,
+				Text = item.label,
+				TextColor3 = isSelected and COLORS.AccentText or COLORS.Text,
+				TextSize = 12,
+				Font = Enum.Font.Gotham,
+				AutoButtonColor = false,
+				ZIndex = 202,
+				LayoutOrder = i,
+			})
+			CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) }).Parent = btn
+
+			btn.MouseEnter:Connect(function()
+				if item.key ~= currentSelected() then
+					btn.BackgroundTransparency = 0.5
+					btn.BackgroundColor3 = COLORS.InputBackground
+				end
+			end)
+			btn.MouseLeave:Connect(function()
+				local sel = item.key == currentSelected()
+				btn.BackgroundTransparency = sel and 0 or 1
+				btn.BackgroundColor3 = sel and COLORS.ActiveTab or Color3.fromRGB(0, 0, 0)
+			end)
+			btn.MouseButton1Click:Connect(function()
+				onSelect(item.key, btn)
+			end)
+			btn.Parent = listFrame
+		end
+
+		-- Считаем размер
+		local listH = math.min(#items, 8) * (itemH + 1) + 8
+
+		-- Позиция относительно ScreenGui через AbsolutePosition
+		local absPos  = anchorFrame.AbsolutePosition
+		local absSize = anchorFrame.AbsoluteSize
+		local screenH = workspace.CurrentCamera.ViewportSize.Y
+		local screenW = workspace.CurrentCamera.ViewportSize.X
+
+		local xPos = math.clamp(absPos.X, 4, screenW - absSize.X - 4)
+		local goesUp = (absPos.Y + absSize.Y + 4 + listH) > (screenH - 10)
+		local yPos = goesUp
+			and (absPos.Y - listH - 4)
+			or  (absPos.Y + absSize.Y + 4)
+
+		listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
+		listFrame.Position = UDim2.new(0, xPos, 0, yPos)
+
+		-- Стрелка
+		Tween(arrow, { ImageRectOffset = Vector2.new(967, 355), ImageColor3 = COLORS.Accent }, 0.18)
+
+		overlay.Visible = true
+		Tween(listFrame, { Size = UDim2.new(0, absSize.X, 0, listH) }, 0.18)
+
+		local closed = false
+		local function closeList()
+			if closed then return end
+			closed = true
+			win._ddCurrent = nil
+			Tween(arrow, { ImageRectOffset = Vector2.new(967, 49), ImageColor3 = COLORS.SubText }, 0.18)
+			Tween(listFrame, { Size = UDim2.new(0, absSize.X, 0, 0) }, 0.15)
+			task.delay(0.16, function()
+				overlay.Visible = false
+			end)
+		end
+
+		win._ddCurrent = { close = closeList }
+		return closeList
+	end
+
 	function Tab:MakeDropdown(config)
 		local Name     = config.Name    or "Dropdown"
 		local DdIcon   = config.Image   or config.Icon or nil
@@ -1210,8 +1362,8 @@ function ZenithLib:MakeTab(config)
 
 		local selected = Default
 		local isOpen   = false
+		local closeList = nil
 
-		-- Основной фрейм
 		local frame = CreateInstance("Frame", {
 			Name = "Dropdown_" .. Name,
 			Size = UDim2.new(1, 0, 0, 38),
@@ -1264,194 +1416,57 @@ function ZenithLib:MakeTab(config)
 		})
 		arrow.Parent = frame
 
-		-- Список опций — прямо в ScreenGui поверх всего
-		local listFrame = CreateInstance("Frame", {
-			Name = "DropList_" .. Name,
-			Size = UDim2.new(0, 0, 0, 0),
-			BackgroundColor3 = Color3.fromRGB(10, 6, 8),
-			BackgroundTransparency = 0,
-			BorderSizePixel = 0,
-			Visible = false,
-			ZIndex = 300,
-		})
-		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = listFrame
-		CreateInstance("UIStroke", {
-			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-			Thickness = 0.5, Transparency = 0.4,
-			Color = COLORS.Accent,
-		}).Parent = listFrame
-
-		local listLayout = CreateInstance("UIListLayout", {
-			Padding = UDim.new(0, 1),
-			SortOrder = Enum.SortOrder.LayoutOrder,
-		})
-		listLayout.Parent = listFrame
-		CreateInstance("UIPadding", {
-			PaddingTop = UDim.new(0, 4),
-			PaddingBottom = UDim.new(0, 4),
-			PaddingLeft = UDim.new(0, 4),
-			PaddingRight = UDim.new(0, 4),
-		}).Parent = listFrame
-
-		-- Строим опции
+		local items = {}
 		for _, opt in ipairs(Options) do
-			local btn = CreateInstance("TextButton", {
-				Size = UDim2.new(1, 0, 0, 30),
-				BackgroundColor3 = opt == selected and COLORS.ActiveTab or Color3.fromRGB(0,0,0),
-				BackgroundTransparency = opt == selected and 0 or 1,
-				BorderSizePixel = 0,
-				Text = opt,
-				TextColor3 = opt == selected and COLORS.AccentText or COLORS.Text,
-				TextSize = 12,
-				Font = Enum.Font.Gotham,
-				AutoButtonColor = false,
-				ZIndex = 301,
-			})
-			CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) }).Parent = btn
-
-			btn.MouseEnter:Connect(function()
-				if opt ~= selected then
-					btn.BackgroundTransparency = 0.5
-					btn.BackgroundColor3 = COLORS.InputBackground
-				end
-			end)
-			btn.MouseLeave:Connect(function()
-				if opt ~= selected then
-					btn.BackgroundTransparency = 1
-				end
-			end)
-			btn.MouseButton1Click:Connect(function()
-				selected = opt
-				label.Text = Name .. ":  " .. opt
-				-- Сбрасываем все кнопки
-				for _, child in ipairs(listFrame:GetChildren()) do
-					if child:IsA("TextButton") then
-						local isSelected = child.Text == opt
-						child.BackgroundTransparency = isSelected and 0 or 1
-						child.BackgroundColor3 = isSelected and COLORS.ActiveTab or Color3.fromRGB(0, 0, 0)
-						child.TextColor3 = isSelected and COLORS.AccentText or COLORS.Text
-					end
-				end
-				isOpen = false
-				closeList()
-				Callback(opt)
-			end)
-			btn.Parent = listFrame
-		end
-
-		-- Функция открытия/закрытия
-		local function openList()
-			isOpen = true
-
-			-- Ждём пока frame получит корректный AbsoluteSize (не 0)
-			-- Не показываем listFrame пока нет валидных координат
-			task.spawn(function()
-				local timeout = 0
-				while frame.AbsoluteSize.X == 0 and timeout < 20 do
-					task.wait()
-					timeout = timeout + 1
-				end
-
-				-- Если за это время закрыли или фрейм пропал — отмена
-				if not frame.Parent or not isOpen or frame.AbsoluteSize.X == 0 then
-					isOpen = false
-					return
-				end
-
-				local absPos  = frame.AbsolutePosition
-				local absSize = frame.AbsoluteSize
-				local itemH   = 31
-				local listH   = math.min(#Options, 8) * itemH + 8
-				local screenH = workspace.CurrentCamera.ViewportSize.Y
-				local screenW = workspace.CurrentCamera.ViewportSize.X
-
-				-- X: не выходим за края
-				local xPos = math.clamp(absPos.X, 4, screenW - absSize.X - 4)
-
-				-- Y: снизу или сверху если не влезает
-				local goesUp = (absPos.Y + absSize.Y + 4 + listH) > (screenH - 10)
-
-				-- Только теперь показываем с правильными координатами
-				listFrame.Size = UDim2.new(0, absSize.X, 0, 0)
-				listFrame.BackgroundTransparency = 0
-				listFrame.Parent = win.ScreenGui
-
-				Tween(arrow, {
-					ImageRectOffset = Vector2.new(967, 355),
-					ImageColor3 = COLORS.Accent
-				}, 0.18)
-
-				if goesUp then
-					listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y - 4)
-					listFrame.Visible  = true
-					Tween(listFrame, {
-						Position = UDim2.new(0, xPos, 0, absPos.Y - listH - 4),
-						Size     = UDim2.new(0, absSize.X, 0, listH),
-					}, 0.2)
-				else
-					listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y + absSize.Y + 4)
-					listFrame.Visible  = true
-					Tween(listFrame, {
-						Size = UDim2.new(0, absSize.X, 0, listH),
-					}, 0.2)
-				end
-			end)
-		end
-		local function closeList()
-			isOpen = false
-			Tween(arrow, { ImageRectOffset = Vector2.new(967, 49), ImageColor3 = COLORS.SubText }, 0.18)
-			local w = listFrame.Size.X.Offset
-			Tween(listFrame, { BackgroundTransparency = 1, Size = UDim2.new(0, w, 0, 0) }, 0.15)
-			task.delay(0.16, function()
-				listFrame.Visible = false
-			end)
+			table.insert(items, { key = opt, label = opt })
 		end
 
 		local hitbox = CreateInstance("TextButton", {
 			Size = UDim2.new(1, 0, 1, 0),
 			BackgroundTransparency = 1,
-			Text = "",
-			ZIndex = 2,
+			Text = "", ZIndex = 2,
 		})
 		hitbox.Parent = frame
+
 		hitbox.MouseButton1Click:Connect(function()
-			isOpen = not isOpen
-			if isOpen then openList() else closeList() end
+			if isOpen then
+				isOpen = false
+				if closeList then closeList() end
+			else
+				isOpen = true
+				closeList = _ddOpen(frame, arrow, 30, items,
+					function(opt, _btn)
+						selected = opt
+						label.Text = Name .. ":  " .. opt
+						isOpen = false
+						if closeList then closeList() end
+						Callback(opt)
+					end,
+					function() return selected end
+				)
+				-- Подписываемся на закрытие снаружи
+				local origClose = closeList
+				closeList = function()
+					isOpen = false
+					origClose()
+				end
+			end
 		end)
 
-		-- Закрыть при клике вне (но не на самой кнопке)
-		local _ddInputConn
-		_ddInputConn = UserInputService.InputBegan:Connect(function(input)
-			if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
-			if not isOpen then return end
-			local mp = UserInputService:GetMouseLocation()
-			-- Проверяем клик вне listFrame И вне frame
-			local lp, ls = listFrame.AbsolutePosition, listFrame.AbsoluteSize
-			local fp, fs = frame.AbsolutePosition, frame.AbsoluteSize
-			local inList  = mp.X >= lp.X and mp.X <= lp.X+ls.X and mp.Y >= lp.Y and mp.Y <= lp.Y+ls.Y
-			local inFrame = mp.X >= fp.X and mp.X <= fp.X+fs.X and mp.Y >= fp.Y and mp.Y <= fp.Y+fs.Y
-			if not inList and not inFrame then
+		-- Закрываем если таб переключился
+		frame.AncestryChanged:Connect(function()
+			if isOpen and closeList then
+				isOpen = false
 				closeList()
 			end
 		end)
-		frame.Destroying:Connect(function()
-			_ddInputConn:Disconnect()
-			listFrame:Destroy()
-		end)
 
 		frame.Parent = tabContent
+
 		local obj = {}
 		function obj:SetValue(v)
 			selected = v
 			label.Text = Name .. ":  " .. tostring(v)
-			for _, child in ipairs(listFrame:GetChildren()) do
-				if child:IsA("TextButton") then
-					local isSelected = child.Text == v
-					child.BackgroundTransparency = isSelected and 0 or 1
-					child.BackgroundColor3 = isSelected and COLORS.ActiveTab or Color3.fromRGB(0, 0, 0)
-					child.TextColor3 = isSelected and COLORS.AccentText or COLORS.Text
-				end
-			end
 		end
 		function obj:GetValue() return selected end
 		return obj
@@ -1466,7 +1481,8 @@ function ZenithLib:MakeTab(config)
 		local selected = {}
 		for _, v in ipairs(Default) do selected[v] = true end
 
-		local isOpen = false
+		local isOpen   = false
+		local closeList = nil
 
 		local function countSelected()
 			local n = 0
@@ -1483,7 +1499,7 @@ function ZenithLib:MakeTab(config)
 			if n <= 2 then
 				return Name .. ":  " .. table.concat(parts, ", ")
 			end
-			return Name .. ":  " .. parts[1] .. ", +" .. (n-1)
+			return Name .. ":  " .. parts[1] .. ", +" .. (n - 1)
 		end
 
 		local frame = CreateInstance("Frame", {
@@ -1524,173 +1540,70 @@ function ZenithLib:MakeTab(config)
 		})
 		arrow.Parent = frame
 
-		local listFrame = CreateInstance("Frame", {
-			Name = "MultiDDList_" .. Name,
-			BackgroundColor3 = Color3.fromRGB(10, 6, 8),
-			BackgroundTransparency = 0,
-			BorderSizePixel = 0,
-			Visible = false,
-			ZIndex = 300,
-		})
-		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = listFrame
-		CreateInstance("UIStroke", {
-			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-			Thickness = 0.5, Transparency = 0.4,
-			Color = COLORS.Accent,
-		}).Parent = listFrame
-		local listLayout = CreateInstance("UIListLayout", {
-			Padding = UDim.new(0, 1),
-			SortOrder = Enum.SortOrder.LayoutOrder,
-		})
-		listLayout.Parent = listFrame
-		CreateInstance("UIPadding", {
-			PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4),
-			PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4),
-		}).Parent = listFrame
-
-		local btnRefs = {}
-
-		local function refreshBtn(btn, opt)
-			local on = selected[opt] == true
-			btn.BackgroundTransparency = on and 0 or 1
-			btn.BackgroundColor3 = COLORS.ActiveTab
-			btn.TextColor3 = on and COLORS.AccentText or COLORS.Text
-		end
-
+		local items = {}
 		for _, opt in ipairs(Options) do
-			local btn = CreateInstance("TextButton", {
-				Size = UDim2.new(1, 0, 0, 30),
-				BackgroundColor3 = COLORS.ActiveTab,
-				BackgroundTransparency = selected[opt] and 0 or 1,
-				BorderSizePixel = 0,
-				Text = opt,
-				TextColor3 = selected[opt] and COLORS.AccentText or COLORS.Text,
-				TextSize = 12,
-				Font = Enum.Font.Gotham,
-				AutoButtonColor = false,
-				ZIndex = 301,
-			})
-			CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) }).Parent = btn
-			btn.MouseEnter:Connect(function()
-				if not selected[opt] then
-					btn.BackgroundTransparency = 0.5
-					btn.BackgroundColor3 = COLORS.InputBackground
-				end
-			end)
-			btn.MouseLeave:Connect(function()
-				refreshBtn(btn, opt)
-			end)
-			btn.MouseButton1Click:Connect(function()
-				if selected[opt] then
-					selected[opt] = nil
-				else
-					selected[opt] = true
-				end
-				refreshBtn(btn, opt)
-				label.Text = getDisplayText()
-				local res = {}
-				for k in pairs(selected) do table.insert(res, k) end
-				Callback(res)
-			end)
-			btn.Parent = listFrame
-			btnRefs[opt] = btn
-		end
-
-		local function openList()
-			isOpen = true
-
-			task.spawn(function()
-				local timeout = 0
-				while frame.AbsoluteSize.X == 0 and timeout < 20 do
-					task.wait()
-					timeout = timeout + 1
-				end
-
-				if not frame.Parent or not isOpen or frame.AbsoluteSize.X == 0 then
-					isOpen = false
-					return
-				end
-
-				local absPos  = frame.AbsolutePosition
-				local absSize = frame.AbsoluteSize
-				local itemH   = 31
-				local listH   = math.min(#Options, 8) * itemH + 8
-				local screenH = workspace.CurrentCamera.ViewportSize.Y
-				local screenW = workspace.CurrentCamera.ViewportSize.X
-
-				local xPos   = math.clamp(absPos.X, 4, screenW - absSize.X - 4)
-				local goesUp = (absPos.Y + absSize.Y + 4 + listH) > (screenH - 10)
-
-				listFrame.Size = UDim2.new(0, absSize.X, 0, 0)
-				listFrame.BackgroundTransparency = 0
-				listFrame.Parent = win.ScreenGui
-
-				Tween(arrow, {
-					ImageRectOffset = Vector2.new(967, 355),
-					ImageColor3 = COLORS.Accent
-				}, 0.18)
-
-				if goesUp then
-					listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y - 4)
-					listFrame.Visible  = true
-					Tween(listFrame, {
-						Position = UDim2.new(0, xPos, 0, absPos.Y - listH - 4),
-						Size     = UDim2.new(0, absSize.X, 0, listH),
-					}, 0.2)
-				else
-					listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y + absSize.Y + 4)
-					listFrame.Visible  = true
-					Tween(listFrame, {
-						Size = UDim2.new(0, absSize.X, 0, listH),
-					}, 0.2)
-				end
-			end)
-		end
-
-		local function closeList()
-			isOpen = false
-			Tween(arrow, { ImageRectOffset = Vector2.new(967, 49), ImageColor3 = COLORS.SubText }, 0.18)
-			local w = listFrame.Size.X.Offset
-			Tween(listFrame, { BackgroundTransparency = 1, Size = UDim2.new(0, w, 0, 0) }, 0.15)
-			task.delay(0.16, function()
-				listFrame.Visible = false
-			end)
+			table.insert(items, { key = opt, label = opt })
 		end
 
 		local hitbox = CreateInstance("TextButton", {
 			Size = UDim2.new(1, 0, 1, 0),
-			BackgroundTransparency = 1, Text = "", ZIndex = 2,
+			BackgroundTransparency = 1,
+			Text = "", ZIndex = 2,
 		})
 		hitbox.Parent = frame
+
+		local function openMulti()
+			isOpen = true
+			closeList = _ddOpen(frame, arrow, 30, items,
+				function(opt, btn)
+					-- toggle
+					if selected[opt] then
+						selected[opt] = nil
+					else
+						selected[opt] = true
+					end
+					-- обновляем цвет кнопки
+					local on = selected[opt] == true
+					btn.BackgroundTransparency = on and 0 or 1
+					btn.BackgroundColor3 = on and COLORS.ActiveTab or Color3.fromRGB(0, 0, 0)
+					btn.TextColor3 = on and COLORS.AccentText or COLORS.Text
+					label.Text = getDisplayText()
+					-- НЕ закрываем список — мультиселект
+					local res = {}
+					for k in pairs(selected) do table.insert(res, k) end
+					Callback(res)
+				end,
+				function() return nil end  -- нет single-selected для мульти
+			)
+			local origClose = closeList
+			closeList = function()
+				isOpen = false
+				origClose()
+			end
+		end
+
 		hitbox.MouseButton1Click:Connect(function()
-			isOpen = not isOpen
-			if isOpen then openList() else closeList() end
+			if isOpen then
+				isOpen = false
+				if closeList then closeList() end
+			else
+				openMulti()
+			end
 		end)
 
-		local _mddInputConn
-		_mddInputConn = UserInputService.InputBegan:Connect(function(input)
-			if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
-			if not isOpen then return end
-			local mp = UserInputService:GetMouseLocation()
-			local lp, ls = listFrame.AbsolutePosition, listFrame.AbsoluteSize
-			local fp, fs = frame.AbsolutePosition, frame.AbsoluteSize
-			local inList  = mp.X >= lp.X and mp.X <= lp.X+ls.X and mp.Y >= lp.Y and mp.Y <= lp.Y+ls.Y
-			local inFrame = mp.X >= fp.X and mp.X <= fp.X+fs.X and mp.Y >= fp.Y and mp.Y <= fp.Y+fs.Y
-			if not inList and not inFrame then
+		frame.AncestryChanged:Connect(function()
+			if isOpen and closeList then
+				isOpen = false
 				closeList()
 			end
 		end)
-		frame.Destroying:Connect(function()
-			_mddInputConn:Disconnect()
-			listFrame:Destroy()
-		end)
 
 		frame.Parent = tabContent
+
 		local obj = {}
 		function obj:SetValue(tbl)
 			selected = {}
 			for _, v in ipairs(tbl) do selected[v] = true end
-			for opt, btn in pairs(btnRefs) do refreshBtn(btn, opt) end
 			label.Text = getDisplayText()
 		end
 		function obj:GetValue()
