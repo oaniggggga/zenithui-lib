@@ -1233,23 +1233,11 @@ function ZenithLib:MakeTab(config)
 
 		local absPos  = anchorFrame.AbsolutePosition
 		local absSize = anchorFrame.AbsoluteSize
-		local screenH = workspace.CurrentCamera.ViewportSize.Y
-		local screenW = workspace.CurrentCamera.ViewportSize.X
 
-		local xPos = math.clamp(absPos.X, 4, screenW - absSize.X - 4)
-		local yPos = absPos.Y + absSize.Y + 4
-		
 		listFrame.Size = UDim2.new(0, absSize.X, 0, 0)
-
-		if yPos + listH > screenH - 10 then
-			listFrame.AnchorPoint = Vector2.new(0, 1)
-			listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y)
-			listFrame.CanvasPosition = Vector2.new(0, 9999)
-		else
-			listFrame.AnchorPoint = Vector2.new(0, 0)
-			listFrame.Position = UDim2.new(0, xPos, 0, yPos)
-			listFrame.CanvasPosition = Vector2.new(0, 0)
-		end
+		listFrame.AnchorPoint = Vector2.new(0, 0)
+		listFrame.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 4)
+		listFrame.CanvasPosition = Vector2.new(0, 0)
 
 		Tween(arrow, { ImageRectOffset = Vector2.new(967, 355), ImageColor3 = COLORS.Accent }, 0.18)
 
