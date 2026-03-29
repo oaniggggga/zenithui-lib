@@ -391,7 +391,7 @@ print("[ZenithLib] >> ZenithLib:MakeWindow()")
 	-- ─────────────────────────────────────────────────────────────
 
 	-- Main Frame
-	local windowPos = config.Position or UDim2.new(0.5, -350, 0, 50)
+	local windowPos = config.Position or UDim2.new(0.5, -350, 0.5, -225)
 	local windowSize = config.Size or UDim2.new(0, 700, 0, 450)
 	
 	-- Shadow Effect
@@ -420,6 +420,9 @@ print("[ZenithLib] >> ZenithLib:MakeWindow()")
 		ClipsDescendants = true,
 	})
 	self.MainFrame.Parent = self.ScreenGui
+	
+	-- Включаем курсор при создании окна
+	UserInputService.MouseIconEnabled = true
 
 	-- Появление окна снизу вверх
 	self.MainFrame.BackgroundTransparency = 1
@@ -2565,6 +2568,9 @@ function ZenithLib:Show()
 	if not self.MainFrame then return end
 	self._visible = true
 	self.MainFrame.Visible = true
+	
+	-- Включаем курсор при открытии меню
+	UserInputService.MouseIconEnabled = true
 
 	local startPos = self.MainFrame.Position
 	-- Появляется снизу вверх
@@ -2589,7 +2595,7 @@ function ZenithLib:Hide()
 
 	local startPos = self.MainFrame.Position
 
-	-- Уходит вниз + fade
+	-- Уходит вниз (без fade фона, только позиция)
 	Tween(self.MainFrame, {
 		Position = UDim2.new(
 			startPos.X.Scale,
@@ -2597,7 +2603,6 @@ function ZenithLib:Hide()
 			startPos.Y.Scale,
 			startPos.Y.Offset + 16
 		),
-		BackgroundTransparency = 1,
 	}, 0.25, Enum.EasingStyle.Quint)
 
 	-- Скрываем после анимации
