@@ -1216,7 +1216,7 @@ function ZenithLib:MakeTab(config)
 		})
 		overlay.Parent = win.ScreenGui
 
-		local listFrame = CreateInstance("Frame", {
+		local listFrame = CreateInstance("ScrollingFrame", {
 			Name = "DD_List",
 			Size = UDim2.new(0, 100, 0, 0),
 			BackgroundColor3 = Color3.fromRGB(10, 6, 8),
@@ -1224,6 +1224,10 @@ function ZenithLib:MakeTab(config)
 			BorderSizePixel = 0,
 			ZIndex = 201,
 			ClipsDescendants = true,
+			ScrollBarThickness = 4,
+			ScrollBarImageColor3 = COLORS.Accent,
+			ScrollBarImageTransparency = 0.3,
+			CanvasSize = UDim2.new(0, 0, 0, 0),
 		})
 		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = listFrame
 		CreateInstance("UIStroke", {
@@ -1238,6 +1242,12 @@ function ZenithLib:MakeTab(config)
 			SortOrder = Enum.SortOrder.LayoutOrder,
 		})
 		listLayout.Parent = listFrame
+		
+		-- Автоматически обновляем CanvasSize
+		listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+			listFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 8)
+		end)
+		
 		CreateInstance("UIPadding", {
 			PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4),
 			PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4),
@@ -1324,7 +1334,20 @@ function ZenithLib:MakeTab(config)
 		local screenW = workspace.CurrentCamera.ViewportSize.X
 
 		local xPos = math.clamp(absPos.X, 4, screenW - absSize.X - 4)
-		local goesUp = (absPos.Y + absSize.Y + 4 + listH) > (screenH - 10)
+		
+		-- Проверяем, влезает ли список вниз
+		local spaceBelow = screenH - (absPos.Y + absSize.Y + 4)
+		local spaceAbove = absPos.Y - 4
+		
+		local goesUp = spaceBelow < listH and spaceAbove > spaceBelow
+		
+		-- Корректируем высоту если не влезает
+		if goesUp and spaceAbove < listH then
+			listH = math.max(spaceAbove - 10, 50)
+		elseif not goesUp and spaceBelow < listH then
+			listH = math.max(spaceBelow - 10, 50)
+		end
+		
 		local yPos = goesUp
 			and (absPos.Y - listH - 4)
 			or  (absPos.Y + absSize.Y + 4)
