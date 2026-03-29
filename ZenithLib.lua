@@ -1236,7 +1236,7 @@ function ZenithLib:MakeTab(config)
 
 		listFrame.Size = UDim2.new(0, absSize.X, 0, 0)
 		listFrame.AnchorPoint = Vector2.new(0, 0)
-		listFrame.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 4)
+		listFrame.Position = UDim2.new(0, absPos.X, 0, absPos.Y + absSize.Y + 10)
 		listFrame.CanvasPosition = Vector2.new(0, 0)
 
 		Tween(arrow, { ImageRectOffset = Vector2.new(967, 355), ImageColor3 = COLORS.Accent }, 0.18)
