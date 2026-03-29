@@ -7,6 +7,7 @@
 [![Version](https://img.shields.io/badge/version-2.1.0-orange.svg)](https://github.com/oaniggggga/zenithui-lib)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Roblox](https://img.shields.io/badge/platform-Roblox-red.svg)](https://www.roblox.com)
+[![Discord](https://img.shields.io/discord/YOUR_SERVER_ID?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/PFJgrzyZ)
 
 *Elegant, feature-rich UI library for Roblox scripts with smooth animations, Lucide icons, and comprehensive element support*
 
@@ -432,6 +433,7 @@ MIT License - feel free to use in your projects!
 
 ## 📞 Support
 
+- **Discord**: [Join our server](https://discord.gg/PFJgrzyZ) - Get help, share scripts, and connect with the community
 - **Issues**: [GitHub Issues](https://github.com/oaniggggga/zenithui-lib/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/oaniggggga/zenithui-lib/discussions)
 
