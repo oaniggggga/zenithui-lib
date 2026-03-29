@@ -421,14 +421,14 @@ print("[ZenithLib] >> ZenithLib:MakeWindow()")
 	})
 	self.MainFrame.Parent = self.ScreenGui
 	
-	-- Включаем курсор при создании окна
+	-- Включаем курсор и разрешаем им двигать
 	UserInputService.MouseIconEnabled = true
+	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 
 	-- Появление окна снизу вверх
-	self.MainFrame.BackgroundTransparency = 1
 	self.MainFrame.Position = UDim2.new(windowPos.X.Scale, windowPos.X.Offset, windowPos.Y.Scale, windowPos.Y.Offset + 24)
 	task.defer(function()
-		Tween(self.MainFrame, { BackgroundTransparency = 0, Position = windowPos }, 0.38, Enum.EasingStyle.Back)
+		Tween(self.MainFrame, { Position = windowPos }, 0.38, Enum.EasingStyle.Back)
 	end)
 	
 	-- Corner Radius
@@ -1370,9 +1370,9 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 
 		-- Функция открытия/закрытия
 		local function openList()
-			-- Сначала делаем видимым скрытым
+			-- Сначала делаем размер 0, но уже непрозрачным
 			listFrame.Size = UDim2.new(0, 0, 0, 0)
-			listFrame.BackgroundTransparency = 1
+			listFrame.BackgroundTransparency = 0
 			listFrame.Visible = true
 			listFrame.Parent = win.ScreenGui
 
@@ -1411,7 +1411,6 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 				}, 0.18)
 
 				Tween(listFrame, {
-					BackgroundTransparency = 0,
 					Size = UDim2.new(0, absSize.X, 0, listH)
 				}, 0.2)
 			end)
@@ -1600,9 +1599,9 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		end
 
 		local function openList()
-			-- Сначала делаем видимым скрытым
+			-- Сначала делаем размер 0, но уже непрозрачным
 			listFrame.Size = UDim2.new(0, 0, 0, 0)
-			listFrame.BackgroundTransparency = 1
+			listFrame.BackgroundTransparency = 0
 			listFrame.Visible = true
 			listFrame.Parent = win.ScreenGui
 
@@ -1641,7 +1640,6 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 				}, 0.18)
 
 				Tween(listFrame, {
-					BackgroundTransparency = 0,
 					Size = UDim2.new(0, absSize.X, 0, listH)
 				}, 0.2)
 			end)
@@ -2569,8 +2567,9 @@ function ZenithLib:Show()
 	self._visible = true
 	self.MainFrame.Visible = true
 	
-	-- Включаем курсор при открытии меню
+	-- Включаем курсор и разрешаем им двигать
 	UserInputService.MouseIconEnabled = true
+	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 
 	local startPos = self.MainFrame.Position
 	-- Появляется снизу вверх
@@ -2580,11 +2579,9 @@ function ZenithLib:Show()
 		startPos.Y.Scale,
 		startPos.Y.Offset + 16
 	)
-	self.MainFrame.BackgroundTransparency = 1
 
 	Tween(self.MainFrame, {
 		Position = startPos,
-		BackgroundTransparency = 0,
 	}, 0.3, Enum.EasingStyle.Quint)
 end
 
