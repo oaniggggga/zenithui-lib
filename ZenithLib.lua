@@ -104,7 +104,7 @@ local function hexToColor3(hex)
 end
 
 -- Utility Functions
-print("[ZenithLib] v2.1.0 loaded OK")
+print("[ZenithLib] v2.1.1 loaded OK (dropdown fix)")
 local function CreateInstance(className, properties)
 print("[ZenithLib] >> CreateInstance()")
 	local instance = Instance.new(className)
@@ -1371,21 +1371,19 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		-- Функция открытия/закрытия
 		local function openList()
 			isOpen = true
-			listFrame.Size = UDim2.new(0, 0, 0, 0)
-			listFrame.BackgroundTransparency = 0
-			listFrame.Visible = true
-			listFrame.Parent = win.ScreenGui
 
 			-- Ждём пока frame получит корректный AbsoluteSize (не 0)
+			-- Не показываем listFrame пока нет валидных координат
 			task.spawn(function()
 				local timeout = 0
-				while frame.AbsoluteSize.X == 0 and timeout < 10 do
+				while frame.AbsoluteSize.X == 0 and timeout < 20 do
 					task.wait()
 					timeout = timeout + 1
 				end
 
-				if not frame.Parent or not isOpen then
-					listFrame.Visible = false
+				-- Если за это время закрыли или фрейм пропал — отмена
+				if not frame.Parent or not isOpen or frame.AbsoluteSize.X == 0 then
+					isOpen = false
 					return
 				end
 
@@ -1402,23 +1400,26 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 				-- Y: снизу или сверху если не влезает
 				local goesUp = (absPos.Y + absSize.Y + 4 + listH) > (screenH - 10)
 
+				-- Только теперь показываем с правильными координатами
+				listFrame.Size = UDim2.new(0, absSize.X, 0, 0)
+				listFrame.BackgroundTransparency = 0
+				listFrame.Parent = win.ScreenGui
+
 				Tween(arrow, {
 					ImageRectOffset = Vector2.new(967, 355),
 					ImageColor3 = COLORS.Accent
 				}, 0.18)
 
 				if goesUp then
-					-- Анимация вверх: начинаем снизу кнопки, растём вверх
 					listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y - 4)
-					listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
+					listFrame.Visible  = true
 					Tween(listFrame, {
 						Position = UDim2.new(0, xPos, 0, absPos.Y - listH - 4),
 						Size     = UDim2.new(0, absSize.X, 0, listH),
 					}, 0.2)
 				else
-					-- Анимация вниз: начинаем сверху списка, растём вниз
 					listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y + absSize.Y + 4)
-					listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
+					listFrame.Visible  = true
 					Tween(listFrame, {
 						Size = UDim2.new(0, absSize.X, 0, listH),
 					}, 0.2)
@@ -1627,21 +1628,16 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 
 		local function openList()
 			isOpen = true
-			listFrame.Size = UDim2.new(0, 0, 0, 0)
-			listFrame.BackgroundTransparency = 0
-			listFrame.Visible = true
-			listFrame.Parent = win.ScreenGui
 
-			-- Ждём пока frame получит корректный AbsoluteSize (не 0)
 			task.spawn(function()
 				local timeout = 0
-				while frame.AbsoluteSize.X == 0 and timeout < 10 do
+				while frame.AbsoluteSize.X == 0 and timeout < 20 do
 					task.wait()
 					timeout = timeout + 1
 				end
 
-				if not frame.Parent or not isOpen then
-					listFrame.Visible = false
+				if not frame.Parent or not isOpen or frame.AbsoluteSize.X == 0 then
+					isOpen = false
 					return
 				end
 
@@ -1652,11 +1648,12 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 				local screenH = workspace.CurrentCamera.ViewportSize.Y
 				local screenW = workspace.CurrentCamera.ViewportSize.X
 
-				-- X: не выходим за края
-				local xPos = math.clamp(absPos.X, 4, screenW - absSize.X - 4)
-
-				-- Y: снизу или сверху если не влезает
+				local xPos   = math.clamp(absPos.X, 4, screenW - absSize.X - 4)
 				local goesUp = (absPos.Y + absSize.Y + 4 + listH) > (screenH - 10)
+
+				listFrame.Size = UDim2.new(0, absSize.X, 0, 0)
+				listFrame.BackgroundTransparency = 0
+				listFrame.Parent = win.ScreenGui
 
 				Tween(arrow, {
 					ImageRectOffset = Vector2.new(967, 355),
@@ -1665,14 +1662,14 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 
 				if goesUp then
 					listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y - 4)
-					listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
+					listFrame.Visible  = true
 					Tween(listFrame, {
 						Position = UDim2.new(0, xPos, 0, absPos.Y - listH - 4),
 						Size     = UDim2.new(0, absSize.X, 0, listH),
 					}, 0.2)
 				else
 					listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y + absSize.Y + 4)
-					listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
+					listFrame.Visible  = true
 					Tween(listFrame, {
 						Size = UDim2.new(0, absSize.X, 0, listH),
 					}, 0.2)
