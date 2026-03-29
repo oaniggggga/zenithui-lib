@@ -1198,7 +1198,7 @@ function ZenithLib:MakeTab(config)
 		for i, item in ipairs(items) do
 			local isSelected = (item.key == currentSelected())
 			local btn = CreateInstance("TextButton", {
-				Size = UDim2.new(1, 0, 0, 30),
+				Size = UDim2.new(1, 0, 0, itemH),
 				BackgroundColor3 = isSelected and COLORS.ActiveTab or Color3.fromRGB(0, 0, 0),
 				BackgroundTransparency = isSelected and 0 or 1,
 				BorderSizePixel = 0,
@@ -1239,12 +1239,17 @@ function ZenithLib:MakeTab(config)
 		local xPos = math.clamp(absPos.X, 4, screenW - absSize.X - 4)
 		local yPos = absPos.Y + absSize.Y + 4
 		
-		if yPos + listH > screenH - 10 then
-			yPos = absPos.Y - listH - 4
-		end
+		listFrame.Size = UDim2.new(0, absSize.X, 0, 0)
 
-		listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
-		listFrame.Position = UDim2.new(0, xPos, 0, yPos)
+		if yPos + listH > screenH - 10 then
+			listFrame.AnchorPoint = Vector2.new(0, 1)
+			listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y - 4)
+			listFrame.CanvasPosition = Vector2.new(0, 9999)
+		else
+			listFrame.AnchorPoint = Vector2.new(0, 0)
+			listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y + absSize.Y + 4)
+			listFrame.CanvasPosition = Vector2.new(0, 0)
+		end
 
 		Tween(arrow, { ImageRectOffset = Vector2.new(967, 355), ImageColor3 = COLORS.Accent }, 0.18)
 
