@@ -1279,34 +1279,36 @@ function ZenithLib:MakeTab(config)
 		local listW = 220
 		local listH = mainAbsSize.Y
 		local listX = mainAbsPos.X + mainAbsSize.X + 20
-		local listY = mainAbsPos.Y
+		local listY = mainAbsPos.Y + (mainAbsSize.Y / 2) - (listH / 2)
 
 		listFrame.Size = UDim2.new(0, listW, 0, 0)
 		listFrame.AnchorPoint = Vector2.new(0, 0)
 		listFrame.Position = UDim2.new(0, listX, 0, listY)
 		listFrame.CanvasPosition = Vector2.new(0, 0)
 
-		local startX = absPos.X + absSize.X + 5
+		local startX = absPos.X + absSize.X
 		local startY = absPos.Y + (absSize.Y / 2)
-		local endX = listX - 5
-		local endY = listY + 20
+		local endX = listX
+		local endY = listY + (listH / 2)
 
 		local function cubicBezier(t, p0, p1, p2, p3)
 			local u = 1 - t
 			return u*u*u*p0 + 3*u*u*t*p1 + 3*u*t*t*p2 + t*t*t*p3
 		end
 
-		local cp1X = startX + (endX - startX) * 0.5
+		local cp1X = startX + (endX - startX) * 0.6
 		local cp1Y = startY
-		local cp2X = startX + (endX - startX) * 0.5
+		local cp2X = startX + (endX - startX) * 0.4
 		local cp2Y = endY
 
-		local segments = 40
+		local LINE_THICKNESS = 2
+		local SEGMENTS = 30
+		local OVERLAP = 1
 		local lineSegments = {}
 		
-		for i = 0, segments - 1 do
-			local t1 = i / segments
-			local t2 = (i + 1) / segments
+		for i = 0, SEGMENTS - 1 do
+			local t1 = i / SEGMENTS
+			local t2 = (i + 1) / SEGMENTS
 			
 			local x1 = cubicBezier(t1, startX, cp1X, cp2X, endX)
 			local y1 = cubicBezier(t1, startY, cp1Y, cp2Y, endY)
@@ -1316,11 +1318,12 @@ function ZenithLib:MakeTab(config)
 			
 			local segLen = math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
 			local angle = math.deg(math.atan2(y2 - y1, x2 - x1))
-			local center = Vector2.new((x1 + x2) / 2, (y1 + y2) / 2)
+			local cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
 			
 			local segment = CreateInstance("Frame", {
-				Size = UDim2.new(0, 0, 0, 1),
-				Position = UDim2.fromOffset(center.X, center.Y),
+				Name = "Seg_" .. i,
+				Size = UDim2.fromOffset(0, LINE_THICKNESS),
+				Position = UDim2.fromOffset(cx, cy),
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				BackgroundColor3 = COLORS.Accent,
 				BorderSizePixel = 0,
@@ -1332,14 +1335,14 @@ function ZenithLib:MakeTab(config)
 			
 			table.insert(lineSegments, {seg = segment, len = segLen})
 			
-			Tween(segment, { Size = UDim2.new(0, segLen, 0, 1) }, 0.012 + (i * 0.006))
+			Tween(segment, { Size = UDim2.fromOffset(segLen + OVERLAP, LINE_THICKNESS) }, 0.012 + (i * 0.006))
 		end
 
 		Tween(arrow, { ImageRectOffset = Vector2.new(967, 355), ImageColor3 = COLORS.Accent }, 0.18)
 
 		overlay.Visible = true
 		
-		task.wait(0.35)
+		task.wait(0.25)
 		Tween(listFrame, { Size = UDim2.new(0, listW, 0, listH) }, 0.25)
 
 		local closed = false
@@ -1351,7 +1354,7 @@ function ZenithLib:MakeTab(config)
 			Tween(listFrame, { Size = UDim2.new(0, listW, 0, 0) }, 0.2)
 			
 			for i, data in ipairs(lineSegments) do
-				Tween(data.seg, { Size = UDim2.new(0, 0, 0, 1) }, 0.01 + ((#lineSegments - i) * 0.005))
+				Tween(data.seg, { Size = UDim2.fromOffset(0, LINE_THICKNESS) }, 0.008 + ((#lineSegments - i) * 0.005))
 			end
 			
 			task.delay(0.3, function()
