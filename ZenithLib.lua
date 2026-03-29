@@ -1319,7 +1319,8 @@ function ZenithLib:MakeTab(config)
 		-- Позиция относительно ScreenGui через AbsolutePosition
 		local absPos  = anchorFrame.AbsolutePosition
 		local absSize = anchorFrame.AbsoluteSize
-		local screenH = workspace.CurrentCamera.ViewportSize.Y
+		local guiInset = game:GetService("GuiService"):GetGuiInset()
+		local screenH = workspace.CurrentCamera.ViewportSize.Y - guiInset.Y
 		local screenW = workspace.CurrentCamera.ViewportSize.X
 
 		local xPos = math.clamp(absPos.X, 4, screenW - absSize.X - 4)
