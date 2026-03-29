@@ -1355,14 +1355,14 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 				-- Сбрасываем все кнопки
 				for _, child in ipairs(listFrame:GetChildren()) do
 					if child:IsA("TextButton") then
-						child.BackgroundTransparency = child.Text == opt and 0 or 1
-						child.BackgroundColor3 = COLORS.ActiveTab
-						child.TextColor3 = child.Text == opt and COLORS.AccentText or COLORS.Text
+						local isSelected = child.Text == opt
+						child.BackgroundTransparency = isSelected and 0 or 1
+						child.BackgroundColor3 = isSelected and COLORS.ActiveTab or Color3.fromRGB(0, 0, 0)
+						child.TextColor3 = isSelected and COLORS.AccentText or COLORS.Text
 					end
 				end
 				isOpen = false
-				listFrame.Visible = false
-				arrow.Image = "rbxassetid://7733658504"
+				closeList()
 				Callback(opt)
 			end)
 			btn.Parent = listFrame
@@ -1370,7 +1370,7 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 
 		-- Функция открытия/закрытия
 		local function openList()
-			-- Сначала делаем размер 0, но уже непрозрачным
+			isOpen = true
 			listFrame.Size = UDim2.new(0, 0, 0, 0)
 			listFrame.BackgroundTransparency = 0
 			listFrame.Visible = true
@@ -1390,29 +1390,33 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 				local screenH = workspace.CurrentCamera.ViewportSize.Y
 				local screenW = workspace.CurrentCamera.ViewportSize.X
 
+				-- X: не выходим за края
+				local xPos = math.clamp(absPos.X, 4, screenW - absSize.X - 4)
+
 				-- Y: снизу или сверху если не влезает
-				local yPos = absPos.Y + absSize.Y + 4
-				if yPos + listH > screenH - 10 then
-					yPos = absPos.Y - listH - 4
-				end
-
-				-- X: не выходим за правый край
-				local xPos = absPos.X
-				if xPos + absSize.X > screenW - 4 then
-					xPos = screenW - absSize.X - 4
-				end
-
-				listFrame.Position = UDim2.new(0, xPos, 0, yPos)
-				listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
+				local goesUp = (absPos.Y + absSize.Y + 4 + listH) > (screenH - 10)
 
 				Tween(arrow, {
 					ImageRectOffset = Vector2.new(967, 355),
 					ImageColor3 = COLORS.Accent
 				}, 0.18)
 
-				Tween(listFrame, {
-					Size = UDim2.new(0, absSize.X, 0, listH)
-				}, 0.2)
+				if goesUp then
+					-- Анимация вверх: начинаем снизу кнопки, растём вверх
+					listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y - 4)
+					listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
+					Tween(listFrame, {
+						Position = UDim2.new(0, xPos, 0, absPos.Y - listH - 4),
+						Size     = UDim2.new(0, absSize.X, 0, listH),
+					}, 0.2)
+				else
+					-- Анимация вниз: начинаем сверху списка, растём вниз
+					listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y + absSize.Y + 4)
+					listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
+					Tween(listFrame, {
+						Size = UDim2.new(0, absSize.X, 0, listH),
+					}, 0.2)
+				end
 			end)
 		end
 		local function closeList()
@@ -1438,7 +1442,8 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		end)
 
 		-- Закрыть при клике вне (но не на самой кнопке)
-		UserInputService.InputBegan:Connect(function(input)
+		local _ddInputConn
+		_ddInputConn = UserInputService.InputBegan:Connect(function(input)
 			if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
 			if not isOpen then return end
 			local mp = UserInputService:GetMouseLocation()
@@ -1451,12 +1456,24 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 				closeList()
 			end
 		end)
+		frame.Destroying:Connect(function()
+			_ddInputConn:Disconnect()
+			listFrame:Destroy()
+		end)
 
 		frame.Parent = tabContent
 		local obj = {}
 		function obj:SetValue(v)
 			selected = v
-			label.Text = Name .. ":  " .. v
+			label.Text = Name .. ":  " .. tostring(v)
+			for _, child in ipairs(listFrame:GetChildren()) do
+				if child:IsA("TextButton") then
+					local isSelected = child.Text == v
+					child.BackgroundTransparency = isSelected and 0 or 1
+					child.BackgroundColor3 = isSelected and COLORS.ActiveTab or Color3.fromRGB(0, 0, 0)
+					child.TextColor3 = isSelected and COLORS.AccentText or COLORS.Text
+				end
+			end
 		end
 		function obj:GetValue() return selected end
 		return obj
@@ -1587,7 +1604,11 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 				refreshBtn(btn, opt)
 			end)
 			btn.MouseButton1Click:Connect(function()
-				selected[opt] = not selected[opt] or nil
+				if selected[opt] then
+					selected[opt] = nil
+				else
+					selected[opt] = true
+				end
 				refreshBtn(btn, opt)
 				label.Text = getDisplayText()
 				local res = {}
@@ -1599,7 +1620,7 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 		end
 
 		local function openList()
-			-- Сначала делаем размер 0, но уже непрозрачным
+			isOpen = true
 			listFrame.Size = UDim2.new(0, 0, 0, 0)
 			listFrame.BackgroundTransparency = 0
 			listFrame.Visible = true
@@ -1619,29 +1640,31 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 				local screenH = workspace.CurrentCamera.ViewportSize.Y
 				local screenW = workspace.CurrentCamera.ViewportSize.X
 
+				-- X: не выходим за края
+				local xPos = math.clamp(absPos.X, 4, screenW - absSize.X - 4)
+
 				-- Y: снизу или сверху если не влезает
-				local yPos = absPos.Y + absSize.Y + 4
-				if yPos + listH > screenH - 10 then
-					yPos = absPos.Y - listH - 4
-				end
-
-				-- X: не выходим за правый край
-				local xPos = absPos.X
-				if xPos + absSize.X > screenW - 4 then
-					xPos = screenW - absSize.X - 4
-				end
-
-				listFrame.Position = UDim2.new(0, xPos, 0, yPos)
-				listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
+				local goesUp = (absPos.Y + absSize.Y + 4 + listH) > (screenH - 10)
 
 				Tween(arrow, {
 					ImageRectOffset = Vector2.new(967, 355),
 					ImageColor3 = COLORS.Accent
 				}, 0.18)
 
-				Tween(listFrame, {
-					Size = UDim2.new(0, absSize.X, 0, listH)
-				}, 0.2)
+				if goesUp then
+					listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y - 4)
+					listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
+					Tween(listFrame, {
+						Position = UDim2.new(0, xPos, 0, absPos.Y - listH - 4),
+						Size     = UDim2.new(0, absSize.X, 0, listH),
+					}, 0.2)
+				else
+					listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y + absSize.Y + 4)
+					listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
+					Tween(listFrame, {
+						Size = UDim2.new(0, absSize.X, 0, listH),
+					}, 0.2)
+				end
 			end)
 		end
 
@@ -1665,7 +1688,8 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			if isOpen then openList() else closeList() end
 		end)
 
-		UserInputService.InputBegan:Connect(function(input)
+		local _mddInputConn
+		_mddInputConn = UserInputService.InputBegan:Connect(function(input)
 			if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
 			if not isOpen then return end
 			local mp = UserInputService:GetMouseLocation()
@@ -1676,6 +1700,10 @@ print("[ZenithLib] >> ZenithLib:MakeTab()")
 			if not inList and not inFrame then
 				closeList()
 			end
+		end)
+		frame.Destroying:Connect(function()
+			_mddInputConn:Disconnect()
+			listFrame:Destroy()
 		end)
 
 		frame.Parent = tabContent
