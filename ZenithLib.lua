@@ -1301,9 +1301,9 @@ function ZenithLib:MakeTab(config)
 		local cp2X = startX + (endX - startX) * 0.4
 		local cp2Y = endY
 
-		local LINE_THICKNESS = 2
-		local SEGMENTS = 30
-		local OVERLAP = 1
+		local LINE_THICKNESS = 1.5
+		local SEGMENTS = 50
+		local OVERLAP = 0.5
 		local lineSegments = {}
 		
 		for i = 0, SEGMENTS - 1 do
@@ -1330,12 +1330,16 @@ function ZenithLib:MakeTab(config)
 				Rotation = angle,
 				BackgroundTransparency = 0,
 			})
-			CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = segment
+			
+			if i == 0 or i == SEGMENTS - 1 then
+				CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = segment
+			end
+			
 			segment.Parent = connectorCanvas
 			
 			table.insert(lineSegments, {seg = segment, len = segLen})
 			
-			Tween(segment, { Size = UDim2.fromOffset(segLen + OVERLAP, LINE_THICKNESS) }, 0.012 + (i * 0.006))
+			Tween(segment, { Size = UDim2.fromOffset(segLen + OVERLAP, LINE_THICKNESS) }, 0.012 + (i * 0.004))
 		end
 
 		Tween(arrow, { ImageRectOffset = Vector2.new(967, 355), ImageColor3 = COLORS.Accent }, 0.18)
@@ -1354,7 +1358,7 @@ function ZenithLib:MakeTab(config)
 			Tween(listFrame, { Size = UDim2.new(0, listW, 0, 0) }, 0.2)
 			
 			for i, data in ipairs(lineSegments) do
-				Tween(data.seg, { Size = UDim2.fromOffset(0, LINE_THICKNESS) }, 0.008 + ((#lineSegments - i) * 0.005))
+				Tween(data.seg, { Size = UDim2.fromOffset(0, LINE_THICKNESS) }, 0.008 + ((#lineSegments - i) * 0.003))
 			end
 			
 			task.delay(0.3, function()
