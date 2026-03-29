@@ -7,7 +7,7 @@
 [![Version](https://img.shields.io/badge/version-2.1.0-orange.svg)](https://github.com/oaniggggga/zenithui-lib)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Roblox](https://img.shields.io/badge/platform-Roblox-red.svg)](https://www.roblox.com)
-[![Discord](https://img.shields.io/discord/YOUR_SERVER_ID?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/PFJgrzyZ)
+[![Discord](https://img.shields.io/discord/1485607035595657300?color=7289da&label=Discord&logo=discord&logoColor=white)](https://discord.gg/PFJgrzyZ)
 
 *Elegant, feature-rich UI library for Roblox scripts with smooth animations, Lucide icons, and comprehensive element support*
 
