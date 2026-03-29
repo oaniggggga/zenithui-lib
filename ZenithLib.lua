@@ -1243,11 +1243,11 @@ function ZenithLib:MakeTab(config)
 
 		if yPos + listH > screenH - 10 then
 			listFrame.AnchorPoint = Vector2.new(0, 1)
-			listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y - 4)
+			listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y)
 			listFrame.CanvasPosition = Vector2.new(0, 9999)
 		else
 			listFrame.AnchorPoint = Vector2.new(0, 0)
-			listFrame.Position = UDim2.new(0, xPos, 0, absPos.Y + absSize.Y + 4)
+			listFrame.Position = UDim2.new(0, xPos, 0, yPos)
 			listFrame.CanvasPosition = Vector2.new(0, 0)
 		end
 
