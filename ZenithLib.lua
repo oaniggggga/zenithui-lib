@@ -1233,18 +1233,15 @@ function ZenithLib:MakeTab(config)
 
 		local absPos  = anchorFrame.AbsolutePosition
 		local absSize = anchorFrame.AbsoluteSize
-		local guiInset = game:GetService("GuiService"):GetGuiInset()
-		local screenH = workspace.CurrentCamera.ViewportSize.Y - guiInset.Y
+		local screenH = workspace.CurrentCamera.ViewportSize.Y
 		local screenW = workspace.CurrentCamera.ViewportSize.X
 
-		local xPos = absPos.X
+		local xPos = math.clamp(absPos.X, 4, screenW - absSize.X - 4)
 		local yPos = absPos.Y + absSize.Y + 4
 		
-		local addOffset = 0
-		if screenH - absPos.Y < listH - 5 then
-			addOffset = listH - 5 - (screenH - absPos.Y) + 40
+		if yPos + listH > screenH - 10 then
+			yPos = absPos.Y - listH - 4
 		end
-		yPos = yPos - addOffset
 
 		listFrame.Size     = UDim2.new(0, absSize.X, 0, 0)
 		listFrame.Position = UDim2.new(0, xPos, 0, yPos)
