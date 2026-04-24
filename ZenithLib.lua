@@ -4,25 +4,72 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local TextService = game:GetService("TextService")
 
+local CONSTANTS = {
+	WINDOW_CORNER_RADIUS = 12,
+	TAB_BUTTON_HEIGHT = 34,
+	TAB_BUTTON_PADDING = 10,
+	ELEMENT_HEIGHT = 40,
+	ELEMENT_CORNER_RADIUS = 8,
+	DROPDOWN_WIDTH = 220,
+	NOTIF_WIDTH = 260,
+	SCROLLBAR_THICKNESS = 3,
+	LINE_THICKNESS = 1.5,
+	CONNECTOR_SEGMENTS = 50,
+}
+
+---@class ZenithLib
+---@class Window
+
+--- Создаёт новое окно
+-- @param config table
+-- @param config.Title string — название окна
+-- @param config.Author string? — автор (показывается в интро)
+-- @param config.ConfigName string? — имя папки для конфигов (default: "Default")
+-- @param config.Intro boolean? — показывать интро-анимацию (default: true)
+-- @param config.Size UDim2? — размер окна (default: 700x450)
+-- @param config.Position UDim2? — позиция (default: центр экрана)
+-- @param config.SubTitle string? — подзаголовок
+-- @return Window
+
 local Icons = nil
 local _iconsLoaded = false
+local _iconCallbacks = {}
+
+local function onIconsLoaded(callback)
+	if _iconsLoaded then
+		callback()
+	else
+		table.insert(_iconCallbacks, callback)
+	end
+end
 
 local function _loadIcons()
 	if _iconsLoaded then return end
-	_iconsLoaded = true
 	local ok, result = pcall(function()
 		return loadstring(game:HttpGet(
 			"https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/refs/heads/main/icons.lua"
 		))()
 	end)
+	_iconsLoaded = true
 	if ok and result then
 		Icons = result
 	else
 		warn("[ZenithLib] Lucide icons failed to load:", result)
 	end
+	for _, cb in ipairs(_iconCallbacks) do
+		pcall(cb)
+	end
+	_iconCallbacks = {}
 end
 
 task.spawn(_loadIcons)
+
+task.delay(10, function()
+	if not _iconsLoaded then
+		warn("[ZenithLib] Icon load timeout, running without icons")
+		_iconsLoaded = true
+	end
+end)
 
 local function getIcon(name)
 	if not Icons then return nil end
@@ -53,7 +100,7 @@ local function applyIcon(imageObj, name)
 			imageObj.ImageRectOffset = icon.imageRectOffset
 			return true
 		else
-			task.delay(2, function()
+			onIconsLoaded(function()
 				local retried = getIcon(name)
 				if retried and imageObj.Parent then
 					imageObj.Image           = "rbxassetid://" .. retried.id
@@ -87,11 +134,12 @@ local function hexToColor3(hex)
 	return Color3.fromRGB(r, g, b)
 end
 
-local function CreateInstance(className, properties)
+local function CreateInstance(className, properties, parent)
 	local instance = Instance.new(className)
 	for prop, value in pairs(properties) do
 		instance[prop] = value
 	end
+	if parent then instance.Parent = parent end
 	return instance
 end
 
@@ -122,6 +170,7 @@ local function MakeDraggable(frame, handle)
 	local dragInput
 	local dragStart
 	local startPos
+	local connections = {}
 
 	local function Update(input)
 		local delta = input.Position - dragStart
@@ -131,30 +180,44 @@ local function MakeDraggable(frame, handle)
 		)
 	end
 
-	handle.InputBegan:Connect(function(input)
+	local function onInputBegan(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			dragging = true
 			dragStart = input.Position
 			startPos = frame.Position
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
+			local connection
+			connection = input.Changed:Connect(function()
+				if input.UserInputState == Enum.InputState.End then
 					dragging = false
+					connection:Disconnect()
 				end
 			end)
+			table.insert(connections, connection)
 		end
-	end)
+	end
 
-	handle.InputChanged:Connect(function(input)
+	local function onInputChanged(input)
 		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
 			dragInput = input
 		end
-	end)
+	end
 
-	UserInputService.InputChanged:Connect(function(input)
+	local function onGlobalInputChanged(input)
 		if dragging and input == dragInput then
 			Update(input)
 		end
-	end)
+	end
+
+	table.insert(connections, handle.InputBegan:Connect(onInputBegan))
+	table.insert(connections, handle.InputChanged:Connect(onInputChanged))
+	table.insert(connections, UserInputService.InputChanged:Connect(onGlobalInputChanged))
+
+return function()
+		for _, conn in ipairs(connections) do
+			pcall(function() conn:Disconnect() end)
+		end
+		connections = {}
+	end
 end
 
 local COLORS = {
@@ -188,27 +251,23 @@ local function SetAccentColor(color)
 	COLORS.Accent = color
 end
 
+local _themeListeners = {}
+
 local ZenithLib = {}
 ZenithLib.__index = ZenithLib
 
+function ZenithLib:OnThemeChanged(callback)
+	table.insert(_themeListeners, callback)
+end
+
+--- Устанавливает тему оформления
+-- @param theme table — { Accent = Color3, MainBackground = Color3, Text = Color3, ... }
 function ZenithLib:SetTheme(theme)
-	if theme.Accent then
-		COLORS.Accent = theme.Accent
+	for k, v in pairs(theme) do
+		if COLORS[k] then COLORS[k] = v end
 	end
-	if theme.MainBackground then
-		COLORS.MainBackground = theme.MainBackground
-	end
-	if theme.Text then
-		COLORS.Text = theme.Text
-	end
-	if theme.SubText then
-		COLORS.SubText = theme.SubText
-	end
-	if theme.InputBackground then
-		COLORS.InputBackground = theme.InputBackground
-	end
-	if theme.DarkerBackground then
-		COLORS.DarkerBackground = theme.DarkerBackground
+	for _, cb in ipairs(_themeListeners) do
+		pcall(cb, COLORS)
 	end
 end
 
@@ -230,11 +289,9 @@ function ZenithLib:MakeWindow(config)
 	local Author     = config.Author     or nil
 	local ConfigName = config.ConfigName or "Default"
 	self._configName = ConfigName
-	self._cfgPath    = nil
-	self._cfgRegistry = {}
-	_configPath = "ZenithLib/" .. ConfigName .. "/"
+	self._cfgPath    = "ZenithLib/" .. ConfigName .. "/"
 	pcall(makefolder, "ZenithLib")
-	pcall(makefolder, _configPath)
+	pcall(makefolder, self._cfgPath)
 	
 	self.ScreenGui = CreateInstance("ScreenGui", {
 		Name = "ZenithLib_" .. ConfigName,
@@ -342,9 +399,8 @@ function ZenithLib:MakeWindow(config)
 		ImageColor3 = Color3.new(0, 0, 0),
 		ImageTransparency = 0.5,
 		ScaleType = Enum.ScaleType.Slice,
-		SliceCenter = Rect.new(20, 20, 20, 20),
+		SliceCenter = Rect.new(49, 49, 450, 450),
 	})
-	shadow.Parent = self.ScreenGui
 	
 	self.MainFrame = CreateInstance("Frame", {
 		Name = "MainFrame",
@@ -355,6 +411,7 @@ function ZenithLib:MakeWindow(config)
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 	})
+	shadow.Parent = self.MainFrame
 	self.MainFrame.Parent = self.ScreenGui
 	
 	UserInputService.MouseIconEnabled = true
@@ -387,6 +444,16 @@ function ZenithLib:MakeWindow(config)
 	
 	local titleBarCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	titleBarCorner.Parent = self.TitleBar
+
+	local titleBarGradient = CreateInstance("UIGradient", {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 22, 8)),
+			ColorSequenceKeypoint.new(1, COLORS.DarkerBackground),
+		}),
+		Rotation = 90,
+	})
+	titleBarGradient.Parent = self.TitleBar
+	self._titleBarGradient = titleBarGradient
 	
 	self.TitleText = CreateInstance("TextLabel", {
 		Name = "TitleText",
@@ -511,12 +578,17 @@ function ZenithLib:MakeWindow(config)
 	local tabNavCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	tabNavCorner.Parent = self.TabNav
 
-	local tabScroll = CreateInstance("Frame", {
+	local tabScroll = CreateInstance("ScrollingFrame", {
 		Name = "TabScroll",
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
+		ScrollBarThickness = 2,
+		ScrollBarImageColor3 = COLORS.Accent,
+		ScrollBarImageTransparency = 0.5,
+		ScrollingDirection = Enum.ScrollingDirection.Y,
+		CanvasSize = UDim2.new(0, 0, 0, 0),
 	})
 	tabScroll.Parent = self.TabNav
 
@@ -525,6 +597,10 @@ function ZenithLib:MakeWindow(config)
 		SortOrder = Enum.SortOrder.LayoutOrder,
 	})
 	self.TabList.Parent = tabScroll
+
+	self.TabList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+		tabScroll.CanvasSize = UDim2.new(0, 0, 0, self.TabList.AbsoluteContentSize.Y + 10)
+	end)
 
 	CreateInstance("UIPadding", {
 		PaddingTop = UDim.new(0, 2),
@@ -553,7 +629,7 @@ function ZenithLib:MakeWindow(config)
 	self.CurrentTab = nil
 	self._tabIndex  = 0   -- счётчик для LayoutOrder
 	
-	MakeDraggable(self.MainFrame, self.TitleBar)
+	self._dragCleanup = MakeDraggable(self.MainFrame, self.TitleBar)
 	
 	self._visible = true
 	self._toggleKey = Enum.KeyCode.RightShift
@@ -564,32 +640,17 @@ function ZenithLib:MakeWindow(config)
 		end
 	end)
 
-	self._mainStroke = mainStroke
-
-	function self:SetTheme(theme)
-		if theme.Accent then
-			COLORS.Accent = theme.Accent
-		end
-		if theme.MainBackground then
-			COLORS.MainBackground = theme.MainBackground
-		end
-		if theme.Text then
-			COLORS.Text = theme.Text
-		end
-		if theme.SubText then
-			COLORS.SubText = theme.SubText
-		end
-		if theme.InputBackground then
-			COLORS.InputBackground = theme.InputBackground
-		end
-		if theme.DarkerBackground then
-			COLORS.DarkerBackground = theme.DarkerBackground
-		end
-	end
+self._mainStroke = mainStroke
 	
 	return self
 end
 
+--- Создаёт новый таб
+-- @param config table
+-- @param config.Title string — название таба
+-- @param config.Image string? — имя иконки
+-- @param config.LayoutOrder number? — порядок сортировки
+-- @return Tab
 function ZenithLib:MakeTab(config)
 	local win = self  -- window объект, не перезаписываем
 
@@ -652,10 +713,11 @@ function ZenithLib:MakeTab(config)
 		Size = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		ScrollBarThickness = 0,
+		ScrollBarThickness = 3,
 		ScrollingDirection = Enum.ScrollingDirection.Y,
 		CanvasSize = UDim2.new(0, 0, 0, 0),
-		ScrollBarImageTransparency = 1,
+		ScrollBarImageColor3 = COLORS.Accent,
+		ScrollBarImageTransparency = 0.5,
 	})
 
 	local contentList = CreateInstance("UIListLayout", {
@@ -693,6 +755,32 @@ function ZenithLib:MakeTab(config)
 			tabContent.Visible = true
 			tabContent.Position = UDim2.new(0, 8, 0, 0)
 			Tween(tabContent, { Position = UDim2.new(0, 0, 0, 0) }, 0.2, Enum.EasingStyle.Quint)
+
+			local function animateTabContent(content)
+				local children = content:GetChildren()
+				local sortable = {}
+				for _, child in ipairs(children) do
+					if child:IsA("Frame") and not child.Name:match("^Section_") then
+						table.insert(sortable, child)
+					end
+				end
+				table.sort(sortable, function(a, b)
+					return (a.LayoutOrder or 0) < (b.LayoutOrder or 0)
+				end)
+				for i, child in ipairs(sortable) do
+					if child:IsA("Frame") then
+						local origTransp = child.BackgroundTransparency
+						if origTransp == 1 then continue end
+						child.BackgroundTransparency = 1
+						task.delay(i * 0.03, function()
+							if child and child.Parent then
+								Tween(child, { BackgroundTransparency = origTransp }, 0.15)
+							end
+						end)
+					end
+				end
+			end
+			animateTabContent(tabContent)
 		end)
 		win.CurrentTab = Title
 		
@@ -740,8 +828,9 @@ function ZenithLib:MakeTab(config)
 	if not win.CurrentTab then
 		SelectTab()
 	end
-	
+
 	local Tab = {}
+	Tab._lastSection = nil
 	
 	function Tab:MakeButton(config)
 		local Name     = config.Name     or "Button"
@@ -823,6 +912,11 @@ function ZenithLib:MakeTab(config)
 		end)
 		
 		buttonFrame.Parent = tabContent
+
+		if Tab._lastSection and Tab._lastSection.addElement then
+			Tab._lastSection:addElement(buttonFrame)
+		end
+
 		return buttonFrame
 	end
 	
@@ -933,6 +1027,13 @@ function ZenithLib:MakeTab(config)
 			UpdateToggle()
 		end)
 
+		toggleHitbox.MouseEnter:Connect(function()
+			Tween(toggleFrame, { BackgroundColor3 = COLORS.EL_HOVER }, 0.12)
+		end)
+		toggleHitbox.MouseLeave:Connect(function()
+			Tween(toggleFrame, { BackgroundColor3 = isOn and COLORS.AccentDim or COLORS.InputBackground }, 0.15)
+		end)
+
 		if config.ConfigKey then
 			win:_RegisterCfgItem(config.ConfigKey,
 				function() return isOn end,
@@ -942,6 +1043,11 @@ function ZenithLib:MakeTab(config)
 		end
 		
 		toggleFrame.Parent = tabContent
+
+		if Tab._lastSection and Tab._lastSection.addElement then
+			Tab._lastSection:addElement(toggleFrame)
+		end
+
 		return toggleFrame
 	end
 	
@@ -953,6 +1059,11 @@ function ZenithLib:MakeTab(config)
 		local Default = config.Default or 50
 		local Color = config.Color or COLORS.Accent
 		local Callback = config.Callback or function() end
+
+		local range = Max - Min
+		if range == 0 then range = 1 end
+
+		local defaultPercent = (Default - Min) / range
 		
 		local sliderFrame = CreateInstance("Frame", {
 			Name = "Slider_" .. Name,
@@ -1018,7 +1129,7 @@ function ZenithLib:MakeTab(config)
 		
 		local sliderFill = CreateInstance("Frame", {
 			Name = "Fill",
-			Size = UDim2.new((Default - Min) / (Max - Min), 0, 1, 0),
+			Size = UDim2.new(defaultPercent, 0, 1, 0),
 			BackgroundColor3 = Color,
 			BorderSizePixel = 0,
 		})
@@ -1030,7 +1141,7 @@ function ZenithLib:MakeTab(config)
 		local sliderKnob = CreateInstance("Frame", {
 			Name = "Knob",
 			Size = UDim2.new(0, 12, 0, 12),
-			Position = UDim2.new((Default - Min) / (Max - Min), -6, 0.5, -6),
+			Position = UDim2.new(defaultPercent, -6, 0.5, -6),
 			BackgroundColor3 = COLORS.Accent,
 			BorderSizePixel = 0,
 		})
@@ -1042,7 +1153,7 @@ function ZenithLib:MakeTab(config)
 		local isDragging = false
 		
 		local function UpdateSlider(value)
-			local percent = math.clamp((value - Min) / (Max - Min), 0, 1)
+			local percent = math.clamp((value - Min) / range, 0, 1)
 			Tween(sliderFill, { Size = UDim2.new(percent, 0, 1, 0) }, 0.05)
 			Tween(sliderKnob, { Position = UDim2.new(percent, -7, 0.5, -7) }, 0.05)
 			sliderValLabel.Text = tostring(value)
@@ -1072,7 +1183,7 @@ function ZenithLib:MakeTab(config)
 				local width = sliderTrack.AbsoluteSize.X
 				local mouseX = UserInputService:GetMouseLocation().X
 				local percent = math.clamp((mouseX - relativeX) / width, 0, 1)
-				local value = math.floor(Min + percent * (Max - Min))
+				local value = math.floor(Min + percent * range)
 				UpdateSlider(value)
 			end
 		end)
@@ -1083,7 +1194,7 @@ function ZenithLib:MakeTab(config)
 				local width = sliderTrack.AbsoluteSize.X
 				local mouseX = UserInputService:GetMouseLocation().X
 				local percent = math.clamp((mouseX - relativeX) / width, 0, 1)
-				local value = math.floor(Min + percent * (Max - Min))
+				local value = math.floor(Min + percent * range)
 				UpdateSlider(value)
 			end
 		end)
@@ -1112,6 +1223,11 @@ function ZenithLib:MakeTab(config)
 		end
 
 		sliderFrame.Parent = tabContent
+
+		if Tab._lastSection and Tab._lastSection.addElement then
+			Tab._lastSection:addElement(sliderFrame)
+		end
+
 		return sliderFrame
 	end
 	
@@ -1198,12 +1314,26 @@ function ZenithLib:MakeTab(config)
 		})
 		overlayHit.Parent = overlay
 
+		local segmentPool = {}
+		for i = 1, CONSTANTS.CONNECTOR_SEGMENTS do
+			local seg = CreateInstance("Frame", {
+				Name = "PooledSeg_" .. i,
+				Size = UDim2.fromOffset(0, CONSTANTS.LINE_THICKNESS),
+				BackgroundColor3 = COLORS.Accent,
+				BorderSizePixel = 0,
+				BackgroundTransparency = 1,
+				Visible = false,
+			}, connectorCanvas)
+			table.insert(segmentPool, seg)
+		end
+
 		win._ddOverlay    = overlay
 		win._ddListFrame  = listFrame
 		win._ddListLayout = listLayout
 		win._ddConnectorCanvas = connectorCanvas
 		win._ddCloseButton = closeButton
 		win._ddCurrent    = nil
+		win._ddSegmentPool = segmentPool
 
 		overlayHit.MouseButton1Click:Connect(function()
 			if win._ddCurrent then
@@ -1227,9 +1357,11 @@ function ZenithLib:MakeTab(config)
 		local listFrame = win._ddListFrame
 		local listLayout = win._ddListLayout
 		local connectorCanvas = win._ddConnectorCanvas
+		local segmentPool = win._ddSegmentPool or {}
 
-		for _, ch in ipairs(connectorCanvas:GetChildren()) do
-			ch:Destroy()
+		for _, seg in ipairs(segmentPool) do
+			seg.Visible = false
+			seg.Size = UDim2.fromOffset(0, CONSTANTS.LINE_THICKNESS)
 		end
 
 		for _, ch in ipairs(listFrame:GetChildren()) do
@@ -1281,6 +1413,11 @@ function ZenithLib:MakeTab(config)
 		local listX = mainAbsPos.X + mainAbsSize.X + 20
 		local listY = mainAbsPos.Y + (mainAbsSize.Y / 2) - (listH / 2)
 
+		local screenW = workspace.CurrentCamera.ViewportSize.X
+		if listX + listW > screenW then
+			listX = mainAbsPos.X - listW - 20
+		end
+
 		listFrame.Size = UDim2.new(0, listW, 0, 0)
 		listFrame.AnchorPoint = Vector2.new(0, 0)
 		listFrame.Position = UDim2.new(0, listX, 0, listY)
@@ -1301,8 +1438,8 @@ function ZenithLib:MakeTab(config)
 		local cp2X = startX + (endX - startX) * 0.4
 		local cp2Y = endY
 
-		local LINE_THICKNESS = 1.5
-		local SEGMENTS = 50
+		local LINE_THICKNESS = CONSTANTS.LINE_THICKNESS
+		local SEGMENTS = CONSTANTS.CONNECTOR_SEGMENTS
 		local OVERLAP = 0.5
 		local lineSegments = {}
 		
@@ -1320,34 +1457,34 @@ function ZenithLib:MakeTab(config)
 			local angle = math.deg(math.atan2(y2 - y1, x2 - x1))
 			local cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
 			
-			local segment = CreateInstance("Frame", {
-				Name = "Seg_" .. i,
-				Size = UDim2.fromOffset(0, LINE_THICKNESS),
-				Position = UDim2.fromOffset(cx, cy),
-				AnchorPoint = Vector2.new(0.5, 0.5),
-				BackgroundColor3 = COLORS.Accent,
-				BorderSizePixel = 0,
-				Rotation = angle,
-				BackgroundTransparency = 0,
-			})
-			
-			if i == 0 or i == SEGMENTS - 1 then
-				CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = segment
+			local segment = segmentPool[i + 1]
+			if segment then
+				segment.Size = UDim2.fromOffset(0, LINE_THICKNESS)
+				segment.Position = UDim2.fromOffset(cx, cy)
+				segment.AnchorPoint = Vector2.new(0.5, 0.5)
+				segment.BackgroundColor3 = COLORS.Accent
+				segment.Rotation = angle
+				segment.BackgroundTransparency = 0
+				segment.Visible = true
+				
+				if i == 0 or i == SEGMENTS - 1 then
+					if not segment:FindFirstChild("UICorner") then
+						CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }, segment)
+					end
+				end
 			end
 			
-			segment.Parent = connectorCanvas
-			
-			table.insert(lineSegments, {seg = segment, len = segLen})
-			
-			Tween(segment, { Size = UDim2.fromOffset(segLen + OVERLAP, LINE_THICKNESS) }, 0.012 + (i * 0.004))
+			if segment then
+				table.insert(lineSegments, {seg = segment, len = segLen})
+				Tween(segment, { Size = UDim2.fromOffset(segLen + OVERLAP, LINE_THICKNESS) }, 0.012 + (i * 0.004))
+			end
 		end
 
 		Tween(arrow, { ImageRectOffset = Vector2.new(967, 355), ImageColor3 = COLORS.Accent }, 0.18)
 
 		overlay.Visible = true
 		
-		task.wait(0.25)
-		Tween(listFrame, { Size = UDim2.new(0, listW, 0, listH) }, 0.25)
+		Tween(listFrame, { Size = UDim2.new(0, listW, 0, listH) }, 0.3)
 
 		local closed = false
 		local function closeList()
@@ -1363,8 +1500,8 @@ function ZenithLib:MakeTab(config)
 			
 			task.delay(0.3, function()
 				overlay.Visible = false
-				for _, ch in ipairs(connectorCanvas:GetChildren()) do
-					ch:Destroy()
+				for _, seg in ipairs(segmentPool) do
+					seg.Visible = false
 				end
 			end)
 		end
@@ -1472,7 +1609,7 @@ function ZenithLib:MakeTab(config)
 			end
 		end)
 
-		frame.AncestryChanged:Connect(function()
+frame.AncestryChanged:Connect(function()
 			if isOpen and closeList then
 				isOpen = false
 				closeList()
@@ -1480,6 +1617,10 @@ function ZenithLib:MakeTab(config)
 		end)
 
 		frame.Parent = tabContent
+
+		if Tab._lastSection and Tab._lastSection.addElement then
+			Tab._lastSection:addElement(frame)
+		end
 
 		local obj = {}
 		function obj:SetValue(v)
@@ -1615,6 +1756,10 @@ function ZenithLib:MakeTab(config)
 
 		frame.Parent = tabContent
 
+		if Tab._lastSection and Tab._lastSection.addElement then
+			Tab._lastSection:addElement(frame)
+		end
+
 		local obj = {}
 		function obj:SetValue(tbl)
 			selected = {}
@@ -1701,9 +1846,46 @@ function ZenithLib:MakeTab(config)
 		
 		local currentKey = Default
 		local isListening = false
+		local inputBeganConn = nil
 		
 		local function UpdateKeyText()
 			keyText.Text = tostring(currentKey):gsub("Enum.KeyCode.", "")
+		end
+
+		local function startListening()
+			isListening = true
+			keyText.Text = "..."
+			Tween(keybindButton, { BackgroundColor3 = COLORS.Accent }, 0.15)
+			TweenElastic(kbScale, { Scale = 1.08 }, 0.4)
+			task.delay(0.4, function()
+				Tween(kbScale, { Scale = 1 }, 0.2)
+			end)
+			inputBeganConn = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+				if gameProcessed then return end
+				if isListening then
+					currentKey = input.KeyCode
+					isListening = false
+					if inputBeganConn then
+						inputBeganConn:Disconnect()
+						inputBeganConn = nil
+					end
+					Tween(keybindButton, { BackgroundColor3 = COLORS.DarkerBackground })
+					UpdateKeyText()
+					Callback(currentKey)
+				end
+			end)
+		end
+		
+		local function stopListening()
+			if isListening then
+				isListening = false
+				if inputBeganConn then
+					inputBeganConn:Disconnect()
+					inputBeganConn = nil
+				end
+				Tween(keybindButton, { BackgroundColor3 = COLORS.DarkerBackground })
+				UpdateKeyText()
+			end
 		end
 		
 		local keyHitbox = CreateInstance("TextButton", {
@@ -1717,23 +1899,16 @@ function ZenithLib:MakeTab(config)
 		kbScale.Parent = keybindButton
 
 		keyHitbox.MouseButton1Click:Connect(function()
-			isListening = true
-			keyText.Text = "..."
-			Tween(keybindButton, { BackgroundColor3 = COLORS.Accent }, 0.15)
-			TweenElastic(kbScale, { Scale = 1.08 }, 0.4)
-			task.delay(0.4, function()
-				Tween(kbScale, { Scale = 1 }, 0.2)
-			end)
+			if isListening then
+				stopListening()
+			else
+				startListening()
+			end
 		end)
 		
-		UserInputService.InputBegan:Connect(function(input, gameProcessed)
-			if gameProcessed then return end
+		keyHitbox.MouseLeave:Connect(function()
 			if isListening then
-				currentKey = input.KeyCode
-				isListening = false
-				Tween(keybindButton, { BackgroundColor3 = COLORS.DarkerBackground })
-				UpdateKeyText()
-				Callback(currentKey)
+				stopListening()
 			end
 		end)
 		
@@ -1749,6 +1924,11 @@ function ZenithLib:MakeTab(config)
 		end
 
 		keybindFrame.Parent = tabContent
+
+		if Tab._lastSection and Tab._lastSection.addElement then
+			Tab._lastSection:addElement(keybindFrame)
+		end
+
 		return keybindFrame
 	end
 	
@@ -1757,6 +1937,32 @@ function ZenithLib:MakeTab(config)
 		local Default = config.Default or ""
 		local TextDisappear = config.TextDisappear or false
 		local Callback = config.Callback or function() end
+		local MaxLength = config.MaxLength or nil
+		local Pattern = config.Pattern or nil
+		local Validator = config.Validator or nil
+
+		local validationError = nil
+		
+		local function validateText(text)
+			if MaxLength and #text > MaxLength then
+				text = text:sub(1, MaxLength)
+			end
+			if Pattern then
+				if not text:match(Pattern) then
+					validationError = "Invalid format"
+					return false
+				end
+			end
+			if Validator then
+				local ok, err = Validator(text)
+				if not ok then
+					validationError = err or "Invalid"
+					return false
+				end
+			end
+			validationError = nil
+			return true
+		end
 
 		local textboxFrame = CreateInstance("Frame", {
 			Name = "Textbox_" .. Name,
@@ -1802,7 +2008,15 @@ function ZenithLib:MakeTab(config)
 			PlaceholderText = config.Placeholder or "Enter text...",
 			PlaceholderColor3 = COLORS.SubText,
 			ClearTextOnFocus = TextDisappear,
+			TextEditable = true,
 		})
+		if MaxLength then
+			textboxInput:GetPropertyChangedSignal("Text"):Connect(function()
+				if #textboxInput.Text > MaxLength then
+					textboxInput.Text = textboxInput.Text:sub(1, MaxLength)
+				end
+			end)
+		end
 		textboxInput.Parent = textboxFrame
 
 		local inputCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 5) })
@@ -1828,13 +2042,41 @@ function ZenithLib:MakeTab(config)
 		textboxInput.FocusLost:Connect(function()
 			Tween(inputStroke, { Transparency = 1 }, 0.18)
 			Tween(textboxLabel, { TextColor3 = COLORS.SubText }, 0.18)
-			Callback(textboxInput.Text)
+			local text = textboxInput.Text
+			if validateText(text) then
+				Callback(text)
+			else
+				if validationError then
+					Tween(textboxInput, { TextColor3 = COLORS.CloseRed }, 0.1)
+					task.delay(1.5, function()
+						if textboxInput and textboxInput.Parent then
+							Tween(textboxInput, { TextColor3 = COLORS.Text }, 0.2)
+						end
+					end)
+				end
+			end
+		end)
+
+		textboxInput.TextChanged:Connect(function()
+			if Pattern then
+				local text = textboxInput.Text
+				if not text:match(Pattern) then
+					Tween(inputStroke, { Color = COLORS.CloseRed }, 0.1)
+				else
+					Tween(inputStroke, { Color = COLORS.Accent }, 0.2)
+				end
+			end
 		end)
 
 		textboxFrame.Parent = tabContent
+
+		if Tab._lastSection and Tab._lastSection.addElement then
+			Tab._lastSection:addElement(textboxFrame)
+		end
+
 		return textboxFrame
 	end
-	
+
 	function Tab:MakeLabel(config)
 		local Name   = config.Name  or config.Title or "Label"
 		local Color  = config.Color or COLORS.SubText
@@ -1863,22 +2105,61 @@ function ZenithLib:MakeTab(config)
 		return labelFrame
 	end
 	
-	function Tab:MakeSeparator()
+	function Tab:MakeSeparator(config)
+		local text = config and config.Text
+		local sepHeight = text and 28 or 10
+		
 		local sep = CreateInstance("Frame", {
 			Name = "Separator",
-			Size = UDim2.new(1, 0, 0, 10),
+			Size = UDim2.new(1, 0, 0, sepHeight),
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 		})
-		local line = CreateInstance("Frame", {
-			Size = UDim2.new(1, 0, 0, 1),
-			Position = UDim2.new(0, 0, 0.5, 0),
-			BackgroundColor3 = COLORS.Accent,
-			BackgroundTransparency = 0.7,
-			BorderSizePixel = 0,
-		})
-		CreateInstance("UICorner", { CornerRadius = UDim.new(1,0) }).Parent = line
-		line.Parent = sep
+		
+		if text then
+			local leftLine = CreateInstance("Frame", {
+				Size = UDim2.new(0.5, -40, 0, 1),
+				Position = UDim2.new(0, 0, 0.5, 0),
+				BackgroundColor3 = COLORS.Accent,
+				BackgroundTransparency = 0.7,
+				BorderSizePixel = 0,
+			})
+			CreateInstance("UICorner", { CornerRadius = UDim.new(1,0) }).Parent = leftLine
+			leftLine.Parent = sep
+			
+			local sepText = CreateInstance("TextLabel", {
+				Size = UDim2.new(0, 80, 1, 0),
+				Position = UDim2.new(0.5, -40, 0, 0),
+				BackgroundTransparency = 1,
+				Text = text,
+				TextColor3 = COLORS.SubText,
+				TextSize = 10,
+				Font = Enum.Font.GothamBold,
+				TextXAlignment = Enum.TextXAlignment.Center,
+			})
+			sepText.Parent = sep
+			
+			local rightLine = CreateInstance("Frame", {
+				Size = UDim2.new(0.5, -40, 0, 1),
+				Position = UDim2.new(0.5, 40, 0.5, 0),
+				BackgroundColor3 = COLORS.Accent,
+				BackgroundTransparency = 0.7,
+				BorderSizePixel = 0,
+			})
+			CreateInstance("UICorner", { CornerRadius = UDim.new(1,0) }).Parent = rightLine
+			rightLine.Parent = sep
+		else
+			local line = CreateInstance("Frame", {
+				Size = UDim2.new(1, 0, 0, 1),
+				Position = UDim2.new(0, 0, 0.5, 0),
+				BackgroundColor3 = COLORS.Accent,
+				BackgroundTransparency = 0.7,
+				BorderSizePixel = 0,
+			})
+			CreateInstance("UICorner", { CornerRadius = UDim.new(1,0) }).Parent = line
+			line.Parent = sep
+		end
+		
 		sep.Parent = tabContent
 		return sep
 	end
@@ -1891,6 +2172,7 @@ function ZenithLib:MakeTab(config)
 		local h, s, v = Color3.toHSV(Default)
 		local currentColor = Default
 		local pickerOpen = false
+		local inputConn = nil
 
 		local row = CreateInstance("Frame", {
 			Name = "ColorPicker_" .. Name,
@@ -2131,11 +2413,28 @@ function ZenithLib:MakeTab(config)
 				if yPos + 260 > screenH - 10 then yPos = ap.Y - 264 end
 				palette.Position = UDim2.new(0, ap.X, 0, yPos)
 				Tween(palette, { BackgroundTransparency = 0 }, 0.18)
+
+				inputConn = UserInputService.InputBegan:Connect(function(input)
+					if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+					if not pickerOpen then return end
+					local mp = UserInputService:GetMouseLocation()
+					local pp, ps = palette.AbsolutePosition, palette.AbsoluteSize
+					local rp, rs = row.AbsolutePosition, row.AbsoluteSize
+					local inPalette = mp.X >= pp.X and mp.X <= pp.X+ps.X and mp.Y >= pp.Y and mp.Y <= pp.Y+ps.Y
+					local inRow    = mp.X >= rp.X and mp.X <= rp.X+rs.X and mp.Y >= rp.Y and mp.Y <= rp.Y+rs.Y
+					if not inPalette and not inRow then
+						closePalette()
+					end
+				end)
 			end)
 		end
 
 		local function closePalette()
 			pickerOpen = false
+			if inputConn then
+				inputConn:Disconnect()
+				inputConn = nil
+			end
 			Tween(palette, { BackgroundTransparency = 1 }, 0.15)
 			task.delay(0.16, function() palette.Visible = false end)
 		end
@@ -2154,19 +2453,6 @@ function ZenithLib:MakeTab(config)
 			closePalette()
 		end)
 
-		UserInputService.InputBegan:Connect(function(input)
-			if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
-			if not pickerOpen then return end
-			local mp = UserInputService:GetMouseLocation()
-			local pp, ps = palette.AbsolutePosition, palette.AbsoluteSize
-			local rp, rs = row.AbsolutePosition, row.AbsoluteSize
-			local inPalette = mp.X >= pp.X and mp.X <= pp.X+ps.X and mp.Y >= pp.Y and mp.Y <= pp.Y+ps.Y
-			local inRow    = mp.X >= rp.X and mp.X <= rp.X+rs.X and mp.Y >= rp.Y and mp.Y <= rp.Y+rs.Y
-			if not inPalette and not inRow then
-				closePalette()
-			end
-		end)
-
 		row.Parent = tabContent
 
 		local obj = {}
@@ -2182,9 +2468,15 @@ function ZenithLib:MakeTab(config)
 		local Title = config.Title or "Title"
 		local Text = config.Text or "Description text here..."
 		
+		local contentWidth = tabContent.AbsoluteSize.X
+		if contentWidth == 0 then contentWidth = 500 end
+		local textSize = TextService:GetTextSize(Text, 12, Enum.Font.Gotham, Vector2.new(contentWidth - 40, math.huge))
+		local textHeight = math.max(textSize.Y, 20)
+		local frameHeight = 30 + textHeight
+		
 		local paragraphFrame = CreateInstance("Frame", {
 			Name = "Paragraph_" .. Title,
-			Size = UDim2.new(1, 0, 0, 60),
+			Size = UDim2.new(1, 0, 0, frameHeight),
 			BackgroundColor3 = COLORS.InputBackground,
 			BorderSizePixel = 0,
 		})
@@ -2205,7 +2497,7 @@ function ZenithLib:MakeTab(config)
 		titleLabel.Parent = paragraphFrame
 		
 		local textLabel = CreateInstance("TextLabel", {
-			Size = UDim2.new(1, -20, 0, 35),
+			Size = UDim2.new(1, -20, 0, textHeight),
 			Position = UDim2.new(0, 10, 0, 25),
 			BackgroundTransparency = 1,
 			Text = Text,
@@ -2219,6 +2511,11 @@ function ZenithLib:MakeTab(config)
 		textLabel.Parent = paragraphFrame
 		
 		paragraphFrame.Parent = tabContent
+
+		if Tab._lastSection and Tab._lastSection.addElement then
+			Tab._lastSection:addElement(paragraphFrame)
+		end
+
 		return paragraphFrame
 	end
 	
@@ -2233,6 +2530,7 @@ function ZenithLib:MakeTab(config)
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 			AutomaticSize = Enum.AutomaticSize.Y,
+			LayoutOrder = win._tabIndex,
 		})
 
 		local headerRow = CreateInstance("Frame", {
@@ -2255,7 +2553,7 @@ function ZenithLib:MakeTab(config)
 			secIco.Parent = headerRow
 		end
 
-		CreateInstance("TextLabel", {
+		local sectionLabel = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, -12, 1, 0),
 			Position = UDim2.new(0, secTextX, 0, 0),
 			BackgroundTransparency = 1,
@@ -2265,7 +2563,8 @@ function ZenithLib:MakeTab(config)
 			Font = Enum.Font.GothamBold,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextYAlignment = Enum.TextYAlignment.Center,
-		}).Parent = headerRow
+		})
+		sectionLabel.Parent = headerRow
 
 		local line = CreateInstance("Frame", {
 			Size = UDim2.new(1, 0, 0, 1),
@@ -2278,7 +2577,81 @@ function ZenithLib:MakeTab(config)
 		line.Parent = headerRow
 
 		sectionFrame.Parent = tabContent
-		return sectionFrame
+
+		local sectionConnectors = {}
+		local vertLine = nil
+		local lastElementY = nil
+		local _connectorPending = false
+
+		local function updateConnector()
+			if _connectorPending then return end
+			_connectorPending = true
+			task.delay(0.05, function()
+				_connectorPending = false
+				local secAbsPos = sectionFrame.AbsolutePosition
+				local secAbsSize = sectionFrame.AbsoluteSize
+				local tabAbsPos = tabContent.AbsolutePosition
+				local canvasY = tabContent.CanvasPosition.Y
+
+				local startY = secAbsPos.Y + secAbsSize.Y - tabAbsPos.Y + canvasY
+				local endY = lastElementY or startY
+
+				if endY > startY then
+					if not vertLine then
+						vertLine = CreateInstance("Frame", {
+							Size = UDim2.fromOffset(CONSTANTS.LINE_THICKNESS, 0),
+							Position = UDim2.new(0, 6, 0, startY),
+							BackgroundColor3 = COLORS.Accent,
+							BackgroundTransparency = 0.6,
+							BorderSizePixel = 0,
+							ZIndex = 2,
+						}, tabContent)
+						CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = vertLine
+					end
+					local totalH = endY - startY
+					Tween(vertLine, { Size = UDim2.fromOffset(CONSTANTS.LINE_THICKNESS, totalH) }, 0.2)
+				end
+			end)
+		end
+
+		local function addConnector(element)
+			task.defer(function()
+				task.wait(0.1)
+				local elemAbsPos = element.AbsolutePosition
+				local elemAbsSize = element.AbsoluteSize
+				local tabAbsPos = tabContent.AbsolutePosition
+				local canvasY = tabContent.CanvasPosition.Y
+
+				local elemY = elemAbsPos.Y + (elemAbsSize.Y / 2) - tabAbsPos.Y + canvasY
+				lastElementY = elemY
+
+				local hLine = CreateInstance("Frame", {
+					Size = UDim2.fromOffset(10, CONSTANTS.LINE_THICKNESS),
+					Position = UDim2.new(0, 6, 0, elemY),
+					BackgroundColor3 = COLORS.Accent,
+					BackgroundTransparency = 0.6,
+					BorderSizePixel = 0,
+					ZIndex = 2,
+				}, tabContent)
+				CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = hLine
+
+				table.insert(sectionConnectors, hLine)
+				updateConnector()
+			end)
+		end
+
+		local sectionObj = {
+			addElement = addConnector,
+			connectors = sectionConnectors,
+		}
+
+		task.delay(0.05, function()
+			updateConnector()
+		end)
+
+		Tab._lastSection = sectionObj
+
+		return sectionObj
 	end
 
 
@@ -2353,11 +2726,16 @@ function ZenithLib:MakeTab(config)
 			pctLabel.Text = tostring(math.floor(v)) .. "%"
 			Callback(v)
 		end
-		function obj:GetValue()
+function obj:GetValue()
 			return math.floor(fill.Size.X.Scale * 100)
 		end
 
 		frame.Parent = tabContent
+
+		if Tab._lastSection and Tab._lastSection.addElement then
+			Tab._lastSection:addElement(frame)
+		end
+
 		return obj
 	end
 
@@ -2392,6 +2770,9 @@ function ZenithLib:Destroy()
 	end
 
 	task.delay(0.32, function()
+		if self._dragCleanup then
+			self._dragCleanup()
+		end
 		if self.ScreenGui then
 			self.ScreenGui:Destroy()
 		end
@@ -2423,8 +2804,11 @@ end
 function ZenithLib:Minimize()
 	if not self.isMinimized then
 		self.isMinimized = true
-		local targetHeight = self.isMaximized and 600 or self.normalHeight
-		Tween(self.MainFrame, { Size = UDim2.new(0, 700, 0, targetHeight) })
+		local currentWidth = self.MainFrame.AbsoluteSize.X
+		Tween(self.MainFrame, { Size = UDim2.new(0, currentWidth, 0, self.minimizedHeight) })
+	else
+		self.isMinimized = false
+		Tween(self.MainFrame, { Size = self.normalSize })
 	end
 end
 
@@ -2494,6 +2878,8 @@ function ZenithLib:Hide()
 	end)
 end
 
+--- Устанавливает клавишу для показа/скрытия окна
+-- @param key Enum.KeyCode — клавиша
 function ZenithLib:SetToggleKey(key)
 	self._toggleKey = key
 end
@@ -2519,6 +2905,12 @@ function ZenithLib:SetAccent(color)
 	COLORS.ElementBorder = Color3.new(color.R*0.25, color.G*0.09, color.B*0.15)
 	COLORS.AccentDim  = Color3.new(color.R*0.41, color.G*0.09, color.B*0.21)
 	if self._mainStroke then self._mainStroke.Color = color end
+	if self._titleBarGradient then
+		self._titleBarGradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.new(color.R * 0.12, color.G * 0.09, color.B * 0.03)),
+			ColorSequenceKeypoint.new(1, COLORS.DarkerBackground),
+		})
+	end
 end
 
 function ZenithLib:SetTabWidth(w)
@@ -2602,6 +2994,36 @@ local function GetNotifHolder(gui)
 	return NotifHolder
 end
 
+local _notifyQueue = {}
+local _notifyProcessing = false
+
+local function processNotifyQueue()
+	if _notifyProcessing then return end
+	_notifyProcessing = true
+	
+	while #_notifyQueue > 0 do
+		local notifyData = table.remove(_notifyQueue, 1)
+		local card = notifyData.card
+		local duration = notifyData.duration
+		
+		task.wait(duration + 0.25)
+		
+		if card and card.Parent then
+			Tween(card, { Position = UDim2.new(1, 10, 0, 0) }, 0.2, Enum.EasingStyle.Quint)
+			task.wait(0.25)
+			pcall(function() card:Destroy() end)
+		end
+	end
+	
+	_notifyProcessing = false
+end
+
+--- Показывает уведомление
+-- @param cfg table
+-- @param cfg.Title string — заголовок уведомления
+-- @param cfg.Content string? — текст уведомления
+-- @param cfg.Duration number? — длительность в секундах (default: 4)
+-- @return Instance
 function ZenithLib:Notify(cfg)
 	local title    = cfg.Title    or "Notification"
 	local content  = cfg.Content  or ""
@@ -2680,13 +3102,8 @@ function ZenithLib:Notify(cfg)
 		{ Size = UDim2.new(0, 0, 0, 2) }
 	):Play()
 
-	task.delay(duration, function()
-		if not card.Parent then return end
-		Tween(card, { Position = UDim2.new(1, 10, 0, 0) }, 0.2, Enum.EasingStyle.Quint)
-		task.delay(0.22, function()
-			pcall(function() card:Destroy() end)
-		end)
-	end)
+	table.insert(_notifyQueue, { card = card, duration = duration })
+	task.spawn(processNotifyQueue)
 
 	return card
 end
@@ -2956,7 +3373,7 @@ function ZenithLib:MakeConfigTab(configName)
     tab:MakeSeparator()
     tab:MakeSection({ Name = "Auto Save" })
 
-    local autoConn = nil
+    local autoSaveLoopRunning = false
     local autoInterval = 30
 
     tab:MakeToggle({
@@ -2964,24 +3381,28 @@ function ZenithLib:MakeConfigTab(configName)
         Icon    = "refresh-cw",
         Default = false,
         Callback = function(state)
-            if autoConn then
-                autoConn:Disconnect()
-                autoConn = nil
-            end
+            autoSaveLoopRunning = state
 
             if state then
-                local last = tick()
-                autoConn = game:GetService("RunService").Heartbeat:Connect(function()
-                    if tick() - last >= autoInterval then
-                        last = tick()
-                        pcall(function() self:SaveConfig(self._cfgName) end)
+                local function autoSaveLoop()
+                    while autoSaveLoopRunning do
+                        task.wait(autoInterval)
+                        if autoSaveLoopRunning then
+                            pcall(function() self:SaveConfig(self._cfgName) end)
+                        end
                     end
-                end)
+                end
+                task.spawn(autoSaveLoop)
                 self:Notify({
                     Title   = "Auto Save ON",
                     Content = "Every " .. autoInterval .. "s",
                     Duration = 2
                 })
+            else
+                self:Notify({ Title = "Auto Save OFF", Content = "", Duration = 2 })
+            end
+        end,
+    })
             else
                 self:Notify({ Title = "Auto Save OFF", Content = "", Duration = 2 })
             end
