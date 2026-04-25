@@ -186,7 +186,7 @@ local function MakeDraggable(frame, handle)
 			startPos = frame.Position
 			local connection
 			connection = input.Changed:Connect(function()
-				if input.UserInputState == Enum.InputState.End then
+				if input.UserInputState == Enum.UserInputState.End then
 					dragging = false
 					connection:Disconnect()
 				end
