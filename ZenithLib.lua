@@ -2078,7 +2078,7 @@ function ZenithLib:MakeTab(config)
 			end
 		end)
 
-		textboxInput.TextChanged:Connect(function()
+		textboxInput:GetPropertyChangedSignal("Text"):Connect(function()
 			if Pattern then
 				local text = textboxInput.Text
 				if not text:match(Pattern) then
@@ -2188,7 +2188,7 @@ function ZenithLib:MakeTab(config)
 	function Tab:MakeColorPicker(config)
 		local Name                                                            = config.Name or "Color"
 		local Default                                                         = config.Default or
-			Color3.fromRGB(220, 80, 120)
+		Color3.fromRGB(220, 80, 120)
 		local Callback                                                        = config.Callback or function() end
 
 		local h, s, v                                                         = Color3.toHSV(Default)
@@ -2619,6 +2619,7 @@ function ZenithLib:MakeTab(config)
 				local secAbsSize = sectionFrame.AbsoluteSize
 				local tabAbsPos = tabContent.AbsolutePosition
 				local canvasY = tabContent.CanvasPosition.Y
+				if not secAbsPos or not secAbsSize or not tabAbsPos then return end
 
 				local startY = secAbsPos.Y + secAbsSize.Y - tabAbsPos.Y + canvasY
 				local endY = lastElementY or startY
@@ -2644,10 +2645,12 @@ function ZenithLib:MakeTab(config)
 		local function addConnector(element)
 			task.defer(function()
 				task.wait(0.1)
+				if not element or not element.Parent then return end
 				local elemAbsPos = element.AbsolutePosition
 				local elemAbsSize = element.AbsoluteSize
 				local tabAbsPos = tabContent.AbsolutePosition
 				local canvasY = tabContent.CanvasPosition.Y
+				if not elemAbsPos or not elemAbsSize or not tabAbsPos then return end
 
 				local elemY = elemAbsPos.Y + (elemAbsSize.Y / 2) - tabAbsPos.Y + canvasY
 				lastElementY = elemY
