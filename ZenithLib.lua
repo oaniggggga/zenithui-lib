@@ -1,4 +1,3 @@
-
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -127,9 +126,9 @@ end
 local function hexToColor3(hex)
 	hex = hex:gsub("#", "")
 	if #hex ~= 6 then return nil end
-	local r = tonumber(hex:sub(1,2), 16)
-	local g = tonumber(hex:sub(3,4), 16)
-	local b = tonumber(hex:sub(5,6), 16)
+	local r = tonumber(hex:sub(1, 2), 16)
+	local g = tonumber(hex:sub(3, 4), 16)
+	local b = tonumber(hex:sub(5, 6), 16)
 	if not r or not g or not b then return nil end
 	return Color3.fromRGB(r, g, b)
 end
@@ -212,7 +211,7 @@ local function MakeDraggable(frame, handle)
 	table.insert(connections, handle.InputChanged:Connect(onInputChanged))
 	table.insert(connections, UserInputService.InputChanged:Connect(onGlobalInputChanged))
 
-return function()
+	return function()
 		for _, conn in ipairs(connections) do
 			pcall(function() conn:Disconnect() end)
 		end
@@ -221,29 +220,29 @@ return function()
 end
 
 local COLORS = {
-	MainBackground   = Color3.fromRGB(10,   9,   8),   -- обсидиан
-	DarkerBackground = Color3.fromRGB(6,    5,   4),   -- глубже — для TabNav / TitleBar
-	InputBackground  = Color3.fromRGB(18,  16,  14),   -- фон элементов — чуть теплее
-	DropdownHolder   = Color3.fromRGB(13,  11,   9),   -- фон списков дропдауна
+	MainBackground   = Color3.fromRGB(10, 9, 8),   -- обсидиан
+	DarkerBackground = Color3.fromRGB(6, 5, 4),    -- глубже — для TabNav / TitleBar
+	InputBackground  = Color3.fromRGB(18, 16, 14), -- фон элементов — чуть теплее
+	DropdownHolder   = Color3.fromRGB(13, 11, 9),  -- фон списков дропдауна
 
-	Accent           = Color3.fromRGB(255, 150,  40),  -- ember / раскалённый янтарь
-	AccentText       = Color3.fromRGB(255, 205, 130),  -- мягкий золотисто-кремовый
-	AccentDim        = Color3.fromRGB(55,  32,   8),   -- тёмный ember для hover/pressed
+	Accent           = Color3.fromRGB(255, 150, 40), -- ember / раскалённый янтарь
+	AccentText       = Color3.fromRGB(255, 205, 130), -- мягкий золотисто-кремовый
+	AccentDim        = Color3.fromRGB(55, 32, 8),  -- тёмный ember для hover/pressed
 
-	Text             = Color3.fromRGB(242, 236, 226),  -- ivory white
-	SubText          = Color3.fromRGB(118, 110,  96),  -- тёплый серо-золотой
+	Text             = Color3.fromRGB(242, 236, 226), -- ivory white
+	SubText          = Color3.fromRGB(118, 110, 96), -- тёплый серо-золотой
 
-	ElementBorder    = Color3.fromRGB(48,  38,  22),   -- тёмно-янтарный бордер
-	InElementBorder  = Color3.fromRGB(48,  38,  22),
-	SliderRail       = Color3.fromRGB(30,  24,  14),   -- трек слайдера
-	TitleBarLine     = Color3.fromRGB(70,  50,  18),   -- линия под тайтлбаром
+	ElementBorder    = Color3.fromRGB(48, 38, 22), -- тёмно-янтарный бордер
+	InElementBorder  = Color3.fromRGB(48, 38, 22),
+	SliderRail       = Color3.fromRGB(30, 24, 14), -- трек слайдера
+	TitleBarLine     = Color3.fromRGB(70, 50, 18), -- линия под тайтлбаром
 
-	ActiveTab        = Color3.fromRGB(28,  20,   8),   -- фон активного таба
-	EL_HOVER         = Color3.fromRGB(24,  20,  14),   -- hover на элементах
+	ActiveTab        = Color3.fromRGB(28, 20, 8),  -- фон активного таба
+	EL_HOVER         = Color3.fromRGB(24, 20, 14), -- hover на элементах
 
-	CloseRed         = Color3.fromRGB(255,  95,  87),
-	MaximizeYellow   = Color3.fromRGB(254, 188,  46),
-	MinimizeGreen    = Color3.fromRGB(40,  200,  64),
+	CloseRed         = Color3.fromRGB(255, 95, 87),
+	MaximizeYellow   = Color3.fromRGB(254, 188, 46),
+	MinimizeGreen    = Color3.fromRGB(40, 200, 64),
 }
 
 
@@ -283,16 +282,16 @@ function ZenithLib:GetTheme()
 end
 
 function ZenithLib:MakeWindow(config)
-	local self = setmetatable({}, ZenithLib)
-	
-	local Title      = config.Title      or "ZenithLib"
-	local Author     = config.Author     or nil
+	local self       = setmetatable({}, ZenithLib)
+
+	local Title      = config.Title or "ZenithLib"
+	local Author     = config.Author or nil
 	local ConfigName = config.ConfigName or "Default"
 	self._configName = ConfigName
 	self._cfgPath    = "ZenithLib/" .. ConfigName .. "/"
 	pcall(makefolder, "ZenithLib")
 	pcall(makefolder, self._cfgPath)
-	
+
 	self.ScreenGui = CreateInstance("ScreenGui", {
 		Name = "ZenithLib_" .. ConfigName,
 		IgnoreGuiInset = true,
@@ -375,7 +374,7 @@ function ZenithLib:MakeWindow(config)
 			task.wait(0.9)
 
 			Tween(titleLbl, { TextTransparency = 1 }, 0.3)
-			Tween(byLbl,    { TextTransparency = 1 }, 0.3)
+			Tween(byLbl, { TextTransparency = 1 }, 0.3)
 			task.wait(0.15)
 			Tween(topLine, { Size = UDim2.new(0, 0, 0, 2) }, 0.3, Enum.EasingStyle.Quint)
 			task.wait(0.15)
@@ -388,7 +387,7 @@ function ZenithLib:MakeWindow(config)
 
 	local windowPos = config.Position or UDim2.new(0.5, -350, 0.5, -225)
 	local windowSize = config.Size or UDim2.new(0, 700, 0, 450)
-	
+
 	local shadow = CreateInstance("ImageLabel", {
 		Name = "Shadow",
 		Size = UDim2.new(1, 20, 1, 20),
@@ -401,7 +400,7 @@ function ZenithLib:MakeWindow(config)
 		ScaleType = Enum.ScaleType.Slice,
 		SliceCenter = Rect.new(49, 49, 450, 450),
 	})
-	
+
 	self.MainFrame = CreateInstance("Frame", {
 		Name = "MainFrame",
 		Size = windowSize,
@@ -413,7 +412,7 @@ function ZenithLib:MakeWindow(config)
 	})
 	shadow.Parent = self.MainFrame
 	self.MainFrame.Parent = self.ScreenGui
-	
+
 	UserInputService.MouseIconEnabled = true
 	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 
@@ -421,10 +420,10 @@ function ZenithLib:MakeWindow(config)
 	task.defer(function()
 		Tween(self.MainFrame, { Position = windowPos }, 0.38, Enum.EasingStyle.Back)
 	end)
-	
+
 	local mainCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	mainCorner.Parent = self.MainFrame
-	
+
 	local mainStroke = CreateInstance("UIStroke", {
 		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 		Thickness = 1,
@@ -432,7 +431,7 @@ function ZenithLib:MakeWindow(config)
 		Color = COLORS.Accent,
 	})
 	mainStroke.Parent = self.MainFrame
-	
+
 	self.TitleBar = CreateInstance("Frame", {
 		Name = "TitleBar",
 		Size = UDim2.new(1, 0, 0, 44),
@@ -441,7 +440,7 @@ function ZenithLib:MakeWindow(config)
 		BorderSizePixel = 0,
 	})
 	self.TitleBar.Parent = self.MainFrame
-	
+
 	local titleBarCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 12) })
 	titleBarCorner.Parent = self.TitleBar
 
@@ -454,7 +453,7 @@ function ZenithLib:MakeWindow(config)
 	})
 	titleBarGradient.Parent = self.TitleBar
 	self._titleBarGradient = titleBarGradient
-	
+
 	self.TitleText = CreateInstance("TextLabel", {
 		Name = "TitleText",
 		Size = UDim2.new(1, -100, 1, 0),
@@ -467,7 +466,7 @@ function ZenithLib:MakeWindow(config)
 		TextXAlignment = Enum.TextXAlignment.Center,
 	})
 	self.TitleText.Parent = self.TitleBar
-	
+
 
 	if config.SubTitle then
 		CreateInstance("TextLabel", {
@@ -549,15 +548,15 @@ function ZenithLib:MakeWindow(config)
 	})
 	closeHitbox.Parent = self.CloseButton
 	closeHitbox.MouseButton1Click:Connect(function() self:Destroy() end)
-	
+
 	self.isMinimized = false
 	self.normalHeight = windowSize.Y.Offset
 	self.minimizedHeight = 40
-	
+
 	minHitbox.MouseButton1Click:Connect(function()
 		self:Minimize()
 	end)
-	
+
 	self.ContentContainer = CreateInstance("Frame", {
 		Name = "ContentContainer",
 		Size = UDim2.new(1, 0, 1, -44),
@@ -565,7 +564,7 @@ function ZenithLib:MakeWindow(config)
 		BackgroundTransparency = 1,
 	})
 	self.ContentContainer.Parent = self.MainFrame
-	
+
 	self.TabNav = CreateInstance("Frame", {
 		Name = "TabNav",
 		Size = UDim2.new(0, 150, 1, 0),
@@ -612,11 +611,11 @@ function ZenithLib:MakeWindow(config)
 
 
 	self._tabScroll = tabScroll
-	
 
 
 
-	self.TabContent = CreateInstance("Frame", {
+
+	self.TabContent        = CreateInstance("Frame", {
 		Name = "TabContent",
 		Size = UDim2.new(1, -150, 1, 0),
 		Position = UDim2.new(0, 150, 0, 0),
@@ -624,15 +623,15 @@ function ZenithLib:MakeWindow(config)
 		BorderSizePixel = 0,
 	})
 	self.TabContent.Parent = self.ContentContainer
-	
-	self.TabFrames  = {}
-	self.CurrentTab = nil
-	self._tabIndex  = 0   -- счётчик для LayoutOrder
-	
-	self._dragCleanup = MakeDraggable(self.MainFrame, self.TitleBar)
-	
-	self._visible = true
-	self._toggleKey = Enum.KeyCode.RightShift
+
+	self.TabFrames         = {}
+	self.CurrentTab        = nil
+	self._tabIndex         = 0 -- счётчик для LayoutOrder
+
+	self._dragCleanup      = MakeDraggable(self.MainFrame, self.TitleBar)
+
+	self._visible          = true
+	self._toggleKey        = Enum.KeyCode.RightShift
 	UserInputService.InputBegan:Connect(function(input, gp)
 		if gp then return end
 		if input.KeyCode == self._toggleKey then
@@ -640,8 +639,8 @@ function ZenithLib:MakeWindow(config)
 		end
 	end)
 
-self._mainStroke = mainStroke
-	
+	self._mainStroke = mainStroke
+
 	return self
 end
 
@@ -652,14 +651,14 @@ end
 -- @param config.LayoutOrder number? — порядок сортировки
 -- @return Tab
 function ZenithLib:MakeTab(config)
-	local win = self  -- window объект, не перезаписываем
+	local win = self -- window объект, не перезаписываем
 
 	win._tabCount = (win._tabCount or 0) + 1
 	local tabIdx = win._tabCount
 
 	local Title = config.Title or "Tab"
 	local Image = config.Image
-	
+
 	win._tabIndex = (win._tabIndex or 0) + 1
 	local _tabOrder = config.LayoutOrder or win._tabIndex
 
@@ -673,12 +672,12 @@ function ZenithLib:MakeTab(config)
 		AutoButtonColor = false,
 		LayoutOrder = _tabOrder,
 	})
-	
+
 	local tabCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
 	tabCorner.Parent = tabButton
-	
+
 	CreateInstance("UIPadding", { PaddingLeft = UDim.new(0, 10) }).Parent = tabButton
-	
+
 	local tabImage = nil
 	if Image and Image ~= "" then
 		tabImage = CreateInstance("ImageLabel", {
@@ -705,9 +704,9 @@ function ZenithLib:MakeTab(config)
 		TextXAlignment = Enum.TextXAlignment.Left,
 	})
 	tabText.Parent = tabButton
-	
+
 	tabButton.Parent = win._tabScroll
-	
+
 	local tabContent = CreateInstance("ScrollingFrame", {
 		Name = "Content_" .. Title,
 		Size = UDim2.new(1, 0, 1, 0),
@@ -737,12 +736,12 @@ function ZenithLib:MakeTab(config)
 		PaddingBottom = UDim.new(0, 10),
 	})
 	contentPadding.Parent = tabContent
-	
+
 	tabContent.Parent = win.TabContent
 	tabContent.Visible = false
-	
+
 	win.TabFrames[Title] = tabContent
-	
+
 	local function SelectTab()
 		for _, frame in pairs(win.TabFrames) do
 			if frame.Visible then
@@ -783,14 +782,16 @@ function ZenithLib:MakeTab(config)
 			animateTabContent(tabContent)
 		end)
 		win.CurrentTab = Title
-		
+
 		local tabContainer = win._tabScroll or win.TabNav
 		for _, button in ipairs(tabContainer:GetChildren()) do
-			if (button:IsA("Frame") or button:IsA("TextButton")) and button.Name:sub(1,4) == "Tab_" then
+			if (button:IsA("Frame") or button:IsA("TextButton")) and button.Name:sub(1, 4) == "Tab_" then
 				button.BackgroundColor3 = COLORS.InputBackground
 				button.BackgroundTransparency = 1
 				local txt = button:FindFirstChildWhichIsA("TextLabel")
-				if txt then txt.TextColor3 = Color3.fromRGB(150, 140, 145); txt.TextSize = 12 end
+				if txt then
+					txt.TextColor3 = Color3.fromRGB(150, 140, 145); txt.TextSize = 12
+				end
 				local ico = button:FindFirstChild("TabIcon")
 				if ico then ico.ImageColor3 = Color3.fromRGB(130, 120, 125) end
 			end
@@ -801,7 +802,7 @@ function ZenithLib:MakeTab(config)
 			Tween(tabImage, { ImageColor3 = COLORS.AccentText }, 0.15)
 		end
 	end
-	
+
 	local tabScale = CreateInstance("UIScale", { Scale = 1 })
 	tabScale.Parent = tabButton
 
@@ -824,35 +825,36 @@ function ZenithLib:MakeTab(config)
 			Tween(tabButton, { BackgroundTransparency = 1 }, 0.15)
 		end
 	end)
-	
+
 	if not win.CurrentTab then
 		SelectTab()
 	end
 
 	local Tab = {}
 	Tab._lastSection = nil
-	
+
 	function Tab:MakeButton(config)
-		local Name     = config.Name     or "Button"
-		local Icon     = config.Icon     or nil
-		local Callback = config.Callback or function() end
-		
-		local buttonFrame = CreateInstance("Frame", {
+		local Name          = config.Name or "Button"
+		local Icon          = config.Icon or nil
+		local Callback      = config.Callback or function() end
+
+		local buttonFrame   = CreateInstance("Frame", {
 			Name = "Button_" .. Name,
 			Size = UDim2.new(1, 0, 0, 40),
 			BackgroundColor3 = COLORS.InputBackground,
 			BorderSizePixel = 0,
 		})
-		
-		local buttonCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
+
+		local buttonCorner  = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 		buttonCorner.Parent = buttonFrame
-		local _bStroke = CreateInstance("UIStroke", {
+		local _bStroke      = CreateInstance("UIStroke", {
 			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-			Thickness = 0.5, Transparency = 0.35,
+			Thickness = 0.5,
+			Transparency = 0.35,
 			Color = COLORS.Accent,
 		})
-		_bStroke.Parent = buttonFrame
-		
+		_bStroke.Parent     = buttonFrame
+
 		if Icon then
 			local btnIcon = CreateInstance("ImageLabel", {
 				Name = "BtnIcon",
@@ -879,20 +881,21 @@ function ZenithLib:MakeTab(config)
 			TextXAlignment = Enum.TextXAlignment.Left,
 		})
 		buttonText.Parent = buttonFrame
-		
+
 		local buttonHitbox = CreateInstance("TextButton", {
 			Size = UDim2.new(1, 0, 1, 0),
 			BackgroundTransparency = 1,
 			Text = "",
 		})
 		buttonHitbox.Parent = buttonFrame
-		
+
 		local btnScale = CreateInstance("UIScale", { Scale = 1 })
 		btnScale.Parent = buttonFrame
 
 		buttonHitbox.MouseButton1Down:Connect(function()
 			Tween(buttonFrame, { BackgroundColor3 = COLORS.Accent }, 0.08)
-			TweenService:Create(btnScale, TweenInfo.new(0.1, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Scale = 0.96 }):Play()
+			TweenService:Create(btnScale, TweenInfo.new(0.1, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+				{ Scale = 0.96 }):Play()
 		end)
 
 		buttonHitbox.MouseButton1Up:Connect(function()
@@ -903,14 +906,16 @@ function ZenithLib:MakeTab(config)
 
 		buttonHitbox.MouseEnter:Connect(function()
 			Tween(buttonFrame, { BackgroundColor3 = COLORS.AccentDim }, 0.15)
-			TweenService:Create(btnScale, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1.02 }):Play()
+			TweenService:Create(btnScale, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+				{ Scale = 1.02 }):Play()
 		end)
 
 		buttonHitbox.MouseLeave:Connect(function()
 			Tween(buttonFrame, { BackgroundColor3 = COLORS.InputBackground }, 0.15)
-			TweenService:Create(btnScale, TweenInfo.new(0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+			TweenService:Create(btnScale, TweenInfo.new(0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+				{ Scale = 1 }):Play()
 		end)
-		
+
 		buttonFrame.Parent = tabContent
 
 		if Tab._lastSection and Tab._lastSection.addElement then
@@ -919,27 +924,27 @@ function ZenithLib:MakeTab(config)
 
 		return buttonFrame
 	end
-	
+
 	function Tab:MakeToggle(config)
-		local Name     = config.Name     or "Toggle"
-		local Icon     = config.Icon     or nil
-		local Default  = config.Default  or false
-		local Callback = config.Callback or function() end
-		
-		local toggleFrame = CreateInstance("Frame", {
+		local Name          = config.Name or "Toggle"
+		local Icon          = config.Icon or nil
+		local Default       = config.Default or false
+		local Callback      = config.Callback or function() end
+
+		local toggleFrame   = CreateInstance("Frame", {
 			Name = "Toggle_" .. Name,
 			Size = UDim2.new(1, 0, 0, 40),
 			BackgroundColor3 = COLORS.InputBackground,
 			BorderSizePixel = 0,
 		})
-		local toggleCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
+		local toggleCorner  = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 		toggleCorner.Parent = toggleFrame
 		CreateInstance("UIStroke", {
 			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 			Thickness = 0.5, Transparency = 0.5,
 			Color = COLORS.ElementBorder,
-		}).Parent = toggleFrame
-		
+		}).Parent           = toggleFrame
+
 		if Icon then
 			local togIcon = CreateInstance("ImageLabel", {
 				Size = UDim2.new(0, 16, 0, 16),
@@ -963,7 +968,7 @@ function ZenithLib:MakeTab(config)
 			TextXAlignment = Enum.TextXAlignment.Left,
 		})
 		toggleText.Parent = toggleFrame
-		
+
 		local toggleSwitch = CreateInstance("Frame", {
 			Name = "Switch",
 			Size = UDim2.new(0, 40, 0, 20),
@@ -972,10 +977,10 @@ function ZenithLib:MakeTab(config)
 			BorderSizePixel = 0,
 		})
 		toggleSwitch.Parent = toggleFrame
-		
+
 		local switchCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) })
 		switchCorner.Parent = toggleSwitch
-		
+
 		local toggleKnob = CreateInstance("Frame", {
 			Name = "Knob",
 			Size = UDim2.new(0, 14, 0, 14),
@@ -984,44 +989,48 @@ function ZenithLib:MakeTab(config)
 			BorderSizePixel = 0,
 		})
 		toggleKnob.Parent = toggleSwitch
-		
+
 		local knobCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) })
 		knobCorner.Parent = toggleKnob
-		
+
 		local isOn = Default
-		
+
 		local function UpdateToggle()
 			if isOn then
 				Tween(toggleSwitch, { BackgroundColor3 = COLORS.Accent }, 0.2)
-				TweenService:Create(toggleKnob, TweenInfo.new(0.08, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 10, 0, 10) }):Play()
+				TweenService:Create(toggleKnob, TweenInfo.new(0.08, Enum.EasingStyle.Quint),
+					{ Size = UDim2.new(0, 10, 0, 10) }):Play()
 				task.delay(0.08, function()
-					TweenService:Create(toggleKnob, TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-						Position = UDim2.new(1, -18, 0.5, -7),
-						Size = UDim2.new(0, 14, 0, 14),
-					}):Play()
+					TweenService:Create(toggleKnob, TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+						{
+							Position = UDim2.new(1, -18, 0.5, -7),
+							Size = UDim2.new(0, 14, 0, 14),
+						}):Play()
 				end)
 				Tween(toggleText, { TextColor3 = COLORS.AccentText }, 0.18)
 			else
 				Tween(toggleSwitch, { BackgroundColor3 = Color3.fromRGB(50, 50, 50) }, 0.2)
-				TweenService:Create(toggleKnob, TweenInfo.new(0.08, Enum.EasingStyle.Quint), { Size = UDim2.new(0, 10, 0, 10) }):Play()
+				TweenService:Create(toggleKnob, TweenInfo.new(0.08, Enum.EasingStyle.Quint),
+					{ Size = UDim2.new(0, 10, 0, 10) }):Play()
 				task.delay(0.08, function()
-					TweenService:Create(toggleKnob, TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-						Position = UDim2.new(0, 4, 0.5, -7),
-						Size = UDim2.new(0, 14, 0, 14),
-					}):Play()
+					TweenService:Create(toggleKnob, TweenInfo.new(0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+						{
+							Position = UDim2.new(0, 4, 0.5, -7),
+							Size = UDim2.new(0, 14, 0, 14),
+						}):Play()
 				end)
 				Tween(toggleText, { TextColor3 = COLORS.Text }, 0.18)
 			end
 			Callback(isOn)
 		end
-		
+
 		local toggleHitbox = CreateInstance("TextButton", {
 			Size = UDim2.new(1, 0, 1, 0),
 			BackgroundTransparency = 1,
 			Text = "",
 		})
 		toggleHitbox.Parent = toggleFrame
-		
+
 		toggleHitbox.MouseButton1Click:Connect(function()
 			isOn = not isOn
 			UpdateToggle()
@@ -1037,11 +1046,13 @@ function ZenithLib:MakeTab(config)
 		if config.ConfigKey then
 			win:_RegisterCfgItem(config.ConfigKey,
 				function() return isOn end,
-				function(v) isOn = v == true; UpdateToggle() end,
+				function(v)
+					isOn = v == true; UpdateToggle()
+				end,
 				"bool"
 			)
 		end
-		
+
 		toggleFrame.Parent = tabContent
 
 		if Tab._lastSection and Tab._lastSection.addElement then
@@ -1050,7 +1061,7 @@ function ZenithLib:MakeTab(config)
 
 		return toggleFrame
 	end
-	
+
 	function Tab:MakeSlider(config)
 		local Icon = config.Icon or nil
 		local Name = config.Name or "Slider"
@@ -1064,14 +1075,14 @@ function ZenithLib:MakeTab(config)
 		if range == 0 then range = 1 end
 
 		local defaultPercent = (Default - Min) / range
-		
+
 		local sliderFrame = CreateInstance("Frame", {
 			Name = "Slider_" .. Name,
 			Size = UDim2.new(1, 0, 0, 50),
 			BackgroundColor3 = COLORS.InputBackground,
 			BorderSizePixel = 0,
 		})
-		
+
 		local sliderCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 		sliderCorner.Parent = sliderFrame
 		CreateInstance("UIStroke", {
@@ -1079,7 +1090,7 @@ function ZenithLib:MakeTab(config)
 			Thickness = 0.5, Transparency = 0.5,
 			Color = COLORS.ElementBorder,
 		}).Parent = sliderFrame
-		
+
 		if Icon then
 			local sldIcon = CreateInstance("ImageLabel", {
 				Size = UDim2.new(0, 14, 0, 14),
@@ -1114,7 +1125,7 @@ function ZenithLib:MakeTab(config)
 		})
 		sliderValLabel.Parent = sliderFrame
 		sliderText.Parent = sliderFrame
-		
+
 		local sliderTrack = CreateInstance("Frame", {
 			Name = "Track",
 			Size = UDim2.new(1, -20, 0, 6),
@@ -1123,10 +1134,10 @@ function ZenithLib:MakeTab(config)
 			BorderSizePixel = 0,
 		})
 		sliderTrack.Parent = sliderFrame
-		
+
 		local trackCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) })
 		trackCorner.Parent = sliderTrack
-		
+
 		local sliderFill = CreateInstance("Frame", {
 			Name = "Fill",
 			Size = UDim2.new(defaultPercent, 0, 1, 0),
@@ -1134,10 +1145,10 @@ function ZenithLib:MakeTab(config)
 			BorderSizePixel = 0,
 		})
 		sliderFill.Parent = sliderTrack
-		
+
 		local fillCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) })
 		fillCorner.Parent = sliderFill
-		
+
 		local sliderKnob = CreateInstance("Frame", {
 			Name = "Knob",
 			Size = UDim2.new(0, 12, 0, 12),
@@ -1146,12 +1157,12 @@ function ZenithLib:MakeTab(config)
 			BorderSizePixel = 0,
 		})
 		sliderKnob.Parent = sliderTrack
-		
+
 		local knobCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) })
 		knobCorner.Parent = sliderKnob
-		
+
 		local isDragging = false
-		
+
 		local function UpdateSlider(value)
 			local percent = math.clamp((value - Min) / range, 0, 1)
 			Tween(sliderFill, { Size = UDim2.new(percent, 0, 1, 0) }, 0.05)
@@ -1159,24 +1170,26 @@ function ZenithLib:MakeTab(config)
 			sliderValLabel.Text = tostring(value)
 			Callback(value)
 		end
-		
+
 		local sliderHitbox = CreateInstance("TextButton", {
 			Size = UDim2.new(1, 0, 1, 0),
 			BackgroundTransparency = 1,
 			Text = "",
 		})
 		sliderHitbox.Parent = sliderFrame
-		
+
 		sliderHitbox.MouseButton1Down:Connect(function()
 			isDragging = true
-			TweenService:Create(sliderKnob, TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = UDim2.new(0, 16, 0, 16) }):Play()
+			TweenService:Create(sliderKnob, TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+				{ Size = UDim2.new(0, 16, 0, 16) }):Play()
 		end)
 
 		sliderHitbox.MouseButton1Up:Connect(function()
 			isDragging = false
-			TweenService:Create(sliderKnob, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Size = UDim2.new(0, 12, 0, 12) }):Play()
+			TweenService:Create(sliderKnob, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+				{ Size = UDim2.new(0, 12, 0, 12) }):Play()
 		end)
-		
+
 		sliderHitbox.MouseMoved:Connect(function()
 			if isDragging then
 				local relativeX = sliderTrack.AbsolutePosition.X
@@ -1187,7 +1200,7 @@ function ZenithLib:MakeTab(config)
 				UpdateSlider(value)
 			end
 		end)
-		
+
 		sliderTrack.InputBegan:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 then
 				local relativeX = sliderTrack.AbsolutePosition.X
@@ -1198,13 +1211,13 @@ function ZenithLib:MakeTab(config)
 				UpdateSlider(value)
 			end
 		end)
-		
+
 		UserInputService.InputEnded:Connect(function(input)
 			if input.UserInputType == Enum.UserInputType.MouseButton1 then
 				isDragging = false
 			end
 		end)
-		
+
 		local _sliderVal = Default
 		local _origUpdate = UpdateSlider
 		UpdateSlider = function(value)
@@ -1230,7 +1243,6 @@ function ZenithLib:MakeTab(config)
 
 		return sliderFrame
 	end
-	
 
 	if not win._ddOverlay then
 		local overlay = CreateInstance("Frame", {
@@ -1272,8 +1284,9 @@ function ZenithLib:MakeTab(config)
 			Transparency = 0.3,
 			Color = COLORS.Accent,
 		}).Parent = listFrame
-		
+
 		local closeButton = CreateInstance("TextButton", {
+			Name = "CloseButton",
 			Size = UDim2.new(0, 24, 0, 24),
 			Position = UDim2.new(1, -28, 0, 4),
 			BackgroundColor3 = COLORS.InputBackground,
@@ -1287,7 +1300,7 @@ function ZenithLib:MakeTab(config)
 		})
 		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) }).Parent = closeButton
 		closeButton.Parent = listFrame
-		
+
 		listFrame.Parent = overlay
 
 		local listLayout = CreateInstance("UIListLayout", {
@@ -1295,11 +1308,11 @@ function ZenithLib:MakeTab(config)
 			SortOrder = Enum.SortOrder.LayoutOrder,
 		})
 		listLayout.Parent = listFrame
-		
+
 		listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 			listFrame.CanvasSize = UDim2.new(0, 0, 0, listLayout.AbsoluteContentSize.Y + 8)
 		end)
-		
+
 		CreateInstance("UIPadding", {
 			PaddingTop = UDim.new(0, 35),
 			PaddingBottom = UDim.new(0, 4),
@@ -1310,7 +1323,8 @@ function ZenithLib:MakeTab(config)
 		local overlayHit = CreateInstance("TextButton", {
 			Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 1,
-			Text = "", ZIndex = 200,
+			Text = "",
+			ZIndex = 200,
 		})
 		overlayHit.Parent = overlay
 
@@ -1327,20 +1341,20 @@ function ZenithLib:MakeTab(config)
 			table.insert(segmentPool, seg)
 		end
 
-		win._ddOverlay    = overlay
-		win._ddListFrame  = listFrame
-		win._ddListLayout = listLayout
+		win._ddOverlay         = overlay
+		win._ddListFrame       = listFrame
+		win._ddListLayout      = listLayout
 		win._ddConnectorCanvas = connectorCanvas
-		win._ddCloseButton = closeButton
-		win._ddCurrent    = nil
-		win._ddSegmentPool = segmentPool
+		win._ddCloseButton     = closeButton
+		win._ddCurrent         = nil
+		win._ddSegmentPool     = segmentPool
 
 		overlayHit.MouseButton1Click:Connect(function()
 			if win._ddCurrent then
 				win._ddCurrent.close()
 			end
 		end)
-		
+
 		closeButton.MouseButton1Click:Connect(function()
 			if win._ddCurrent then
 				win._ddCurrent.close()
@@ -1353,11 +1367,11 @@ function ZenithLib:MakeTab(config)
 			win._ddCurrent.close()
 		end
 
-		local overlay   = win._ddOverlay
-		local listFrame = win._ddListFrame
-		local listLayout = win._ddListLayout
+		local overlay         = win._ddOverlay
+		local listFrame       = win._ddListFrame
+		local listLayout      = win._ddListLayout
 		local connectorCanvas = win._ddConnectorCanvas
-		local segmentPool = win._ddSegmentPool or {}
+		local segmentPool     = win._ddSegmentPool or {}
 
 		for _, seg in ipairs(segmentPool) do
 			seg.Visible = false
@@ -1402,18 +1416,18 @@ function ZenithLib:MakeTab(config)
 			btn.Parent = listFrame
 		end
 
-		local absPos  = anchorFrame.AbsolutePosition
-		local absSize = anchorFrame.AbsoluteSize
-		local mainFrame = win.MainFrame
-		local mainAbsPos = mainFrame.AbsolutePosition
+		local absPos      = anchorFrame.AbsolutePosition
+		local absSize     = anchorFrame.AbsoluteSize
+		local mainFrame   = win.MainFrame
+		local mainAbsPos  = mainFrame.AbsolutePosition
 		local mainAbsSize = mainFrame.AbsoluteSize
 
-		local listW = 220
-		local listH = mainAbsSize.Y
-		local listX = mainAbsPos.X + mainAbsSize.X + 20
-		local listY = mainAbsPos.Y + (mainAbsSize.Y / 2) - (listH / 2)
+		local listW       = 220
+		local listH       = mainAbsSize.Y
+		local listX       = mainAbsPos.X + mainAbsSize.X + 20
+		local listY       = mainAbsPos.Y + (mainAbsSize.Y / 2) - (listH / 2)
 
-		local screenW = workspace.CurrentCamera.ViewportSize.X
+		local screenW     = workspace.CurrentCamera.ViewportSize.X
 		if listX + listW > screenW then
 			listX = mainAbsPos.X - listW - 20
 		end
@@ -1430,7 +1444,7 @@ function ZenithLib:MakeTab(config)
 
 		local function cubicBezier(t, p0, p1, p2, p3)
 			local u = 1 - t
-			return u*u*u*p0 + 3*u*u*t*p1 + 3*u*t*t*p2 + t*t*t*p3
+			return u * u * u * p0 + 3 * u * u * t * p1 + 3 * u * t * t * p2 + t * t * t * p3
 		end
 
 		local cp1X = startX + (endX - startX) * 0.6
@@ -1442,21 +1456,21 @@ function ZenithLib:MakeTab(config)
 		local SEGMENTS = CONSTANTS.CONNECTOR_SEGMENTS
 		local OVERLAP = 0.5
 		local lineSegments = {}
-		
+
 		for i = 0, SEGMENTS - 1 do
 			local t1 = i / SEGMENTS
 			local t2 = (i + 1) / SEGMENTS
-			
+
 			local x1 = cubicBezier(t1, startX, cp1X, cp2X, endX)
 			local y1 = cubicBezier(t1, startY, cp1Y, cp2Y, endY)
-			
+
 			local x2 = cubicBezier(t2, startX, cp1X, cp2X, endX)
 			local y2 = cubicBezier(t2, startY, cp1Y, cp2Y, endY)
-			
-			local segLen = math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
+
+			local segLen = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
 			local angle = math.deg(math.atan2(y2 - y1, x2 - x1))
 			local cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
-			
+
 			local segment = segmentPool[i + 1]
 			if segment then
 				segment.Size = UDim2.fromOffset(0, LINE_THICKNESS)
@@ -1466,16 +1480,16 @@ function ZenithLib:MakeTab(config)
 				segment.Rotation = angle
 				segment.BackgroundTransparency = 0
 				segment.Visible = true
-				
+
 				if i == 0 or i == SEGMENTS - 1 then
 					if not segment:FindFirstChild("UICorner") then
 						CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }, segment)
 					end
 				end
 			end
-			
+
 			if segment then
-				table.insert(lineSegments, {seg = segment, len = segLen})
+				table.insert(lineSegments, { seg = segment, len = segLen })
 				Tween(segment, { Size = UDim2.fromOffset(segLen + OVERLAP, LINE_THICKNESS) }, 0.012 + (i * 0.004))
 			end
 		end
@@ -1483,7 +1497,7 @@ function ZenithLib:MakeTab(config)
 		Tween(arrow, { ImageRectOffset = Vector2.new(967, 355), ImageColor3 = COLORS.Accent }, 0.18)
 
 		overlay.Visible = true
-		
+
 		Tween(listFrame, { Size = UDim2.new(0, listW, 0, listH) }, 0.3)
 
 		local closed = false
@@ -1493,11 +1507,11 @@ function ZenithLib:MakeTab(config)
 			win._ddCurrent = nil
 			Tween(arrow, { ImageRectOffset = Vector2.new(967, 49), ImageColor3 = COLORS.SubText }, 0.18)
 			Tween(listFrame, { Size = UDim2.new(0, listW, 0, 0) }, 0.2)
-			
+
 			for i, data in ipairs(lineSegments) do
 				Tween(data.seg, { Size = UDim2.fromOffset(0, LINE_THICKNESS) }, 0.008 + ((#lineSegments - i) * 0.003))
 			end
-			
+
 			task.delay(0.3, function()
 				overlay.Visible = false
 				for _, seg in ipairs(segmentPool) do
@@ -1511,17 +1525,17 @@ function ZenithLib:MakeTab(config)
 	end
 
 	function Tab:MakeDropdown(config)
-		local Name     = config.Name    or "Dropdown"
-		local DdIcon   = config.Image   or config.Icon or nil
-		local Options  = config.Options or {}
-		local Default  = config.Default or (Options[1] or "")
-		local Callback = config.Callback or function() end
+		local Name                                                           = config.Name or "Dropdown"
+		local DdIcon                                                         = config.Image or config.Icon or nil
+		local Options                                                        = config.Options or {}
+		local Default                                                        = config.Default or (Options[1] or "")
+		local Callback                                                       = config.Callback or function() end
 
-		local selected = Default
-		local isOpen   = false
-		local closeList = nil
+		local selected                                                       = Default
+		local isOpen                                                         = false
+		local closeList                                                      = nil
 
-		local frame = CreateInstance("Frame", {
+		local frame                                                          = CreateInstance("Frame", {
 			Name = "Dropdown_" .. Name,
 			Size = UDim2.new(1, 0, 0, 38),
 			BackgroundColor3 = COLORS.InputBackground,
@@ -1533,7 +1547,7 @@ function ZenithLib:MakeTab(config)
 			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 			Thickness = 0.5, Transparency = 0.5,
 			Color = COLORS.ElementBorder,
-		}).Parent = frame
+		}).Parent                                                            = frame
 
 		if DdIcon then
 			local ddIco = CreateInstance("ImageLabel", {
@@ -1563,13 +1577,13 @@ function ZenithLib:MakeTab(config)
 		label.Parent = frame
 
 		local arrow = CreateInstance("ImageLabel", {
-			Size = UDim2.new(0, 16, 0, 16),
-			Position = UDim2.new(1, -26, 0.5, -8),
+			Size                   = UDim2.new(0, 16, 0, 16),
+			Position               = UDim2.new(1, -26, 0.5, -8),
 			BackgroundTransparency = 1,
-			Image = "rbxassetid://16898612629",
-			ImageRectSize   = Vector2.new(48, 48),
-			ImageRectOffset = Vector2.new(967, 49),
-			ImageColor3 = COLORS.SubText,
+			Image                  = "rbxassetid://16898612629",
+			ImageRectSize          = Vector2.new(48, 48),
+			ImageRectOffset        = Vector2.new(967, 49),
+			ImageColor3            = COLORS.SubText,
 		})
 		arrow.Parent = frame
 
@@ -1581,7 +1595,8 @@ function ZenithLib:MakeTab(config)
 		local hitbox = CreateInstance("TextButton", {
 			Size = UDim2.new(1, 0, 1, 0),
 			BackgroundTransparency = 1,
-			Text = "", ZIndex = 2,
+			Text = "",
+			ZIndex = 2,
 		})
 		hitbox.Parent = frame
 
@@ -1609,7 +1624,7 @@ function ZenithLib:MakeTab(config)
 			end
 		end)
 
-frame.AncestryChanged:Connect(function()
+		frame.AncestryChanged:Connect(function()
 			if isOpen and closeList then
 				isOpen = false
 				closeList()
@@ -1627,12 +1642,14 @@ frame.AncestryChanged:Connect(function()
 			selected = v
 			label.Text = Name .. ":  " .. tostring(v)
 		end
+
 		function obj:GetValue() return selected end
+
 		return obj
 	end
 
 	function Tab:MakeMultiDropdown(config)
-		local Name     = config.Name    or "MultiDropdown"
+		local Name     = config.Name or "MultiDropdown"
 		local Options  = config.Options or {}
 		local Default  = config.Default or {}
 		local Callback = config.Callback or function() end
@@ -1640,7 +1657,7 @@ frame.AncestryChanged:Connect(function()
 		local selected = {}
 		for _, v in ipairs(Default) do selected[v] = true end
 
-		local isOpen   = false
+		local isOpen    = false
 		local closeList = nil
 
 		local function countSelected()
@@ -1689,13 +1706,13 @@ frame.AncestryChanged:Connect(function()
 		label.Parent = frame
 
 		local arrow = CreateInstance("ImageLabel", {
-			Size = UDim2.new(0, 16, 0, 16),
-			Position = UDim2.new(1, -26, 0.5, -8),
+			Size                   = UDim2.new(0, 16, 0, 16),
+			Position               = UDim2.new(1, -26, 0.5, -8),
 			BackgroundTransparency = 1,
-			Image = "rbxassetid://16898612629",
-			ImageRectSize   = Vector2.new(48, 48),
-			ImageRectOffset = Vector2.new(967, 49),
-			ImageColor3 = COLORS.SubText,
+			Image                  = "rbxassetid://16898612629",
+			ImageRectSize          = Vector2.new(48, 48),
+			ImageRectOffset        = Vector2.new(967, 49),
+			ImageColor3            = COLORS.SubText,
 		})
 		arrow.Parent = frame
 
@@ -1707,7 +1724,8 @@ frame.AncestryChanged:Connect(function()
 		local hitbox = CreateInstance("TextButton", {
 			Size = UDim2.new(1, 0, 1, 0),
 			BackgroundTransparency = 1,
-			Text = "", ZIndex = 2,
+			Text = "",
+			ZIndex = 2,
 		})
 		hitbox.Parent = frame
 
@@ -1729,7 +1747,7 @@ frame.AncestryChanged:Connect(function()
 					for k in pairs(selected) do table.insert(res, k) end
 					Callback(res)
 				end,
-				function() return nil end  -- нет single-selected для мульти
+				function() return nil end -- нет single-selected для мульти
 			)
 			local origClose = closeList
 			closeList = function()
@@ -1766,36 +1784,37 @@ frame.AncestryChanged:Connect(function()
 			for _, v in ipairs(tbl) do selected[v] = true end
 			label.Text = getDisplayText()
 		end
+
 		function obj:GetValue()
 			local res = {}
 			for k in pairs(selected) do table.insert(res, k) end
 			return res
 		end
+
 		return obj
 	end
 
-
 	function Tab:MakeKeybind(config)
-		local Name     = config.Name     or "Keybind"
-		local KbIcon   = config.Image    or config.Icon or nil
-		local Default  = config.Default  or Enum.KeyCode.Unknown
-		local Callback = config.Callback or function() end
-		
-		local keybindFrame = CreateInstance("Frame", {
+		local Name           = config.Name or "Keybind"
+		local KbIcon         = config.Image or config.Icon or nil
+		local Default        = config.Default or Enum.KeyCode.Unknown
+		local Callback       = config.Callback or function() end
+
+		local keybindFrame   = CreateInstance("Frame", {
 			Name = "Keybind_" .. Name,
 			Size = UDim2.new(1, 0, 0, 40),
 			BackgroundColor3 = COLORS.InputBackground,
 			BorderSizePixel = 0,
 		})
-		
-		local keybindCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
+
+		local keybindCorner  = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) })
 		keybindCorner.Parent = keybindFrame
 		CreateInstance("UIStroke", {
 			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 			Thickness = 0.5, Transparency = 0.5,
 			Color = COLORS.ElementBorder,
-		}).Parent = keybindFrame
-		
+		}).Parent            = keybindFrame
+
 		if KbIcon then
 			local kbIco = CreateInstance("ImageLabel", {
 				Size = UDim2.new(0, 15, 0, 15),
@@ -1821,7 +1840,7 @@ frame.AncestryChanged:Connect(function()
 			TextXAlignment = Enum.TextXAlignment.Left,
 		})
 		keybindText.Parent = keybindFrame
-		
+
 		local keybindButton = CreateInstance("Frame", {
 			Name = "KeyButton",
 			Size = UDim2.new(0, 80, 0, 26),
@@ -1830,10 +1849,10 @@ frame.AncestryChanged:Connect(function()
 			BorderSizePixel = 0,
 		})
 		keybindButton.Parent = keybindFrame
-		
+
 		local keyButtonCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 4) })
 		keyButtonCorner.Parent = keybindButton
-		
+
 		local keyText = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, 0, 1, 0),
 			BackgroundTransparency = 1,
@@ -1843,11 +1862,11 @@ frame.AncestryChanged:Connect(function()
 			Font = Enum.Font.GothamBold,
 		})
 		keyText.Parent = keybindButton
-		
+
 		local currentKey = Default
 		local isListening = false
 		local inputBeganConn = nil
-		
+
 		local function UpdateKeyText()
 			keyText.Text = tostring(currentKey):gsub("Enum.KeyCode.", "")
 		end
@@ -1875,7 +1894,7 @@ frame.AncestryChanged:Connect(function()
 				end
 			end)
 		end
-		
+
 		local function stopListening()
 			if isListening then
 				isListening = false
@@ -1887,14 +1906,14 @@ frame.AncestryChanged:Connect(function()
 				UpdateKeyText()
 			end
 		end
-		
+
 		local keyHitbox = CreateInstance("TextButton", {
 			Size = UDim2.new(1, 0, 1, 0),
 			BackgroundTransparency = 1,
 			Text = "",
 		})
 		keyHitbox.Parent = keybindButton
-		
+
 		local kbScale = CreateInstance("UIScale", { Scale = 1 })
 		kbScale.Parent = keybindButton
 
@@ -1905,19 +1924,21 @@ frame.AncestryChanged:Connect(function()
 				startListening()
 			end
 		end)
-		
+
 		keyHitbox.MouseLeave:Connect(function()
 			if isListening then
 				stopListening()
 			end
 		end)
-		
+
 		if config.ConfigKey then
 			win:_RegisterCfgItem(config.ConfigKey,
 				function() return tostring(currentKey):gsub("Enum.KeyCode.", "") end,
 				function(v)
 					local ok, key = pcall(function() return Enum.KeyCode[tostring(v)] end)
-					if ok and key then currentKey = key; UpdateKeyText() end
+					if ok and key then
+						currentKey = key; UpdateKeyText()
+					end
 				end,
 				"keybind"
 			)
@@ -1931,7 +1952,7 @@ frame.AncestryChanged:Connect(function()
 
 		return keybindFrame
 	end
-	
+
 	function Tab:MakeTextbox(config)
 		local Name = config.Name or "Textbox"
 		local Default = config.Default or ""
@@ -1942,7 +1963,7 @@ frame.AncestryChanged:Connect(function()
 		local Validator = config.Validator or nil
 
 		local validationError = nil
-		
+
 		local function validateText(text)
 			if MaxLength and #text > MaxLength then
 				text = text:sub(1, MaxLength)
@@ -2078,11 +2099,11 @@ frame.AncestryChanged:Connect(function()
 	end
 
 	function Tab:MakeLabel(config)
-		local Name   = config.Name  or config.Title or "Label"
-		local Color  = config.Color or COLORS.SubText
-		local Size   = config.TextSize or 12
+		local Name        = config.Name or config.Title or "Label"
+		local Color       = config.Color or COLORS.SubText
+		local Size        = config.TextSize or 12
 
-		local labelFrame = CreateInstance("Frame", {
+		local labelFrame  = CreateInstance("Frame", {
 			Name = "Label_" .. Name,
 			Size = UDim2.new(1, 0, 0, 24),
 			BackgroundTransparency = 1,
@@ -2099,23 +2120,23 @@ frame.AncestryChanged:Connect(function()
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextWrapped = true,
-		}).Parent = labelFrame
+		}).Parent         = labelFrame
 
 		labelFrame.Parent = tabContent
 		return labelFrame
 	end
-	
+
 	function Tab:MakeSeparator(config)
 		local text = config and config.Text
 		local sepHeight = text and 28 or 10
-		
+
 		local sep = CreateInstance("Frame", {
 			Name = "Separator",
 			Size = UDim2.new(1, 0, 0, sepHeight),
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 		})
-		
+
 		if text then
 			local leftLine = CreateInstance("Frame", {
 				Size = UDim2.new(0.5, -40, 0, 1),
@@ -2124,9 +2145,9 @@ frame.AncestryChanged:Connect(function()
 				BackgroundTransparency = 0.7,
 				BorderSizePixel = 0,
 			})
-			CreateInstance("UICorner", { CornerRadius = UDim.new(1,0) }).Parent = leftLine
+			CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = leftLine
 			leftLine.Parent = sep
-			
+
 			local sepText = CreateInstance("TextLabel", {
 				Size = UDim2.new(0, 80, 1, 0),
 				Position = UDim2.new(0.5, -40, 0, 0),
@@ -2138,7 +2159,7 @@ frame.AncestryChanged:Connect(function()
 				TextXAlignment = Enum.TextXAlignment.Center,
 			})
 			sepText.Parent = sep
-			
+
 			local rightLine = CreateInstance("Frame", {
 				Size = UDim2.new(0.5, -40, 0, 1),
 				Position = UDim2.new(0.5, 40, 0.5, 0),
@@ -2146,7 +2167,7 @@ frame.AncestryChanged:Connect(function()
 				BackgroundTransparency = 0.7,
 				BorderSizePixel = 0,
 			})
-			CreateInstance("UICorner", { CornerRadius = UDim.new(1,0) }).Parent = rightLine
+			CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = rightLine
 			rightLine.Parent = sep
 		else
 			local line = CreateInstance("Frame", {
@@ -2156,37 +2177,38 @@ frame.AncestryChanged:Connect(function()
 				BackgroundTransparency = 0.7,
 				BorderSizePixel = 0,
 			})
-			CreateInstance("UICorner", { CornerRadius = UDim.new(1,0) }).Parent = line
+			CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = line
 			line.Parent = sep
 		end
-		
+
 		sep.Parent = tabContent
 		return sep
 	end
-	
+
 	function Tab:MakeColorPicker(config)
-		local Name     = config.Name    or "Color"
-		local Default  = config.Default or Color3.fromRGB(220, 80, 120)
-		local Callback = config.Callback or function() end
+		local Name                                                            = config.Name or "Color"
+		local Default                                                         = config.Default or
+			Color3.fromRGB(220, 80, 120)
+		local Callback                                                        = config.Callback or function() end
 
-		local h, s, v = Color3.toHSV(Default)
-		local currentColor = Default
-		local pickerOpen = false
-		local inputConn = nil
+		local h, s, v                                                         = Color3.toHSV(Default)
+		local currentColor                                                    = Default
+		local pickerOpen                                                      = false
+		local inputConn                                                       = nil
 
-		local row = CreateInstance("Frame", {
+		local row                                                             = CreateInstance("Frame", {
 			Name = "ColorPicker_" .. Name,
 			Size = UDim2.new(1, 0, 0, 38),
 			BackgroundColor3 = COLORS.InputBackground,
 			BackgroundTransparency = 0,
 			BorderSizePixel = 0,
 		})
-		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = row
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent  = row
 		CreateInstance("UIStroke", {
 			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 			Thickness = 0.5, Transparency = 0.5,
 			Color = COLORS.ElementBorder,
-		}).Parent = row
+		}).Parent                                                             = row
 
 		CreateInstance("TextLabel", {
 			Size = UDim2.new(1, -60, 1, 0),
@@ -2197,23 +2219,23 @@ frame.AncestryChanged:Connect(function()
 			TextSize = 13,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
-		}).Parent = row
+		}).Parent                                                             = row
 
-		local preview = CreateInstance("Frame", {
+		local preview                                                         = CreateInstance("Frame", {
 			Size = UDim2.new(0, 22, 0, 22),
 			Position = UDim2.new(1, -36, 0.5, -11),
 			BackgroundColor3 = Default,
 			BorderSizePixel = 0,
 		})
-		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 5) }).Parent = preview
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 5) }).Parent  = preview
 		CreateInstance("UIStroke", {
 			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 			Thickness = 1, Transparency = 0.4,
-			Color = Color3.fromRGB(255,255,255),
-		}).Parent = preview
-		preview.Parent = row
+			Color = Color3.fromRGB(255, 255, 255),
+		}).Parent                                                             = preview
+		preview.Parent                                                        = row
 
-		local palette = CreateInstance("Frame", {
+		local palette                                                         = CreateInstance("Frame", {
 			Name = "Palette_" .. Name,
 			Size = UDim2.new(0, 260, 0, 260),
 			BackgroundColor3 = Color3.fromRGB(10, 6, 8),
@@ -2227,9 +2249,9 @@ frame.AncestryChanged:Connect(function()
 			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 			Thickness = 0.5, Transparency = 0.35,
 			Color = COLORS.Accent,
-		}).Parent = palette
+		}).Parent                                                             = palette
 
-		local svFrame = CreateInstance("ImageLabel", {
+		local svFrame                                                         = CreateInstance("ImageLabel", {
 			Name = "SVSquare",
 			Size = UDim2.new(1, -20, 0, 160),
 			Position = UDim2.new(0, 10, 0, 10),
@@ -2238,52 +2260,52 @@ frame.AncestryChanged:Connect(function()
 			Image = "rbxassetid://4155801252", -- S-V gradient overlay
 			ZIndex = 401,
 		})
-		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) }).Parent = svFrame
-		svFrame.Parent = palette
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) }).Parent  = svFrame
+		svFrame.Parent                                                        = palette
 
-		local svCursor = CreateInstance("Frame", {
+		local svCursor                                                        = CreateInstance("Frame", {
 			Size = UDim2.new(0, 12, 0, 12),
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.new(s, 0, 1 - v, 0),
-			BackgroundColor3 = Color3.fromRGB(255,255,255),
+			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 			BorderSizePixel = 0,
 			ZIndex = 403,
 		})
-		CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = svCursor
+		CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent  = svCursor
 		CreateInstance("UIStroke", {
 			Thickness = 2, Transparency = 0.3,
-			Color = Color3.fromRGB(0,0,0),
-		}).Parent = svCursor
-		svCursor.Parent = svFrame
+			Color = Color3.fromRGB(0, 0, 0),
+		}).Parent                                                             = svCursor
+		svCursor.Parent                                                       = svFrame
 
-		local hueBar = CreateInstance("ImageLabel", {
+		local hueBar                                                          = CreateInstance("ImageLabel", {
 			Name = "HueBar",
 			Size = UDim2.new(1, -20, 0, 14),
 			Position = UDim2.new(0, 10, 0, 178),
-			BackgroundColor3 = Color3.fromRGB(255,255,255),
+			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 			BorderSizePixel = 0,
 			Image = "rbxassetid://698052001", -- hue gradient
 			ZIndex = 401,
 		})
-		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 4) }).Parent = hueBar
-		hueBar.Parent = palette
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 4) }).Parent  = hueBar
+		hueBar.Parent                                                         = palette
 
-		local hueCursor = CreateInstance("Frame", {
+		local hueCursor                                                       = CreateInstance("Frame", {
 			Size = UDim2.new(0, 6, 1, 4),
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.new(h, 0, 0.5, 0),
-			BackgroundColor3 = Color3.fromRGB(255,255,255),
+			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
 			BorderSizePixel = 0,
 			ZIndex = 403,
 		})
-		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 2) }).Parent = hueCursor
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 2) }).Parent  = hueCursor
 		CreateInstance("UIStroke", {
 			Thickness = 1.5, Transparency = 0.2,
-			Color = Color3.fromRGB(0,0,0),
-		}).Parent = hueCursor
-		hueCursor.Parent = hueBar
+			Color = Color3.fromRGB(0, 0, 0),
+		}).Parent                                                             = hueCursor
+		hueCursor.Parent                                                      = hueBar
 
-		local hexBox = CreateInstance("TextBox", {
+		local hexBox                                                          = CreateInstance("TextBox", {
 			Size = UDim2.new(0, 110, 0, 26),
 			Position = UDim2.new(0, 10, 0, 200),
 			BackgroundColor3 = Color3.fromRGB(18, 10, 14),
@@ -2297,28 +2319,28 @@ frame.AncestryChanged:Connect(function()
 			ClearTextOnFocus = false,
 			ZIndex = 402,
 		})
-		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 5) }).Parent = hexBox
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 5) }).Parent  = hexBox
 		CreateInstance("UIStroke", {
 			Thickness = 0.5, Transparency = 0.4,
 			Color = COLORS.ElementBorder,
-		}).Parent = hexBox
-		hexBox.Parent = palette
+		}).Parent                                                             = hexBox
+		hexBox.Parent                                                         = palette
 
-		local bigPreview = CreateInstance("Frame", {
+		local bigPreview                                                      = CreateInstance("Frame", {
 			Size = UDim2.new(0, 52, 0, 26),
 			Position = UDim2.new(1, -72, 0, 200),
 			BackgroundColor3 = Default,
 			BorderSizePixel = 0,
 			ZIndex = 402,
 		})
-		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 5) }).Parent = bigPreview
+		CreateInstance("UICorner", { CornerRadius = UDim.new(0, 5) }).Parent  = bigPreview
 		CreateInstance("UIStroke", {
 			Thickness = 0.5, Transparency = 0.4,
-			Color = Color3.fromRGB(255,255,255),
-		}).Parent = bigPreview
-		bigPreview.Parent = palette
+			Color = Color3.fromRGB(255, 255, 255),
+		}).Parent                                                             = bigPreview
+		bigPreview.Parent                                                     = palette
 
-		local closeBtn = CreateInstance("TextButton", {
+		local closeBtn                                                        = CreateInstance("TextButton", {
 			Size = UDim2.new(0, 20, 0, 20),
 			Position = UDim2.new(1, -28, 0, 8),
 			BackgroundTransparency = 1,
@@ -2328,14 +2350,14 @@ frame.AncestryChanged:Connect(function()
 			Font = Enum.Font.GothamBold,
 			ZIndex = 403,
 		})
-		closeBtn.Parent = palette
+		closeBtn.Parent                                                       = palette
 
 		local function applyColor()
 			currentColor = Color3.fromHSV(h, s, v)
 			Tween(preview, { BackgroundColor3 = currentColor }, 0.05)
 			Tween(bigPreview, { BackgroundColor3 = currentColor }, 0.05)
 			Tween(svFrame, { BackgroundColor3 = Color3.fromHSV(h, 1, 1) }, 0.05)
-				hexBox.Text = "#" .. color3ToHex(currentColor)
+			hexBox.Text = "#" .. color3ToHex(currentColor)
 			svCursor.Position = UDim2.new(s, 0, 1 - v, 0)
 			hueCursor.Position = UDim2.new(h, 0, 0.5, 0)
 			Callback(currentColor)
@@ -2344,7 +2366,8 @@ frame.AncestryChanged:Connect(function()
 		local svDragging = false
 		local svHit = CreateInstance("TextButton", {
 			Size = UDim2.new(1, 0, 1, 0),
-			BackgroundTransparency = 1, Text = "",
+			BackgroundTransparency = 1,
+			Text = "",
 			ZIndex = 402,
 		})
 		svHit.Parent = svFrame
@@ -2369,7 +2392,8 @@ frame.AncestryChanged:Connect(function()
 		local hueDragging = false
 		local hueHit = CreateInstance("TextButton", {
 			Size = UDim2.new(1, 0, 1, 0),
-			BackgroundTransparency = 1, Text = "",
+			BackgroundTransparency = 1,
+			Text = "",
 			ZIndex = 402,
 		})
 		hueHit.Parent = hueBar
@@ -2391,7 +2415,7 @@ frame.AncestryChanged:Connect(function()
 		end)
 
 		hexBox.FocusLost:Connect(function()
-			local hex = hexBox.Text:gsub("#","")
+			local hex = hexBox.Text:gsub("#", "")
 			local col = hexToColor3(hex)
 			if col then
 				h, s, v = Color3.toHSV(col)
@@ -2417,11 +2441,11 @@ frame.AncestryChanged:Connect(function()
 				inputConn = UserInputService.InputBegan:Connect(function(input)
 					if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
 					if not pickerOpen then return end
-					local mp = UserInputService:GetMouseLocation()
-					local pp, ps = palette.AbsolutePosition, palette.AbsoluteSize
-					local rp, rs = row.AbsolutePosition, row.AbsoluteSize
-					local inPalette = mp.X >= pp.X and mp.X <= pp.X+ps.X and mp.Y >= pp.Y and mp.Y <= pp.Y+ps.Y
-					local inRow    = mp.X >= rp.X and mp.X <= rp.X+rs.X and mp.Y >= rp.Y and mp.Y <= rp.Y+rs.Y
+					local mp        = UserInputService:GetMouseLocation()
+					local pp, ps    = palette.AbsolutePosition, palette.AbsoluteSize
+					local rp, rs    = row.AbsolutePosition, row.AbsoluteSize
+					local inPalette = mp.X >= pp.X and mp.X <= pp.X + ps.X and mp.Y >= pp.Y and mp.Y <= pp.Y + ps.Y
+					local inRow     = mp.X >= rp.X and mp.X <= rp.X + rs.X and mp.Y >= rp.Y and mp.Y <= rp.Y + rs.Y
 					if not inPalette and not inRow then
 						closePalette()
 					end
@@ -2441,7 +2465,9 @@ frame.AncestryChanged:Connect(function()
 
 		local rowHit = CreateInstance("TextButton", {
 			Size = UDim2.new(1, 0, 1, 0),
-			BackgroundTransparency = 1, Text = "", ZIndex = 2,
+			BackgroundTransparency = 1,
+			Text = "",
+			ZIndex = 2,
 		})
 		rowHit.Parent = row
 		rowHit.MouseButton1Click:Connect(function()
@@ -2460,30 +2486,32 @@ frame.AncestryChanged:Connect(function()
 			h, s, v = Color3.toHSV(color)
 			applyColor()
 		end
+
 		function obj:GetValue() return currentColor end
+
 		return obj
 	end
 
 	function Tab:MakeParagraph(config)
 		local Title = config.Title or "Title"
 		local Text = config.Text or "Description text here..."
-		
+
 		local contentWidth = tabContent.AbsoluteSize.X
 		if contentWidth == 0 then contentWidth = 500 end
 		local textSize = TextService:GetTextSize(Text, 12, Enum.Font.Gotham, Vector2.new(contentWidth - 40, math.huge))
 		local textHeight = math.max(textSize.Y, 20)
 		local frameHeight = 30 + textHeight
-		
+
 		local paragraphFrame = CreateInstance("Frame", {
 			Name = "Paragraph_" .. Title,
 			Size = UDim2.new(1, 0, 0, frameHeight),
 			BackgroundColor3 = COLORS.InputBackground,
 			BorderSizePixel = 0,
 		})
-		
+
 		local paragraphCorner = CreateInstance("UICorner", { CornerRadius = UDim.new(0, 6) })
 		paragraphCorner.Parent = paragraphFrame
-		
+
 		local titleLabel = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, 0, 0, 20),
 			Position = UDim2.new(0, 10, 0, 5),
@@ -2495,7 +2523,7 @@ frame.AncestryChanged:Connect(function()
 			TextXAlignment = Enum.TextXAlignment.Left,
 		})
 		titleLabel.Parent = paragraphFrame
-		
+
 		local textLabel = CreateInstance("TextLabel", {
 			Size = UDim2.new(1, -20, 0, textHeight),
 			Position = UDim2.new(0, 10, 0, 25),
@@ -2509,7 +2537,7 @@ frame.AncestryChanged:Connect(function()
 			TextYAlignment = Enum.TextYAlignment.Top,
 		})
 		textLabel.Parent = paragraphFrame
-		
+
 		paragraphFrame.Parent = tabContent
 
 		if Tab._lastSection and Tab._lastSection.addElement then
@@ -2518,11 +2546,10 @@ frame.AncestryChanged:Connect(function()
 
 		return paragraphFrame
 	end
-	
 
 	function Tab:MakeSection(config)
-		local Name    = config.Name  or "Section"
-		local SecIcon = config.Image or config.Icon or nil
+		local Name         = config.Name or "Section"
+		local SecIcon      = config.Image or config.Icon or nil
 
 		local sectionFrame = CreateInstance("Frame", {
 			Name = "Section_" .. Name,
@@ -2533,14 +2560,14 @@ frame.AncestryChanged:Connect(function()
 			LayoutOrder = win._tabIndex,
 		})
 
-		local headerRow = CreateInstance("Frame", {
+		local headerRow    = CreateInstance("Frame", {
 			Size = UDim2.new(1, 0, 0, 20),
 			BackgroundTransparency = 1,
 			BorderSizePixel = 0,
 		})
-		headerRow.Parent = sectionFrame
+		headerRow.Parent   = sectionFrame
 
-		local secTextX = SecIcon and 20 or 4
+		local secTextX     = SecIcon and 20 or 4
 		if SecIcon then
 			local secIco = CreateInstance("ImageLabel", {
 				Size = UDim2.new(0, 12, 0, 12),
@@ -2654,18 +2681,16 @@ frame.AncestryChanged:Connect(function()
 		return sectionObj
 	end
 
-
 	function Tab:MakeInput(config)
 		return self:MakeTextbox(config)
 	end
 
-
 	function Tab:MakeProgressBar(config)
-		local Name     = config.Name    or "Progress"
-		local Default  = config.Default or 0   -- 0..100
-		local Callback = config.Callback or function() end
+		local Name                                                           = config.Name or "Progress"
+		local Default                                                        = config.Default or 0 -- 0..100
+		local Callback                                                       = config.Callback or function() end
 
-		local frame = CreateInstance("Frame", {
+		local frame                                                          = CreateInstance("Frame", {
 			Name = "Progress_" .. Name,
 			Size = UDim2.new(1, 0, 0, 44),
 			BackgroundColor3 = COLORS.InputBackground,
@@ -2677,7 +2702,7 @@ frame.AncestryChanged:Connect(function()
 			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
 			Thickness = 0.5, Transparency = 0.5,
 			Color = COLORS.ElementBorder,
-		}).Parent = frame
+		}).Parent                                                            = frame
 
 		CreateInstance("TextLabel", {
 			Size = UDim2.new(1, -50, 0, 18),
@@ -2688,9 +2713,9 @@ frame.AncestryChanged:Connect(function()
 			TextSize = 12,
 			Font = Enum.Font.Gotham,
 			TextXAlignment = Enum.TextXAlignment.Left,
-		}).Parent = frame
+		}).Parent                                                            = frame
 
-		local pctLabel = CreateInstance("TextLabel", {
+		local pctLabel                                                       = CreateInstance("TextLabel", {
 			Size = UDim2.new(0, 44, 0, 18),
 			Position = UDim2.new(1, -54, 0, 4),
 			BackgroundTransparency = 1,
@@ -2700,33 +2725,34 @@ frame.AncestryChanged:Connect(function()
 			Font = Enum.Font.GothamBold,
 			TextXAlignment = Enum.TextXAlignment.Right,
 		})
-		pctLabel.Parent = frame
+		pctLabel.Parent                                                      = frame
 
-		local track = CreateInstance("Frame", {
+		local track                                                          = CreateInstance("Frame", {
 			Size = UDim2.new(1, -20, 0, 4),
 			Position = UDim2.new(0, 10, 0, 30),
 			BackgroundColor3 = COLORS.SliderRail,
 			BorderSizePixel = 0,
 		})
-		CreateInstance("UICorner", { CornerRadius = UDim.new(1,0) }).Parent = track
-		track.Parent = frame
+		CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = track
+		track.Parent                                                         = frame
 
-		local fill = CreateInstance("Frame", {
+		local fill                                                           = CreateInstance("Frame", {
 			Size = UDim2.new(Default / 100, 0, 1, 0),
 			BackgroundColor3 = COLORS.Accent,
 			BorderSizePixel = 0,
 		})
-		CreateInstance("UICorner", { CornerRadius = UDim.new(1,0) }).Parent = fill
-		fill.Parent = track
+		CreateInstance("UICorner", { CornerRadius = UDim.new(1, 0) }).Parent = fill
+		fill.Parent                                                          = track
 
-		local obj = {}
+		local obj                                                            = {}
 		function obj:SetValue(v)
 			v = math.clamp(v, 0, 100)
-			Tween(fill, { Size = UDim2.new(v/100, 0, 1, 0) }, 0.2)
+			Tween(fill, { Size = UDim2.new(v / 100, 0, 1, 0) }, 0.2)
 			pctLabel.Text = tostring(math.floor(v)) .. "%"
 			Callback(v)
 		end
-function obj:GetValue()
+
+		function obj:GetValue()
 			return math.floor(fill.Size.X.Scale * 100)
 		end
 
@@ -2778,7 +2804,6 @@ function ZenithLib:Destroy()
 		end
 	end)
 end
-
 
 function ZenithLib:SetTitle(newTitle)
 	if self.TitleText then
@@ -2838,7 +2863,7 @@ function ZenithLib:Show()
 	if not self.MainFrame then return end
 	self._visible = true
 	self.MainFrame.Visible = true
-	
+
 	UserInputService.MouseIconEnabled = true
 	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 
@@ -2899,11 +2924,12 @@ function ZenithLib:SetWindowPosition(x, y)
 end
 
 function ZenithLib:SetAccent(color)
-	COLORS.Accent     = color
-	COLORS.AccentText = Color3.new(math.min(color.R+0.35,1), math.min(color.G+0.35,1), math.min(color.B+0.35,1))
-	COLORS.ActiveTab  = Color3.new(color.R*0.13, color.G*0.07, color.B*0.1)
-	COLORS.ElementBorder = Color3.new(color.R*0.25, color.G*0.09, color.B*0.15)
-	COLORS.AccentDim  = Color3.new(color.R*0.41, color.G*0.09, color.B*0.21)
+	COLORS.Accent        = color
+	COLORS.AccentText    = Color3.new(math.min(color.R + 0.35, 1), math.min(color.G + 0.35, 1), math.min(color.B + 0.35,
+		1))
+	COLORS.ActiveTab     = Color3.new(color.R * 0.13, color.G * 0.07, color.B * 0.1)
+	COLORS.ElementBorder = Color3.new(color.R * 0.25, color.G * 0.09, color.B * 0.15)
+	COLORS.AccentDim     = Color3.new(color.R * 0.41, color.G * 0.09, color.B * 0.21)
 	if self._mainStroke then self._mainStroke.Color = color end
 	if self._titleBarGradient then
 		self._titleBarGradient.Color = ColorSequence.new({
@@ -2926,7 +2952,6 @@ function ZenithLib:GetTabs()
 	end
 	return names
 end
-
 
 function ZenithLib:_InitBuiltinTabs()
 	local credTab = self:MakeTab({ Title = "Credits", Image = "info", LayoutOrder = 9998 })
@@ -2961,15 +2986,14 @@ function ZenithLib:_InitBuiltinTabs()
 		end,
 	})
 	setTab:MakeColorPicker({
-		Name    = "Accent Color",
-		Default = COLORS.Accent,
+		Name     = "Accent Color",
+		Default  = COLORS.Accent,
 		Callback = function(color)
 			COLORS.Accent = color
 			if self._mainStroke then self._mainStroke.Color = color end
 		end,
 	})
 end
-
 
 local NotifHolder = nil
 
@@ -3000,21 +3024,21 @@ local _notifyProcessing = false
 local function processNotifyQueue()
 	if _notifyProcessing then return end
 	_notifyProcessing = true
-	
+
 	while #_notifyQueue > 0 do
 		local notifyData = table.remove(_notifyQueue, 1)
 		local card = notifyData.card
 		local duration = notifyData.duration
-		
+
 		task.wait(duration + 0.25)
-		
+
 		if card and card.Parent then
 			Tween(card, { Position = UDim2.new(1, 10, 0, 0) }, 0.2, Enum.EasingStyle.Quint)
 			task.wait(0.25)
 			pcall(function() card:Destroy() end)
 		end
 	end
-	
+
 	_notifyProcessing = false
 end
 
@@ -3025,12 +3049,12 @@ end
 -- @param cfg.Duration number? — длительность в секундах (default: 4)
 -- @return Instance
 function ZenithLib:Notify(cfg)
-	local title    = cfg.Title    or "Notification"
-	local content  = cfg.Content  or ""
-	local duration = cfg.Duration or 4
-	local holder   = GetNotifHolder(self.ScreenGui)
+	local title                                                          = cfg.Title or "Notification"
+	local content                                                        = cfg.Content or ""
+	local duration                                                       = cfg.Duration or 4
+	local holder                                                         = GetNotifHolder(self.ScreenGui)
 
-	local card = CreateInstance("Frame", {
+	local card                                                           = CreateInstance("Frame", {
 		Name = "Notif",
 		Size = UDim2.new(1, 0, 0, 62),
 		BackgroundColor3 = Color3.fromRGB(12, 7, 9),
@@ -3047,9 +3071,9 @@ function ZenithLib:Notify(cfg)
 		Thickness = 1,
 		Transparency = 0.55,
 		Color = COLORS.Accent,
-	}).Parent = card
+	}).Parent                                                            = card
 
-	local accent = CreateInstance("Frame", {
+	local accent                                                         = CreateInstance("Frame", {
 		Size = UDim2.new(0, 3, 1, 0),
 		Position = UDim2.new(0, 0, 0, 0),
 		BackgroundColor3 = COLORS.Accent,
@@ -3057,7 +3081,7 @@ function ZenithLib:Notify(cfg)
 		ZIndex = 201,
 	})
 	CreateInstance("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = accent
-	accent.Parent = card
+	accent.Parent                                                        = card
 
 	CreateInstance("TextLabel", {
 		Size = UDim2.new(1, -16, 0, 20),
@@ -3069,7 +3093,7 @@ function ZenithLib:Notify(cfg)
 		Font = Enum.Font.GothamBold,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		ZIndex = 201,
-	}).Parent = card
+	}).Parent                                                            = card
 
 	CreateInstance("TextLabel", {
 		Size = UDim2.new(1, -16, 0, 20),
@@ -3083,9 +3107,9 @@ function ZenithLib:Notify(cfg)
 		TextWrapped = true,
 		TextTruncate = Enum.TextTruncate.AtEnd,
 		ZIndex = 201,
-	}).Parent = card
+	}).Parent                                                            = card
 
-	local timerBar = CreateInstance("Frame", {
+	local timerBar                                                       = CreateInstance("Frame", {
 		Size = UDim2.new(1, 0, 0, 2),
 		Position = UDim2.new(0, 0, 1, -2),
 		BackgroundColor3 = COLORS.Accent,
@@ -3093,7 +3117,7 @@ function ZenithLib:Notify(cfg)
 		BorderSizePixel = 0,
 		ZIndex = 201,
 	})
-	timerBar.Parent = card
+	timerBar.Parent                                                      = card
 
 	Tween(card, { Position = UDim2.new(0, 0, 0, 0) }, 0.25, Enum.EasingStyle.Quint)
 
@@ -3107,8 +3131,6 @@ function ZenithLib:Notify(cfg)
 
 	return card
 end
-
-
 
 local HttpService = game:GetService("HttpService")
 
@@ -3155,292 +3177,282 @@ function ZenithLib:_RegisterCfgItem(key, getter, setter, itemType)
 end
 
 function ZenithLib:SaveConfig(name)
-    self._cfgRegistry = self._cfgRegistry or {}
-    name = name or self._cfgName or "default"
+	self._cfgRegistry = self._cfgRegistry or {}
+	name = name or self._cfgName or "default"
 
-    local path = self._cfgPath
-    if not path then
-        path = _getCfgPath(self._configName or "default")
-        self._cfgPath = path
-    end
+	local path = self._cfgPath
+	if not path then
+		path = _getCfgPath(self._configName or "default")
+		self._cfgPath = path
+	end
 
-    local data = {}
-    for k, entry in pairs(self._cfgRegistry) do
-        local ok, val = pcall(entry.get)
-        if ok then
-            if typeof(val) == "Color3" then
-                val = color3ToHex(val)
-            elseif typeof(val) == "EnumItem" then
-                val = tostring(val):gsub("Enum.KeyCode.", "")
-            end
-            data[k] = val
-        else
-            warn("[ZenithLib] SaveConfig: failed to get value for key:", k)
-        end
-    end
+	local data = {}
+	for k, entry in pairs(self._cfgRegistry) do
+		local ok, val = pcall(entry.get)
+		if ok then
+			if typeof(val) == "Color3" then
+				val = color3ToHex(val)
+			elseif typeof(val) == "EnumItem" then
+				val = tostring(val):gsub("Enum.KeyCode.", "")
+			end
+			data[k] = val
+		else
+			warn("[ZenithLib] SaveConfig: failed to get value for key:", k)
+		end
+	end
 
-    local ok, err = pcall(_cfgWrite, path, name, data)
-    if not ok then
-        warn("[ZenithLib] SaveConfig write failed:", err)
-        return false
-    end
+	local ok, err = pcall(_cfgWrite, path, name, data)
+	if not ok then
+		warn("[ZenithLib] SaveConfig write failed:", err)
+		return false
+	end
 
-    return true
+	return true
 end
 
 function ZenithLib:LoadConfig(name)
-    self._cfgRegistry = self._cfgRegistry or {}
-    name = name or self._cfgName or "default"
+	self._cfgRegistry = self._cfgRegistry or {}
+	name = name or self._cfgName or "default"
 
-    local path = self._cfgPath
-    if not path then
-        path = _getCfgPath(self._configName or "default")
-        self._cfgPath = path
-    end
+	local path = self._cfgPath
+	if not path then
+		path = _getCfgPath(self._configName or "default")
+		self._cfgPath = path
+	end
 
-    local data = _cfgRead(path, name)
-    if not data then
-        warn("[ZenithLib] LoadConfig: file not found or empty:", path .. name .. ".json")
-        return false
-    end
+	local data = _cfgRead(path, name)
+	if not data then
+		warn("[ZenithLib] LoadConfig: file not found or empty:", path .. name .. ".json")
+		return false
+	end
 
-    for k, entry in pairs(self._cfgRegistry) do
-        if data[k] ~= nil then
-            local val = data[k]
+	for k, entry in pairs(self._cfgRegistry) do
+		if data[k] ~= nil then
+			local val = data[k]
 
-            if entry.type == "color" and type(val) == "string" then
-                local col = hexToColor3(val)
-                if col then val = col end
+			if entry.type == "color" and type(val) == "string" then
+				local col = hexToColor3(val)
+				if col then val = col end
+			elseif entry.type == "keybind" and type(val) == "string" then
+				local ok2, key = pcall(function()
+					return Enum.KeyCode[val]
+				end)
+				if ok2 and key then val = key end
+			end
 
-            elseif entry.type == "keybind" and type(val) == "string" then
-                local ok2, key = pcall(function()
-                    return Enum.KeyCode[val]
-                end)
-                if ok2 and key then val = key end
-            end
+			local ok, err = pcall(entry.set, val)
+			if not ok then
+				warn("[ZenithLib] LoadConfig: failed to set value for key:", k, err)
+			end
+		end
+	end
 
-            local ok, err = pcall(entry.set, val)
-            if not ok then
-                warn("[ZenithLib] LoadConfig: failed to set value for key:", k, err)
-            end
-        end
-    end
-
-    return true
+	return true
 end
 
 function ZenithLib:MakeConfigTab(configName)
-    configName = configName or self._configName or "default"
+	configName = configName or self._configName or "default"
 
-    self._cfgPath = _getCfgPath(configName)
-    self._cfgName = "default"
-    self._cfgRegistry = self._cfgRegistry or {}
+	self._cfgPath = _getCfgPath(configName)
+	self._cfgName = "default"
+	self._cfgRegistry = self._cfgRegistry or {}
 
-    local tab = self:MakeTab({ Title = "Config", Image = "save", LayoutOrder = 9000 })
+	local tab = self:MakeTab({ Title = "Config", Image = "save", LayoutOrder = 9000 })
 
-    tab:MakeSection({ Name = "Profiles" })
+	tab:MakeSection({ Name = "Profiles" })
 
-    local function getConfigList()
-        local list = _cfgList(self._cfgPath)
-        if #list == 0 then
-            pcall(writefile, self._cfgPath .. "default.json", "{}")
-            list = { "default" }
-        end
-        return list
-    end
+	local function getConfigList()
+		local list = _cfgList(self._cfgPath)
+		if #list == 0 then
+			pcall(writefile, self._cfgPath .. "default.json", "{}")
+			list = { "default" }
+		end
+		return list
+	end
 
-    local cfgList = getConfigList()
+	local cfgList = getConfigList()
 
-    local cfgDropdown = tab:MakeDropdown({
-        Name    = "Profile",
-        Options = cfgList,
-        Default = cfgList[1],
-        Callback = function(name)
-            self._cfgName = name
-        end,
-    })
+	local cfgDropdown = tab:MakeDropdown({
+		Name     = "Profile",
+		Options  = cfgList,
+		Default  = cfgList[1],
+		Callback = function(name)
+			self._cfgName = name
+		end,
+	})
 
-    local newNameBox = tab:MakeTextbox({
-        Name        = "New Profile Name",
-        Placeholder = "my_config",
-        Default     = "",
-        Callback    = function(name)
-            name = name:match("^%s*(.-)%s*$")
+	local newNameBox = tab:MakeTextbox({
+		Name        = "New Profile Name",
+		Placeholder = "my_config",
+		Default     = "",
+		Callback    = function(name)
+			name = name:match("^%s*(.-)%s*$")
 
-            if name == "" then
-                self:Notify({ Title = "Error", Content = "Name cannot be empty", Duration = 2 })
-                return
-            end
+			if name == "" then
+				self:Notify({ Title = "Error", Content = "Name cannot be empty", Duration = 2 })
+				return
+			end
 
-            local exists = false
-            for _, v in ipairs(getConfigList()) do
-                if v == name then exists = true; break end
-            end
+			local exists = false
+			for _, v in ipairs(getConfigList()) do
+				if v == name then
+					exists = true; break
+				end
+			end
 
-            if exists then
-                self:Notify({ Title = "Error", Content = "Profile already exists: " .. name, Duration = 2 })
-                return
-            end
+			if exists then
+				self:Notify({ Title = "Error", Content = "Profile already exists: " .. name, Duration = 2 })
+				return
+			end
 
-            local ok, err = pcall(writefile, self._cfgPath .. name .. ".json", "{}")
-            if ok then
-                self:Notify({ Title = "Created", Content = "Profile: " .. name, Duration = 2 })
-                local newList = getConfigList()
-                cfgDropdown:SetValue(name)
-                self._cfgName = name
-            else
-                self:Notify({ Title = "Error", Content = "Failed to create: " .. tostring(err), Duration = 3 })
-            end
-        end,
-    })
+			local ok, err = pcall(writefile, self._cfgPath .. name .. ".json", "{}")
+			if ok then
+				self:Notify({ Title = "Created", Content = "Profile: " .. name, Duration = 2 })
+				local newList = getConfigList()
+				cfgDropdown:SetValue(name)
+				self._cfgName = name
+			else
+				self:Notify({ Title = "Error", Content = "Failed to create: " .. tostring(err), Duration = 3 })
+			end
+		end,
+	})
 
-    tab:MakeSeparator()
-    tab:MakeSection({ Name = "Actions" })
+	tab:MakeSeparator()
+	tab:MakeSection({ Name = "Actions" })
 
-    tab:MakeButton({
-        Name = "Save Config",
-        Icon = "save",
-        Callback = function()
-            if not self._cfgPath then
-                self:Notify({ Title = "Error", Content = "Config path not set", Duration = 2 })
-                return
-            end
-            local ok, err = pcall(function() self:SaveConfig(self._cfgName) end)
-            if ok then
-                self:Notify({ Title = "Saved ✓", Content = "Profile: " .. self._cfgName, Duration = 2 })
-            else
-                self:Notify({ Title = "Save Failed", Content = tostring(err), Duration = 3 })
-            end
-        end,
-    })
+	tab:MakeButton({
+		Name = "Save Config",
+		Icon = "save",
+		Callback = function()
+			if not self._cfgPath then
+				self:Notify({ Title = "Error", Content = "Config path not set", Duration = 2 })
+				return
+			end
+			local ok, err = pcall(function() self:SaveConfig(self._cfgName) end)
+			if ok then
+				self:Notify({ Title = "Saved ✓", Content = "Profile: " .. self._cfgName, Duration = 2 })
+			else
+				self:Notify({ Title = "Save Failed", Content = tostring(err), Duration = 3 })
+			end
+		end,
+	})
 
-    tab:MakeButton({
-        Name = "Load Config",
-        Icon = "folder-open",
-        Callback = function()
-            if not self._cfgPath then
-                self:Notify({ Title = "Error", Content = "Config path not set", Duration = 2 })
-                return
-            end
-            local ok, result = pcall(function() return self:LoadConfig(self._cfgName) end)
-            if ok and result then
-                self:Notify({ Title = "Loaded ✓", Content = "Profile: " .. self._cfgName, Duration = 2 })
-            elseif ok and not result then
-                self:Notify({ Title = "Not Found", Content = "Profile: " .. self._cfgName, Duration = 2 })
-            else
-                self:Notify({ Title = "Load Failed", Content = tostring(result), Duration = 3 })
-            end
-        end,
-    })
+	tab:MakeButton({
+		Name = "Load Config",
+		Icon = "folder-open",
+		Callback = function()
+			if not self._cfgPath then
+				self:Notify({ Title = "Error", Content = "Config path not set", Duration = 2 })
+				return
+			end
+			local ok, result = pcall(function() return self:LoadConfig(self._cfgName) end)
+			if ok and result then
+				self:Notify({ Title = "Loaded ✓", Content = "Profile: " .. self._cfgName, Duration = 2 })
+			elseif ok and not result then
+				self:Notify({ Title = "Not Found", Content = "Profile: " .. self._cfgName, Duration = 2 })
+			else
+				self:Notify({ Title = "Load Failed", Content = tostring(result), Duration = 3 })
+			end
+		end,
+	})
 
-    tab:MakeButton({
-        Name = "Delete Profile",
-        Icon = "trash-2",
-        Callback = function()
-            if self._cfgName == "default" then
-                self:Notify({ Title = "Error", Content = "Cannot delete default profile", Duration = 2 })
-                return
-            end
+	tab:MakeButton({
+		Name = "Delete Profile",
+		Icon = "trash-2",
+		Callback = function()
+			if self._cfgName == "default" then
+				self:Notify({ Title = "Error", Content = "Cannot delete default profile", Duration = 2 })
+				return
+			end
 
-            local filePath = self._cfgPath .. self._cfgName .. ".json"
+			local filePath = self._cfgPath .. self._cfgName .. ".json"
 
-            local fileExists = pcall(readfile, filePath)
-            if not fileExists then
-                self:Notify({ Title = "Error", Content = "Profile not found: " .. self._cfgName, Duration = 2 })
-                return
-            end
+			local fileExists = pcall(readfile, filePath)
+			if not fileExists then
+				self:Notify({ Title = "Error", Content = "Profile not found: " .. self._cfgName, Duration = 2 })
+				return
+			end
 
-            local ok, err = pcall(function()
-                if delfile then
-                    delfile(filePath)
-                else
-                    writefile(filePath, "__DELETED__")
-                    warn("[ZenithLib] delfile not supported, file marked as deleted")
-                end
-            end)
+			local ok, err = pcall(function()
+				if delfile then
+					delfile(filePath)
+				else
+					writefile(filePath, "__DELETED__")
+					warn("[ZenithLib] delfile not supported, file marked as deleted")
+				end
+			end)
 
-            if ok then
-                local deleted = self._cfgName
-                self._cfgName = "default"
-                cfgDropdown:SetValue("default")
-                self:Notify({ Title = "Deleted ✓", Content = "Profile: " .. deleted, Duration = 2 })
-            else
-                self:Notify({ Title = "Delete Failed", Content = tostring(err), Duration = 3 })
-            end
-        end,
-    })
+			if ok then
+				local deleted = self._cfgName
+				self._cfgName = "default"
+				cfgDropdown:SetValue("default")
+				self:Notify({ Title = "Deleted ✓", Content = "Profile: " .. deleted, Duration = 2 })
+			else
+				self:Notify({ Title = "Delete Failed", Content = tostring(err), Duration = 3 })
+			end
+		end,
+	})
 
-    tab:MakeSeparator()
-    tab:MakeSection({ Name = "Auto Save" })
+	tab:MakeSeparator()
+	tab:MakeSection({ Name = "Auto Save" })
 
-    local autoSaveLoopRunning = false
-    local autoInterval = 30
+	local autoSaveLoopRunning = false
+	local autoInterval = 30
 
-    tab:MakeToggle({
-        Name    = "Auto Save",
-        Icon    = "refresh-cw",
-        Default = false,
-        Callback = function(state)
-            autoSaveLoopRunning = state
+	tab:MakeToggle({
+		Name     = "Auto Save",
+		Icon     = "refresh-cw",
+		Default  = false,
+		Callback = function(state)
+			autoSaveLoopRunning = state
 
-            if state then
-                local function autoSaveLoop()
-                    while autoSaveLoopRunning do
-                        task.wait(autoInterval)
-                        if autoSaveLoopRunning then
-                            pcall(function() self:SaveConfig(self._cfgName) end)
-                        end
-                    end
-                end
-                task.spawn(autoSaveLoop)
-                self:Notify({
-                    Title   = "Auto Save ON",
-                    Content = "Every " .. autoInterval .. "s",
-                    Duration = 2
-                })
-            else
-                self:Notify({ Title = "Auto Save OFF", Content = "", Duration = 2 })
-            end
-        end,
-    })
-            else
-                self:Notify({ Title = "Auto Save OFF", Content = "", Duration = 2 })
-            end
-        end,
-    })
+			if state then
+				local function autoSaveLoop()
+					while autoSaveLoopRunning do
+						task.wait(autoInterval)
+						if autoSaveLoopRunning then
+							pcall(function() self:SaveConfig(self._cfgName) end)
+						end
+					end
+				end
+				task.spawn(autoSaveLoop)
+				self:Notify({
+					Title    = "Auto Save ON",
+					Content  = "Every " .. autoInterval .. "s",
+					Duration = 2
+				})
+			else
+				self:Notify({ Title = "Auto Save OFF", Content = "", Duration = 2 })
+			end
+		end,
+	})
+	tab:MakeSlider({
+		Name     = "Save Interval (sec)",
+		Min      = 10,
+		Max      = 300,
+		Default  = 30,
+		Callback = function(v)
+			autoInterval = v
+		end,
+	})
 
-    tab:MakeSlider({
-        Name    = "Save Interval (sec)",
-        Min     = 10,
-        Max     = 300,
-        Default = 30,
-        Callback = function(v)
-            autoInterval = v
-        end,
-    })
+	tab:MakeSeparator()
 
-    tab:MakeSeparator()
+	task.defer(function()
+		if not self._cfgPath then return end
+		local ok, result = pcall(function() return self:LoadConfig(self._cfgName) end)
+		if ok and result then
+			self:Notify({
+				Title    = "Config",
+				Content  = "Auto-loaded: " .. self._cfgName,
+				Duration = 3
+			})
+		end
+	end)
 
-    task.defer(function()
-        if not self._cfgPath then return end
-        local ok, result = pcall(function() return self:LoadConfig(self._cfgName) end)
-        if ok and result then
-            self:Notify({
-                Title   = "Config",
-                Content = "Auto-loaded: " .. self._cfgName,
-                Duration = 3
-            })
-        end
-    end)
-
-    return tab
+	return tab
 end
-
 
 _G.ZenithLib = ZenithLib
 
 return ZenithLib
-
-
-
-
